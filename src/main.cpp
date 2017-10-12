@@ -9,6 +9,8 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 
+#include "spline.h"
+
 using namespace std;
 
 // for convenience
@@ -196,6 +198,51 @@ int main() {
   	map_waypoints_dy.push_back(d_y);
   }
 
+  tk::spline spline_x;
+  tk::spline spline_y;
+  tk::spline spline_dx;
+  tk::spline spline_dy;
+
+  spline_x.set_points(map_waypoints_s, map_waypoints_x);
+  spline_y.set_points(map_waypoints_s, map_waypoints_y);
+  spline_dx.set_points(map_waypoints_s, map_waypoints_dx);
+  spline_dy.set_points(map_waypoints_s, map_waypoints_dy);
+
+  cout << "x(990)=" << spline_x(990) << " y(990)=" << spline_y(990) << endl;
+
+  double len_ref = 0;
+  double prev_x = spline_x(0);
+  double prev_y = spline_y(0);
+  for (double s = 1; s <= 6945; s++)
+  {
+    double x = spline_x(s);
+    double y = spline_y(s);
+    len_ref += distance(x, y, prev_x, prev_y);
+    prev_x = x;
+    prev_y = y;
+  }
+  cout << "len_ref=" << len_ref << endl;
+
+  double len_lane;
+
+  for (int i = 0; i < 3; i++)
+  {
+    double laned = 2 + 4 * i;
+    len_lane = 0;
+    prev_x = spline_x(0) + laned * spline_dx(0);
+    prev_y = spline_y(0) + laned * spline_dy(0);
+    for (double s = 1; s <= 6945; s++)
+    {
+      double x = spline_x(s) + laned * spline_dx(s);
+      double y = spline_y(s) + laned * spline_dy(s);
+      len_lane += distance(x, y, prev_x, prev_y);
+      prev_x = x;
+      prev_y = y;
+    }
+    cout << "len_lane" << i << "=" << len_lane << endl;
+  }
+
+
   h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -238,6 +285,17 @@ int main() {
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
 
+            cout << "car_s=" << car_s << " card_d=" << car_d << endl;
+            vector<double> frenet;
+            frenet = getFrenet(car_x, car_y, car_yaw, map_waypoints_x, map_waypoints_y);
+            cout << "frenet_s=" << frenet[0] << " frenet_d=" << frenet[1] << endl << endl;
+
+            double dist_inc = 0.5;
+            for (int i = 0; i < 50; i++)
+            {
+              next_x_vals.push_back(car_x + dist_inc*i*cos(deg2rad(car_yaw)));
+              next_y_vals.push_back(car_y + dist_inc*i*sin(deg2rad(car_yaw)));
+            } 
 
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
           	msgJson["next_x"] = next_x_vals;
