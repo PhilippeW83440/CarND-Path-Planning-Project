@@ -11,6 +11,9 @@
 
 #include "spline.h"
 #include <time.h>
+#include "matplotlibcpp.h"
+
+namespace plt = matplotlibcpp;
 
 using namespace std;
 
@@ -47,9 +50,11 @@ int ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vect
 	double closestLen = 100000; //large number
 	int closestWaypoint = 0;
 
-  if (maps_x.size() <= 200)
+  int size = maps_x.size();
+
+  if (size <= 200)
   {
-	  for(int i = 0; i < maps_x.size(); i++)
+	  for(int i = 0; i < size; i++)
 	  {
 	  	double map_x = maps_x[i];
 	  	double map_y = maps_y[i];
@@ -64,9 +69,9 @@ int ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vect
   else // Faster search with big maps: 2 hierarchical steps of search
   {
     // 1) Search a point relatively close to the nearest
-    int jump_points = maps_x.size() / 181; // so that we have 1 jump_points with a 181 points map (default)
+    int jump_points = size / 181; // so that we have 1 jump_points with a 181 points map (default)
     int point = 0;
-	  while(point < maps_x.size())
+	  while(point < size)
     {
 	  	double map_x = maps_x[point];
 	  	double map_y = maps_y[point];
@@ -83,17 +88,29 @@ int ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vect
 	  //for(int i = closestWaypoint - 181; i < closestWaypoint + 181; i++)
 	  for(int i = closestWaypoint - 91; i < closestWaypoint + 91; i++)
     {
-	  	double map_x = maps_x[i];
-	  	double map_y = maps_y[i];
+      int idx = i;
+      if (i < 0)
+      {
+        idx += size;
+      }
+      else if (i >= size)
+      {
+        idx -= size;
+      }
+
+	  	double map_x = maps_x[idx];
+	  	double map_y = maps_y[idx];
 	  	double dist = distance(x,y,map_x,map_y);
 	  	if(dist < closestLen)
 	  	{
 	  		closestLen = dist;
-	  		closestWaypoint = i;
+	  		closestWaypoint = idx;
 	  	}
     }
   }
 
+  // TODO XX TEMP
+  cout << "closestWaypoint=" << closestWaypoint << endl;
 	return closestWaypoint;
 
 }
@@ -109,12 +126,19 @@ int NextWaypoint(double x, double y, double theta, const vector<double> &maps_x,
 	double heading = atan2( (map_y-y),(map_x-x) );
 
 	double angle = abs(theta-heading);
+	angle = min(2*pi() - angle, angle); // XXX bug fix
 
 	if(angle > pi()/4)
 	{
 		closestWaypoint++;
+    if (closestWaypoint == maps_x.size())
+    {
+      closestWaypoint = 0; // XXX bug fix
+    }
 	}
 
+  // XXX debug
+  cout << "corrected closestWaypoint=" << closestWaypoint << endl;
 	return closestWaypoint;
 
 }
@@ -207,6 +231,9 @@ int main() {
   vector<double> map_waypoints_dx;
   vector<double> map_waypoints_dy;
 
+  vector<double> map_waypoints_normx;
+  vector<double> map_waypoints_normy;
+
   // Waypoint map to read from
   string map_file_ = "../data/highway_map.csv";
   // The max s value before wrapping around the track back to 0
@@ -215,6 +242,13 @@ int main() {
   ifstream in_map_(map_file_.c_str(), ifstream::in);
 
   string line;
+
+  bool not_started = true;
+  double x0;
+  double y0;
+  double dx0;
+  double dy0;
+
   while (getline(in_map_, line)) {
   	istringstream iss(line);
   	double x;
@@ -227,12 +261,33 @@ int main() {
   	iss >> s;
   	iss >> d_x;
   	iss >> d_y;
+    if (not_started)
+    {
+      x0 = x; y0 = y; dx0 = d_x; dy0 = d_y;
+      not_started = false;
+    }
   	map_waypoints_x.push_back(x);
   	map_waypoints_y.push_back(y);
   	map_waypoints_s.push_back(s);
   	map_waypoints_dx.push_back(d_x);
   	map_waypoints_dy.push_back(d_y);
+
+  	map_waypoints_normx.push_back(x+10*d_x);
+  	map_waypoints_normy.push_back(y+10*d_y);
   }
+
+  // to get a good spline approximation on last segment wrapping around
+  map_waypoints_x.push_back(x0);
+  map_waypoints_y.push_back(y0);
+  map_waypoints_s.push_back(max_s);
+  map_waypoints_dx.push_back(dx0);
+  map_waypoints_dy.push_back(dy0);
+  map_waypoints_normx.push_back(x0+10*dx0);
+  map_waypoints_normy.push_back(y0+10*dy0);
+
+  plt::title("Map");
+  plt::plot(map_waypoints_x, map_waypoints_y, "r*");
+  plt::plot(map_waypoints_normx, map_waypoints_normy, "g*");
 
   tk::spline spline_x;
   tk::spline spline_y;
@@ -243,6 +298,16 @@ int main() {
   spline_y.set_points(map_waypoints_s, map_waypoints_y);
   spline_dx.set_points(map_waypoints_s, map_waypoints_dx);
   spline_dy.set_points(map_waypoints_s, map_waypoints_dy);
+
+  // remove last point so we do not have duplicates (x,y): it was just for spline continuity at wraparound
+  map_waypoints_x.pop_back();
+  map_waypoints_y.pop_back();
+  map_waypoints_s.pop_back();
+  map_waypoints_dx.pop_back();
+  map_waypoints_dy.pop_back();
+  map_waypoints_normx.pop_back();
+  map_waypoints_normy.pop_back();
+
 
   cout << "x(990)=" << spline_x(990) << " y(990)=" << spline_y(990) << endl;
 
@@ -296,6 +361,12 @@ int main() {
     new_map_waypoints_dy.push_back(dy);
   }
 
+  plt::plot(new_map_waypoints_x, new_map_waypoints_y, "b-");
+  vector<double> car_x = { 1, 770.0906};
+  vector<double> car_y = { 1, 1129.872};
+  plt::plot(car_x, car_y, "gx");
+  plt::show();
+
 	double frenet_s = 0;
   vector<double> map_s;
   map_s.push_back(0.0);
@@ -311,8 +382,8 @@ int main() {
 	for(int i = 1; i < new_map_waypoints_x.size(); i++)
 	{
 		frenet_s += distance(new_map_waypoints_x[i], new_map_waypoints_y[i], new_map_waypoints_x[i-1], new_map_waypoints_y[i-1]);
-    //new_map_s.push_back(frenet_s);
-    new_map_s.push_back(i);
+    //new_map_s.push_back(frenet_s); // TODO test both alternatives
+    new_map_s.push_back(i); // better
     cout << "frenet_s=" << frenet_s << " " << i << endl;
 	}
 
@@ -321,10 +392,13 @@ int main() {
   int lane = 1;
   double ref_vel = 0.0; // mph
   double max_error = 0.0;
+  double sum_error = 0.0;
+  double avg_error = 0.0;
+  unsigned int num_error = 0;
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map_s, &new_map_s, &new_map_waypoints_x, &new_map_waypoints_y, &new_map_waypoints_dx, &new_map_waypoints_dy, &spline_x, &spline_y, &spline_dx, &spline_dy, &max_error,&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy,&lane](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&sum_error, &avg_error, &num_error, &map_s, &new_map_s, &new_map_waypoints_x, &new_map_waypoints_y, &new_map_waypoints_dx, &new_map_waypoints_dy, &spline_x, &spline_y, &spline_dx, &spline_dy, &max_error,&ref_vel,&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy,&lane](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -365,10 +439,26 @@ int main() {
           	auto sensor_fusion = j[1]["sensor_fusion"];
                 //vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
 
+
+            // TEST XXX TODO TEMP
+            //car_x = 770.0906;
+            //car_y = 1129.872;
+            //car_s = 6931.203;
+            //car_d = 6.087758;
+            //car_yaw = 375.72;
+            //car_speed = 39.366;
+
+            //car_x = 783.6693;
+            //car_y = 1129.419;
+            //car_s = 6944.789;
+            //car_d = 6.174933;
+            //car_yaw = 358.449;
+            //car_speed = 41.1659;
+
             // check transformations accuracy
             clock_t start = clock();
-            vector<double> frenet = getFrenet(car_x, car_y, car_yaw, new_map_waypoints_x, new_map_waypoints_y, new_map_s);
-            //vector<double> frenet = getFrenet(car_x, car_y, car_yaw, map_waypoints_x, map_waypoints_y, map_s);
+            vector<double> frenet = getFrenet(car_x, car_y, deg2rad(car_yaw), new_map_waypoints_x, new_map_waypoints_y, new_map_s);
+            //vector<double> frenet = getFrenet(car_x, car_y, deg2rad(car_yaw), map_waypoints_x, map_waypoints_y, map_s);
             int frenet_s = frenet[0];
             int frenet_d = frenet[1];
 
@@ -379,6 +469,10 @@ int main() {
             double elapsed = (double)(stop - start) * 1000000.0 / CLOCKS_PER_SEC;
 
             double error = distance(my_x, my_y, car_x, car_y);
+            sum_error += error;
+            num_error++;
+            avg_error = sum_error / num_error;
+            assert(error < 4);
             if (error > max_error)
             {
               max_error = error;
@@ -389,7 +483,7 @@ int main() {
 
             int prev_size = previous_path_x.size();
 
-            cout << "error=" << error << " trt_time=" << elapsed << " us (max_error=" << max_error << ")" 
+            cout << "error=" << error << " trt_time=" << elapsed << " us (max_error=" << max_error <<  " avg_error=" << avg_error << ")" 
                  << " prev_size=" << prev_size << endl;
 
             //////////////////////////////////////////////////////////////////////
