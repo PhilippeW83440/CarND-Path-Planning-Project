@@ -13,10 +13,16 @@
 #include <time.h>
 #include "matplotlibcpp.h"
 
+#include "params.h"
+
 #include "coord.h"
 #include "behavior.h"
 #include "trajectory.h"
 #include "cost.h"
+#include "predictions.h"
+
+// Waypoint map to read from
+string map_file_ = "../data/highway_map.csv";
 
 namespace plt = matplotlibcpp;
 
@@ -55,10 +61,6 @@ int main() {
   vector<double> map_waypoints_normx;
   vector<double> map_waypoints_normy;
 
-  // Waypoint map to read from
-  string map_file_ = "../data/highway_map.csv";
-  // The max s value before wrapping around the track back to 0
-  double max_s = 6945.554;
 
   ifstream in_map_(map_file_.c_str(), ifstream::in);
 
