@@ -9,8 +9,7 @@ int get_lane(double d)
 double get_sdistance(double s1, double s2)
 {
   // account for s wraparound at max_s
-  double sdistance = 1;
-  //double sdistance = min( fabs(s1 - s2), min(fabs((s1+max_s) - s2), fabs(s1 - (s2+max_s))) );
+  double sdistance = min( fabs(s1 - s2), min(fabs((s1+max_s) - s2), fabs(s1 - (s2+max_s))) );
   return sdistance;
 }
 
