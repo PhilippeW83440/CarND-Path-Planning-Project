@@ -61,7 +61,6 @@ int main() {
   vector<double> map_waypoints_normx;
   vector<double> map_waypoints_normy;
 
-
   ifstream in_map_(map_file_.c_str(), ifstream::in);
 
   string line;
@@ -131,13 +130,10 @@ int main() {
   map_waypoints_normx.pop_back();
   map_waypoints_normy.pop_back();
 
-
-  cout << "x(990)=" << spline_x(990) << " y(990)=" << spline_y(990) << endl;
-
   double len_ref = 0;
   double prev_x = spline_x(0);
   double prev_y = spline_y(0);
-  for (double s = 1; s <= 6945; s++)
+  for (double s = 1; s <= floor(max_s); s++)
   {
     double x = spline_x(s);
     double y = spline_y(s);
@@ -147,31 +143,12 @@ int main() {
   }
   cout << "len_ref=" << len_ref << endl;
 
-  double len_lane;
-
-  for (int i = 0; i < 3; i++)
-  {
-    double laned = 2 + 4 * i;
-    len_lane = 0;
-    prev_x = spline_x(0) + laned * spline_dx(0);
-    prev_y = spline_y(0) + laned * spline_dy(0);
-    for (double s = 1; s <= 6945; s++)
-    {
-      double x = spline_x(s) + laned * spline_dx(s);
-      double y = spline_y(s) + laned * spline_dy(s);
-      len_lane += distance(x, y, prev_x, prev_y);
-      prev_x = x;
-      prev_y = y;
-    }
-    cout << "len_lane" << i << "=" << len_lane << endl;
-  }
-
   // map with higher precision: 1 point every 1 meter (instead of every 30 meters)
   vector<double> new_map_waypoints_x;
   vector<double> new_map_waypoints_y;
   vector<double> new_map_waypoints_dx;
   vector<double> new_map_waypoints_dy;
-  for (double s = 0; s <= 6945; s++)
+  for (double s = 0; s <= floor(max_s); s++)
   {
     double x = spline_x(s);
     double y = spline_y(s);
@@ -202,6 +179,7 @@ int main() {
 	frenet_s = 0;
   vector<double> new_map_s;
   new_map_s.push_back(0.0);
+  // new map: 1 point every meter
 	for(int i = 1; i < new_map_waypoints_x.size(); i++)
 	{
 		frenet_s += distance(new_map_waypoints_x[i], new_map_waypoints_y[i], new_map_waypoints_x[i-1], new_map_waypoints_y[i-1]);

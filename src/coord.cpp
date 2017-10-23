@@ -1,9 +1,33 @@
 #include "coord.h"
+#include "params.h"
 
 constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 double mph_to_ms(double mph) { return mph / 2.24; } // m.s-1
+double ms_to_mph(double ms) { return ms * 2.24; } // mph
+
+// d coord for left lane
+double get_dleft(int lane)
+{
+  double dleft = lane * param_lane_width;
+  return dleft;
+}
+
+// d coord for right lane
+double get_dright(int lane)
+{
+  double dright = (lane + 1) * param_lane_width;
+  return dright;
+}
+
+// d coord for center lane
+double get_dcenter(int lane)
+{
+  double dcenter = (lane + 0.5) * param_lane_width;
+  return dcenter;
+}
+
 
 double distance(double x1, double y1, double x2, double y2)
 {
@@ -136,8 +160,8 @@ vector<double> getFrenet(double x, double y, double theta, const vector<double> 
 
 	//see if d value is positive or negative by comparing it to a center point
 
-	double center_x = 1000-maps_x[prev_wp];
-	double center_y = 2000-maps_y[prev_wp];
+	double center_x = param_center_x - maps_x[prev_wp];
+	double center_y = param_center_y - maps_y[prev_wp];
 	double centerToPos = distance(center_x,center_y,x_x,x_y);
 	double centerToRef = distance(center_x,center_y,proj_x,proj_y);
 
