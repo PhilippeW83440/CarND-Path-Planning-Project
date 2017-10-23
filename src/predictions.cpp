@@ -1,5 +1,6 @@
 #include "predictions.h"
 #include "params.h"
+#include <cassert>
 
 int get_lane(double d)
 {
@@ -17,38 +18,58 @@ double get_sdistance(double s1, double s2)
 // we generate predictions for closet car per lane behind us
 // => at most 6 predictions (for now on) as we have 3 lanes
 
-// TODO attention au wraparound de s !!!
-
 // sort of simple scene detection
 vector<int> find_closest_objects(vector<vector<double>> sensor_fusion, double car_s)
 {
   vector<int> front = {-1, -1, -1}; // idx of closest object per lane
   vector<int> back = {-1, -1, -1}; // idx of closest object per lane
 
-  vector<double> dmin_front = {1e10, 1e10, 1e10}; // per lane
-  vector<double> dmin_back = {1e10, 1e10, 1e10}; // per lane
+  vector<double> front_dmin = {1e10, 1e10, 1e10}; // per lane
+  vector<double> back_dmin = {1e10, 1e10, 1e10}; // per lane
+
+  // Handle FOV and s wraparound
+  double sfov_min = car_s - param_fov;
+  double sfov_max = car_s + param_fov;
+  double sfov_shit = 0;
+  if (sfov_min < 0)
+  {
+    sfov_shit = -sfov_min;
+  }
+  else if (sfov_max > max_s)
+  {
+    sfov_shit = max_s - sfov_max;
+  }
+  sfov_min += sfov_shit;
+  sfov_max += sfov_shit;
+  assert(sfov_min >= 0 && sfov_min <= max_s);
+  assert(sfov_max >= 0 && sfov_max <= max_s);
+
+  car_s += sfov_shit;
 
   for (int i = 0; i < sensor_fusion.size(); i++)
   {
-    double s = sensor_fusion[i][5];
-    double d = sensor_fusion[i][6];
-    int lane = get_lane(d);
-    double dist = get_sdistance(s, car_s);
+    double s = sensor_fusion[i][5] + sfov_shit;
+    if (s >= sfov_min && s <= sfov_max) // object in FOV
+    {
+      double d = sensor_fusion[i][6];
+      int lane = get_lane(d);
+      double dist = get_sdistance(s, car_s);
 
-    if (s > car_s) /* front */
-    {
-      if (dist < dmin_front[lane])
+      if (s > car_s) /* front */
       {
-        front[lane] = i;
-        dmin_front[lane] = dist;
+        if (dist < front_dmin[lane])
+        {
+          front[lane] = i;
+          front_dmin[lane] = dist;
+        }
       }
-    }
-    else /* back */
-    {
-      if (dist < dmin_back[lane])
+      else /* back */
       {
-        back[lane] = i;
-        dmin_back[lane] = dist;
+        if (dist < back_dmin[lane])
+        {
+          back[lane] = i;
+          back_dmin[lane] = dist;
+        }
       }
     }
   }
@@ -68,20 +89,16 @@ vector<vector<vector<double>>> generate_predictions(vector<vector<double>> senso
     int obj = closest_objects[i];
     if (obj >= 0)
     {
-      double s = sensor_fusion[obj][5];
-      if (get_sdistance(s, car_s) <= param_fov) // if in Field Of View
+      double x = sensor_fusion[obj][1];
+      double y = sensor_fusion[obj][2];
+      double vx = sensor_fusion[obj][3];
+      double vy = sensor_fusion[obj][4];
+      vector<vector<double>> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
+      for (int j = 0; j < horizon; j++)
       {
-        double x = sensor_fusion[obj][1];
-        double y = sensor_fusion[obj][2];
-        double vx = sensor_fusion[obj][3];
-        double vy = sensor_fusion[obj][4];
-        vector<vector<double>> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
-        for (int j = 0; j < horizon; j++)
-        {
-          prediction.push_back({x + vx * j*param_dt, y + vy * j*param_dt});
-        }
-        predictions.push_back(prediction);
+        prediction.push_back({x + vx * j*param_dt, y + vy * j*param_dt});
       }
+      predictions.push_back(prediction);
     }
   }
 
