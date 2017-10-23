@@ -100,7 +100,7 @@ int main() {
             map.testError(car_x, car_y, car_yaw);
 
             int prev_size = previous_path_x.size();
-            cout << "prev_size=" << prev_size << endl;
+            cout << "prev_size=" << prev_size << " car_s=" << car_s << " car_d=" << car_d << " car_speed=" << car_speed << " lane=" << lane << " ref_vel=" << ref_vel << endl;
 
             if (prev_size > 0)
             {
@@ -117,14 +117,14 @@ int main() {
             vector<vector<vector<double>>> trajectories;
             for (int i = 0; i < targets.size(); i++)
             {
-              lane = targets[i][0];
-              ref_vel = targets[i][1];
+              int target_lane = targets[i][0];
+              double target_vel = targets[i][1];
 
               // vector of (traj_x, traj_y)
-              vector<vector<double>> trajectory = generate_trajectory(lane, ref_vel, map, car_x, car_y, car_yaw, car_s, car_d, previous_path_x, previous_path_y);
+              vector<vector<double>> trajectory = generate_trajectory(target_lane, target_vel, map, car_x, car_y, car_yaw, car_s, car_d, previous_path_x, previous_path_y);
 
               // achtung TODO ... la trajectoire est potentiellement tronquee en fait: OK pu pas ? */
-              double cost = cost_function(trajectory, lane, ref_vel, 2.0 /* sec */); // TODO add predictions
+              double cost = cost_function(trajectory, target_lane, target_vel, 2.0 /* sec */); // TODO add predictions
               costs.push_back(cost);
               trajectories.push_back(trajectory);
             }
@@ -139,8 +139,11 @@ int main() {
                 min_cost_index = i;
               }
             }
-            cout << "lowest cost for target " << min_cost_index << " = (lane=" << targets[min_cost_index][0] 
-                 << ", vel=" << targets[min_cost_index][1] << ", cost="<< min_cost << ")" << endl;
+            lane = targets[min_cost_index][0];
+            ref_vel = targets[min_cost_index][1];
+
+            cout << "lowest cost for target " << min_cost_index << " = (lane=" << lane
+                 << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;
 
 
             //////////////////////////////////////////////////////////////////////
