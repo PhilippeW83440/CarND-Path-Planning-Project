@@ -1,9 +1,12 @@
 #include "trajectory.h"
 #include "spline.h"
-#include "coord.h"
+#include "utility.h"
+#include "map.h"
 #include "params.h"
 
-vector<vector<double>> generate_trajectory(int lane, double ref_vel, vector<double> map_waypoints_s, vector<double> map_waypoints_x, vector<double> map_waypoints_y, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
+using namespace std;
+
+vector<vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
 {
   vector<double> ptsx;
   vector<double> ptsy;
@@ -41,9 +44,9 @@ vector<vector<double>> generate_trajectory(int lane, double ref_vel, vector<doub
     ptsy.push_back(ref_y);
   }
   
-  vector<double> next_wp0 = getXY(car_s+30, get_dcenter(lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-  vector<double> next_wp1 = getXY(car_s+60, get_dcenter(lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
-  vector<double> next_wp2 = getXY(car_s+90, get_dcenter(lane), map_waypoints_s, map_waypoints_x, map_waypoints_y);
+  vector<double> next_wp0 = map.getXY(car_s+30, get_dcenter(target_lane));
+  vector<double> next_wp1 = map.getXY(car_s+60, get_dcenter(target_lane));
+  vector<double> next_wp2 = map.getXY(car_s+90, get_dcenter(target_lane));
   
   
   ptsx.push_back(next_wp0[0]);
@@ -93,7 +96,7 @@ vector<vector<double>> generate_trajectory(int lane, double ref_vel, vector<doub
   // here we will always output 50 points
   for (int i = 1; i <= param_nb_points - prev_size; i++)
   {
-    double N = (target_dist / (param_dt * mph_to_ms(ref_vel))); // divide by 2.24: mph -> m/s
+    double N = (target_dist / (param_dt * mph_to_ms(target_vel))); // divide by 2.24: mph -> m/s
     double x_point = x_add_on + target_x/N;
     double y_point = spl(x_point);
   

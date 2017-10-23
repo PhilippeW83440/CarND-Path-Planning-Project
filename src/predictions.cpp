@@ -2,6 +2,8 @@
 #include "params.h"
 #include <cassert>
 
+using namespace std;
+
 int get_lane(double d)
 {
   return (int)(d / param_lane_width);

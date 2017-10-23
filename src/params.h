@@ -1,8 +1,10 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#include "coord.h"
+#include <string>
+#include "utility.h"
 
+extern std::string map_file_; // cf params.cpp
 // The max s value before wrapping around the track back to 0
 const double max_s = 6945.554;
 // center point of the track

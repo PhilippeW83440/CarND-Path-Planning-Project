@@ -5,8 +5,7 @@
 #include <iostream>
 #include <vector>
 
-using namespace std;
 
-vector<vector<vector<double>>> generate_predictions(vector<vector<double>> sensor_fusion, double car_s, double car_d, int horizon);
+std::vector<std::vector<std::vector<double>>> generate_predictions(std::vector<std::vector<double>> sensor_fusion, double car_s, double car_d, int horizon);
 
 #endif // PREDICTIONS_H

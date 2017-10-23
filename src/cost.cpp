@@ -1,5 +1,7 @@
 #include "cost.h"
 
+using namespace std;
+
 double cost_function(vector<vector<double>> trajectory, int target_lane, double target_vel, double target_time)
 {
   double cost = 0; // lower cost preferred

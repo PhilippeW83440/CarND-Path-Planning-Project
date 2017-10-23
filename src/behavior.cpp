@@ -1,7 +1,8 @@
 #include "behavior.h"
 #include "params.h"
-#include "coord.h"
+#include "utility.h"
 
+using namespace std;
 
 vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> sensor_fusion, int prev_size, int lane, double car_s, double car_d, double ref_vel)
 {
