@@ -18,6 +18,8 @@
 
 #include "params.h"
 
+#include <map>
+
 using namespace std;
 
 // for convenience
@@ -109,7 +111,7 @@ int main() {
             }
 
             // 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
-            vector<vector<vector<double>>> predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
+            std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
 
 
             // TOTO use predictions to find better targets

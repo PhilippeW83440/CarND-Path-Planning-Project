@@ -6,33 +6,41 @@
 
 using namespace std;
 
-bool check_collision(vector<vector<double>> &trajectory, vector<vector<vector<double>>> &predictions)
+bool check_collision(vector<vector<double>> &trajectory, std::map<int, vector<vector<double>>> &predictions)
 {
-  for (int i = 0; i < predictions.size(); i++) // up to 6 cars with predictions
+  std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
+  while(it != predictions.end())
   {
-    assert(predictions[i].size() == trajectory[0].size());
-    assert(predictions[i].size() == trajectory[1].size());
+    int obj_id = it->first;
+    cout << "obj_id=" << obj_id << endl;
+    vector<vector<double>> prediction = it->second;
 
-    for (int j = 0; j < predictions[i].size(); j++) // up to 50 (x,y) coordinates
+    assert(prediction.size() == trajectory[0].size());
+    assert(prediction.size() == trajectory[1].size());
+
+    for (int i = 0; i < prediction.size(); i++) // up to 50 (x,y) coordinates
     {
-      double obj_x = predictions[i][j][0];
-      double obj_y = predictions[i][j][1];
-      double ego_x = trajectory[0][j];
-      double ego_y = trajectory[1][j];
+      double obj_x = prediction[i][0];
+      double obj_y = prediction[i][1];
+      double ego_x = trajectory[0][i];
+      double ego_y = trajectory[1][i];
+
       double dist = distance(ego_x, ego_y, obj_x, obj_y);
-      //cout << "dist=" << dist << endl; 
+      cout << "dist[" << i << "]=" << dist << endl; 
       if (dist <= param_dist_collision)
       {
-        cout << "collision in " << j << " steps (dist=" << dist << ")" << endl;
+        cout << "collision in " << i << " steps with fusion obj_id " << obj_id << " (dist=" << dist << ")" << endl;
+        assert(1 == 0);
         return true;
       }
     }
+    it++;
   }
   return false;
 }
 
 
-double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, vector<vector<vector<double>>> &predictions)
+double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, vector<vector<double>>> &predictions)
 {
   double cost = 0; // lower cost preferred
 

@@ -4,9 +4,10 @@
 #include <math.h>
 #include <iostream>
 #include <vector>
+#include <map>
 
 
 // TARGET: lane, velocity, time for maneuver
-double cost_function(std::vector<std::vector<double>> &trajectory, int target_lane, double target_vel, std::vector<std::vector<std::vector<double>>> &predictions);
+double cost_function(std::vector<std::vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, std::vector<std::vector<double>>> &predictions);
 
 #endif // COST_H
