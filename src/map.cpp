@@ -374,7 +374,7 @@ double Map::testError(double car_x, double car_y, double car_yaw)
   int frenet_s = frenet[0];
   int frenet_d = frenet[1];
 
-  auto car_xy = getXYspline(frenet_s, frenet_d);
+  vector<double> car_xy = getXYspline(frenet_s, frenet_d);
   //auto car_xy = getXY(frenet_s, frenet_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
   //auto car_xy = getXY(frenet_s, frenet_d, new_map_s, new_map_waypoints_x, new_map_waypoints_y);
 

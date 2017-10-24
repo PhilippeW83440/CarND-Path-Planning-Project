@@ -84,16 +84,15 @@ int main() {
           	double car_speed = j[1]["speed"];
 
           	// Previous path data given to the Planner
-          	auto previous_path_x = j[1]["previous_path_x"];
-          	auto previous_path_y = j[1]["previous_path_y"];
+          	vector<double> previous_path_x = j[1]["previous_path_x"];
+          	vector<double> previous_path_y = j[1]["previous_path_y"];
+
           	// Previous path's end s and d values 
           	double end_path_s = j[1]["end_path_s"];
           	double end_path_d = j[1]["end_path_d"];
 
           	// Sensor Fusion Data, a list of all other cars on the same side of the road.
-          	auto sensor_fusion = j[1]["sensor_fusion"];
-                //vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
-
+            vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
 
           	json msgJson;
 
@@ -146,7 +145,7 @@ int main() {
             lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
 
-            assert(min_cost <= 100); // TODO temp
+            assert(min_cost <= 100); // TODO temp just for checking purposes
 
             cout << "lowest cost for target " << min_cost_index << " = (lane=" << lane
                  << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;

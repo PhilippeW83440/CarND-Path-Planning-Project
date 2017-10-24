@@ -30,7 +30,7 @@ bool check_collision(vector<vector<double>> &trajectory, std::map<int, vector<ve
       if (dist <= param_dist_collision)
       {
         cout << "collision in " << i << " steps with fusion obj_id " << obj_id << " (dist=" << dist << ")" << endl;
-        assert(1 == 0);
+        assert(1 == 0); // TODO temp just for checking purposes
         return true;
       }
     }
