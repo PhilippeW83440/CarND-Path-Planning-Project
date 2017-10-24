@@ -102,19 +102,18 @@ int main() {
             map.testError(car_x, car_y, car_yaw);
 
             int prev_size = previous_path_x.size();
-            cout << "prev_size=" << prev_size << " car_s=" << car_s << " car_d=" << car_d << " car_speed=" << car_speed << " lane=" << lane << " ref_vel=" << ref_vel << endl;
+            cout << "prev_size=" << prev_size << " car_s=" << car_s << " car_d=" << car_d << 
+                    " car_speed=" << car_speed << " lane=" << lane << " ref_vel=" << ref_vel << endl;
 
+            // 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
+            std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
             if (prev_size > 0)
             {
               car_s = end_path_s;
               car_d = end_path_d;
             }
 
-            // 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
-            std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
-
-
-            // TOTO use predictions to find better targets
+            // TODO use predictions to find better targets
             vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, prev_size, lane /* car_lane */, 
                                                                            car_s, car_d, ref_vel /* car_vel */);
 
