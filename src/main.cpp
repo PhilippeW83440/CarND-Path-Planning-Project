@@ -108,8 +108,11 @@ int main() {
               car_d = end_path_d;
             }
 
-            // TODO add predictions
+            // 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
+            vector<vector<vector<double>>> predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
 
+
+            // TOTO use predictions to find better targets
             vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, prev_size, lane /* car_lane */, 
                                                                            car_s, car_d, ref_vel /* car_vel */);
 
@@ -121,10 +124,10 @@ int main() {
               double target_vel = targets[i][1];
 
               // vector of (traj_x, traj_y)
-              vector<vector<double>> trajectory = generate_trajectory(target_lane, target_vel, map, car_x, car_y, car_yaw, car_s, car_d, previous_path_x, previous_path_y);
+              vector<vector<double>> trajectory = generate_trajectory(target_lane, target_vel, map, car_x, car_y, 
+                                                                      car_yaw, car_s, car_d, previous_path_x, previous_path_y);
 
-              // achtung TODO ... la trajectoire est potentiellement tronquee en fait: OK pu pas ? */
-              double cost = cost_function(trajectory, target_lane, target_vel, 2.0 /* sec */); // TODO add predictions
+              double cost = cost_function(trajectory, target_lane, target_vel, predictions);
               costs.push_back(cost);
               trajectories.push_back(trajectory);
             }
@@ -141,6 +144,8 @@ int main() {
             }
             lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
+
+            assert(min_cost <= 100); // TODO temp
 
             cout << "lowest cost for target " << min_cost_index << " = (lane=" << lane
                  << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;
