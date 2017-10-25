@@ -145,8 +145,6 @@ int main() {
             lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
 
-            assert(min_cost <= 100); // TODO temp just for checking purposes
-
             cout << "lowest cost for target " << min_cost_index << " = (lane=" << lane
                  << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;
 

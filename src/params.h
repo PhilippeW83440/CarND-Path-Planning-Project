@@ -20,7 +20,7 @@ const double param_max_speed_mph = 49.5;
 
 const double param_max_speed = 22; // m.s-1
 const double param_max_accel = 10; // m.s-2
-const double param_max_jerk  = 10; // m.s-3
+const double param_max_jerk  = 10; // m.s-3 average jerk over 1 second
 
 const double param_fov = 100.0; // Field Of View 100 meters
 
