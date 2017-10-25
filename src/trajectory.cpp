@@ -11,13 +11,13 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
 // 50 x {s, s_dot, s_ddot}
-static vector<vector<double>> previous_path_s(param_nb_points, {0, 0, 0});
-static vector<vector<double>> previous_path_d(param_nb_points, {0, 0, 0});
+static vector<vector<double>> store_path_s(param_nb_points, {0, 0, 0});
+static vector<vector<double>> store_path_d(param_nb_points, {0, 0, 0});
 
 void JMT_init(double car_s, double car_d)
 {
-  previous_path_s[0] = { car_s, 0, 0};
-  previous_path_d[0] = { car_d, 0, 0};
+  store_path_s[0] = { car_s, 0, 0};
+  store_path_d[0] = { car_d, 0, 0};
 }
   
 
@@ -96,38 +96,36 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
+vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
 {
 
   int prev_size = previous_path_x.size();
-  int nb_points_used = param_nb_points - prev_size;
-  int last_point = nb_points_used -1;
-
-  assert( car_s == previous_path_s[last_point][0] );
-  assert( car_d == previous_path_d[last_point][0] );
+  //int last_point = param_nb_points - prev_size - 1;
+  int last_point = param_nb_points - 1;
 
   /////////////////////////////////////////////////////////////
-  // TODO compute sf, sf_dot and T
 
-  double T = 2; // 2 seconds si car_d center of line
+  double T = target_time; // 2 seconds si car_d center of line
 
   // si si_dot si_ddot: to be retieved
-  double si = previous_path_s[last_point][0];
-  double si_dot = previous_path_s[last_point][1];
-  double si_ddot = previous_path_s[last_point][2];
+  double si = store_path_s[last_point][0];
+  double si_dot = store_path_s[last_point][1];
+  double si_ddot = store_path_s[last_point][2];
 
-  double di = previous_path_d[last_point][0];
-  double di_dot = previous_path_d[last_point][1];
-  double di_ddot = previous_path_d[last_point][2];
+  double sf_dot = target_vel;
+  double sf = si + 0.5*(si_dot+sf_dot) * T;
 
+  double di = store_path_d[last_point][0];
+  double di_dot = store_path_d[last_point][1];
+  double di_ddot = store_path_d[last_point][2];
 
-  // sf sfdot 0
+  double df = get_dcenter(target_lane);
 
-  vector<double> start_s = { si, si_dot, si_ddot}; // si si_dot si_ddot
-  vector<double> end_s = { car_s, 0, 0};   // sf sf_dot 0
+  vector<double> start_s = { si, si_dot, si_ddot};
+  vector<double> end_s = { sf, sf_dot, 0};
 
-  vector<double> start_d = { di, di_dot, di_ddot }; // di di_dot di_ddot
-  vector<double> end_d = { get_dcenter(target_lane), 0, 0}; // df 0 0
+  vector<double> start_d = { di, di_dot, di_ddot };
+  vector<double> end_d = { df, 0, 0};
 
   /////////////////////////////////////////////////////////////
 
@@ -139,14 +137,15 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
   
   for (int i = 0; i < prev_size; i++)
   {
-    previous_path_s[i] = previous_path_s[param_nb_points - prev_size + i];
-    previous_path_d[i] = previous_path_d[param_nb_points - prev_size + i];
+    store_path_s[i] = store_path_s[param_nb_points - prev_size + i];
+    store_path_d[i] = store_path_d[param_nb_points - prev_size + i];
 
     next_x_vals.push_back(previous_path_x[i]);
     next_y_vals.push_back(previous_path_y[i]);
   }
 
-  double t = 0.0;
+  //double t = 0.0; continuity point reused
+  double t = param_dt;
   for (int i = prev_size; i < param_nb_points; i++)
   {
     double s = polyeval(poly_s, t);
@@ -157,8 +156,8 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
     double d_dot = polyeval_dot(poly_d, t);
     double d_ddot = polyeval_ddot(poly_d, t);
 
-    previous_path_s[i] = { s, s_dot, s_ddot };
-    previous_path_d[i] = { d, d_dot, d_ddot };
+    store_path_s[i] = { s, s_dot, s_ddot };
+    store_path_d[i] = { d, d_dot, d_ddot };
 
     vector<double> point_xy = map.getXYspline(s, d);
 
