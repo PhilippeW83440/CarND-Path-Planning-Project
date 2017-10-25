@@ -4,7 +4,174 @@
 #include "map.h"
 #include "params.h"
 
+#include "Eigen-3.3/Eigen/Dense"
+
 using namespace std;
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+
+// 50 x {s, s_dot, s_ddot}
+static vector<vector<double>> previous_path_s(param_nb_points, {0, 0, 0});
+static vector<vector<double>> previous_path_d(param_nb_points, {0, 0, 0});
+
+void JMT_init(double car_s, double car_d)
+{
+  previous_path_s[0] = { car_s, 0, 0};
+  previous_path_d[0] = { car_d, 0, 0};
+}
+  
+
+vector<double> JMT(vector< double> start, vector <double> end, double T)
+{
+    /*
+    Calculate the Jerk Minimizing Trajectory that connects the initial state
+    to the final state in time T.
+
+    INPUTS
+
+    start - the vehicles start location given as a length three array
+        corresponding to initial values of [s, s_dot, s_double_dot]
+
+    end   - the desired end state for vehicle. Like "start" this is a
+        length three array.
+
+    T     - The duration, in seconds, over which this maneuver should occur.
+
+    OUTPUT 
+    an array of length 6, each value corresponding to a coefficent in the polynomial 
+    s(t) = a_0 + a_1 * t + a_2 * t**2 + a_3 * t**3 + a_4 * t**4 + a_5 * t**5
+
+    EXAMPLE
+
+    > JMT( [0, 10, 0], [10, 10, 0], 1)
+    [0.0, 10.0, 0.0, 0.0, 0.0, 0.0]
+    */
+
+    MatrixXd A(3,3);
+    VectorXd b(3);
+    VectorXd x(3);
+
+    A <<   pow(T,3),    pow(T,4),    pow(T,5),
+         3*pow(T,2),  4*pow(T,3),  5*pow(T,4),
+                6*T, 12*pow(T,2), 20*pow(T,3);
+
+    b << end[0] - (start[0] + start[1]*T + 0.5*start[2]*T*T), 
+         end[1] - (start[1] + start[2]*T), 
+         end[2] - start[2];
+
+    x = A.inverse() * b;
+
+    return {start[0], start[1], start[2]/2, x[0], x[1], x[2]};
+}
+
+
+// c: coefficients of polynom
+double polyeval(vector<double> c, double t)
+{
+  double res = 0.0;
+  for (int i = 0; i < c.size(); i++)
+  {
+    res += c[i] * pow(t, i);
+  }
+  return res;
+}
+
+// 1st derivative of a polynom
+double polyeval_dot(vector<double> c, double t) {
+  double res = 0.0;
+  for (int i = 1; i < c.size(); ++i) {
+    res += i * c[i] * pow(t, i-1);
+  }
+  return res;
+}
+
+// 2nd derivative of a polynom
+double polyeval_ddot(vector<double> c, double t) {
+  double res = 0.0;
+  for (int i = 2; i < c.size(); ++i) {
+    res += i * (i-1) * c[i] * pow(t, i-2);
+  }
+  return res;
+}
+
+
+
+vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
+{
+
+  int prev_size = previous_path_x.size();
+  int nb_points_used = param_nb_points - prev_size;
+  int last_point = nb_points_used -1;
+
+  assert( car_s == previous_path_s[last_point][0] );
+  assert( car_d == previous_path_d[last_point][0] );
+
+  /////////////////////////////////////////////////////////////
+  // TODO compute sf, sf_dot and T
+
+  double T = 2; // 2 seconds si car_d center of line
+
+  // si si_dot si_ddot: to be retieved
+  double si = previous_path_s[last_point][0];
+  double si_dot = previous_path_s[last_point][1];
+  double si_ddot = previous_path_s[last_point][2];
+
+  double di = previous_path_d[last_point][0];
+  double di_dot = previous_path_d[last_point][1];
+  double di_ddot = previous_path_d[last_point][2];
+
+
+  // sf sfdot 0
+
+  vector<double> start_s = { si, si_dot, si_ddot}; // si si_dot si_ddot
+  vector<double> end_s = { car_s, 0, 0};   // sf sf_dot 0
+
+  vector<double> start_d = { di, di_dot, di_ddot }; // di di_dot di_ddot
+  vector<double> end_d = { get_dcenter(target_lane), 0, 0}; // df 0 0
+
+  /////////////////////////////////////////////////////////////
+
+  vector<double> poly_s = JMT(start_s, end_s, T);
+  vector<double> poly_d = JMT(start_d, end_d, T);
+
+  vector<double> next_x_vals;
+  vector<double> next_y_vals;
+  
+  for (int i = 0; i < prev_size; i++)
+  {
+    previous_path_s[i] = previous_path_s[param_nb_points - prev_size + i];
+    previous_path_d[i] = previous_path_d[param_nb_points - prev_size + i];
+
+    next_x_vals.push_back(previous_path_x[i]);
+    next_y_vals.push_back(previous_path_y[i]);
+  }
+
+  double t = 0.0;
+  for (int i = prev_size; i < param_nb_points; i++)
+  {
+    double s = polyeval(poly_s, t);
+    double s_dot = polyeval_dot(poly_s, t);
+    double s_ddot = polyeval_ddot(poly_s, t);
+
+    double d = polyeval(poly_d, t);
+    double d_dot = polyeval_dot(poly_d, t);
+    double d_ddot = polyeval_ddot(poly_d, t);
+
+    previous_path_s[i] = { s, s_dot, s_ddot };
+    previous_path_d[i] = { d, d_dot, d_ddot };
+
+    vector<double> point_xy = map.getXYspline(s, d);
+
+    next_x_vals.push_back(point_xy[0]);
+    next_y_vals.push_back(point_xy[1]);
+
+    t += param_dt;
+  }
+
+  return { next_x_vals, next_y_vals };
+}
+
+
 
 vector<vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
 {
