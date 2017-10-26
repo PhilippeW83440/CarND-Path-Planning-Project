@@ -96,7 +96,7 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
+vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y)
 {
 
   int prev_size = previous_path_x.size();
@@ -172,7 +172,7 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
 
 
 
-vector<vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> previous_path_x, vector<double> previous_path_y)
+vector<vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y)
 {
   vector<double> ptsx;
   vector<double> ptsy;
@@ -210,9 +210,13 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, M
     ptsy.push_back(ref_y);
   }
   
-  vector<double> next_wp0 = map.getXY(car_s+30, get_dcenter(target_lane));
-  vector<double> next_wp1 = map.getXY(car_s+60, get_dcenter(target_lane));
-  vector<double> next_wp2 = map.getXY(car_s+90, get_dcenter(target_lane));
+  //vector<double> next_wp0 = map.getXY(car_s+30, get_dcenter(target_lane));
+  //vector<double> next_wp1 = map.getXY(car_s+60, get_dcenter(target_lane));
+  //vector<double> next_wp2 = map.getXY(car_s+90, get_dcenter(target_lane));
+
+  vector<double> next_wp0 = map.getXYspline(car_s+30, get_dcenter(target_lane));
+  vector<double> next_wp1 = map.getXYspline(car_s+60, get_dcenter(target_lane));
+  vector<double> next_wp2 = map.getXYspline(car_s+90, get_dcenter(target_lane));
   
   
   ptsx.push_back(next_wp0[0]);

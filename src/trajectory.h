@@ -17,6 +17,6 @@
 
 // OUTPUTS:
 //    trajectory: next_x_vals, next_y_vals
-std::vector<std::vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> pervious_path_x, std::vector<double> previous_path_y);
+std::vector<std::vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y);
 
 #endif // TRAJECTORY_H

@@ -4,7 +4,7 @@
 
 using namespace std;
 
-vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> sensor_fusion, int prev_size, int lane, double car_s, double car_d, double ref_vel)
+vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sensor_fusion, int prev_size, int lane, double car_s, double car_d, double ref_vel)
 {
   vector<vector<double>> possible_next_states;
 
