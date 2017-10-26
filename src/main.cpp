@@ -104,12 +104,23 @@ int main() {
             cout << "prev_size=" << prev_size << " car_s=" << car_s << " car_d=" << car_d << 
                     " car_speed=" << car_speed << " lane=" << lane << " ref_vel=" << ref_vel << endl;
 
+            vector<double> frenet = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
+            cout << "car_frenet_s=" << frenet[0] << " car_frenet_d=" << frenet[1] << endl;
+
+            car_s = frenet[0];
+            car_d = frenet[1];
+
             // 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
             std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
+
             if (prev_size > 0)
             {
-              car_s = end_path_s;
-              car_d = end_path_d;
+              //car_s = end_path_s;
+              //car_d = end_path_d;
+
+              frenet = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
+              car_s = frenet[0];
+              car_d = frenet[1];
             }
 
             // TODO use predictions to find better targets
