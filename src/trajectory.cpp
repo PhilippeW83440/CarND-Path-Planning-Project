@@ -16,8 +16,8 @@ static vector<vector<double>> store_path_d(param_nb_points, {0, 0, 0});
 
 void JMT_init(double car_s, double car_d)
 {
-  store_path_s[0] = { car_s, 0, 0};
-  store_path_d[0] = { car_d, 0, 0};
+  store_path_s[param_nb_points-1] = { car_s, 0, 0};
+  store_path_d[param_nb_points-1] = { car_d, 0, 0};
 }
   
 
@@ -111,20 +111,40 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
   double si_dot = store_path_s[last_point][1];
   double si_ddot = store_path_s[last_point][2];
 
-  double sf_dot = mph_to_ms(target_vel);
-  double sf = si + 0.5*(si_dot+sf_dot) * T;
-
   double di = store_path_d[last_point][0];
   double di_dot = store_path_d[last_point][1];
   double di_ddot = store_path_d[last_point][2];
 
-  double df = get_dcenter(target_lane);
+  double sf, sf_dot, sf_ddot;
+  double df, df_dot, df_ddot;
+
+  if (target_vel <= 10) // mph
+  {
+    sf_ddot = 0;
+    sf_dot = mph_to_ms(target_vel);
+    sf = si + 2 * sf_dot * T;
+
+    df = di;
+    df_dot = 0;
+    df_ddot = 0;
+  }
+  else
+  {
+    sf_ddot = 0;
+    sf_dot = mph_to_ms(target_vel);
+    //sf = si + 0.5*(si_dot+sf_dot) * T;
+    sf = si + sf_dot * T;
+
+    df = get_dcenter(target_lane);
+    df_dot = 0;
+    df_ddot = 0;
+  }
 
   vector<double> start_s = { si, si_dot, si_ddot};
   vector<double> end_s = { sf, sf_dot, 0};
 
   vector<double> start_d = { di, di_dot, di_ddot };
-  vector<double> end_d = { df, 0, 0};
+  vector<double> end_d = { df, df_dot, df_ddot};
 
   /////////////////////////////////////////////////////////////
 
