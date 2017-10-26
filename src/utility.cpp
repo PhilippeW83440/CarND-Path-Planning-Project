@@ -28,6 +28,10 @@ double get_dcenter(int lane)
   return dcenter;
 }
 
+int get_lane(double d)
+{
+  return (int)(d / param_lane_width);
+}
 
 double distance(double x1, double y1, double x2, double y2)
 {

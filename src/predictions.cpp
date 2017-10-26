@@ -4,11 +4,6 @@
 
 using namespace std;
 
-int get_lane(double d)
-{
-  return (int)(d / param_lane_width);
-}
-
 //double get_sdistance(double s1, double s2)
 //{
 //  // account for s wraparound at max_s

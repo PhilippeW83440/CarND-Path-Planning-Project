@@ -14,6 +14,8 @@ double get_dright(int lane);
 // d coord for "center lane" of a lane
 double get_dcenter(int lane);
 
+int get_lane(double d);
+
 double distance(double x1, double y1, double x2, double y2);
 
 
