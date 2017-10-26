@@ -340,6 +340,7 @@ vector<double> Map::getXY(double s, double d)
 
 vector<double> Map::getXYspline(double s, double d)
 {
+  s = fmod(s, max_s); // bug fix for JMT wraparound
 	double x = spline_x(s) + d * spline_dx(s);
 	double y = spline_y(s) + d * spline_dy(s);
 

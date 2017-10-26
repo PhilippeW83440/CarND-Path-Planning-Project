@@ -58,6 +58,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   {
     //ref_vel += 2 * .224;
     ref_vel += param_max_speed_inc_mph;
+    ref_vel = min(ref_vel, param_max_speed_mph);
   }
 
   possible_next_states.push_back({(double)lane, ref_vel});
