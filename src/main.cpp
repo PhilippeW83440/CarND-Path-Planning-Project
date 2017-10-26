@@ -49,13 +49,12 @@ int main() {
   Map map(map_file_);
   map.plot();
 
-  int lane = 1;
   double ref_vel = 0.0; // mph
   bool start = true;
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map, &ref_vel, &lane, &start](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &ref_vel, &start](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -103,8 +102,8 @@ int main() {
             map.testError(car_x, car_y, car_yaw);
 
             int prev_size = previous_path_x.size();
-            cout << "prev_size=" << prev_size << " car_s=" << car_s << " car_d=" << car_d << 
-                    " car_speed=" << car_speed << " lane=" << lane << " ref_vel=" << ref_vel << endl;
+            cout << "prev_size=" << prev_size << " car_x=" << car_x << " car_y=" << car_y << " car_s=" << 
+                    car_s << " car_d=" << car_d << " car_speed=" << car_speed << " ref_vel=" << ref_vel << endl;
 
             //prev_size = min(prev_size, param_prev_size);
 
@@ -127,17 +126,15 @@ int main() {
             {
               //car_s = end_path_s;
               //car_d = end_path_d;
-
               frenet = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
               car_s = frenet[0];
               car_d = frenet[1];
             }
 
-            //int car_lane = get_lane(car_d);
-            //assert(lane == car_lane);
+            int car_lane = get_lane(car_d);
 
             // TODO use predictions to find better targets
-            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, previous_path_x.size(), lane /* car_lane */, 
+            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, previous_path_x.size(), car_lane, 
                                                                            car_s, car_d, ref_vel /* car_vel */);
 
             vector<double> costs;
@@ -146,11 +143,22 @@ int main() {
             {
               int target_lane = targets[i][0];
               double target_vel = targets[i][1];
-              double target_time = 2.0;
+              double target_time = 2.0; // TODO should be behavior_planner job
 
               // vector of (traj_x, traj_y)
-              vector<vector<double>> trajectory = generate_trajectory(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
-                                                                      car_s, car_d, previous_path_x, previous_path_y, prev_size);
+              vector<vector<double>> trajectory;
+              if (param_trajectory_jmt)
+              {
+                // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
+                trajectory = generate_trajectory_jmt(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
+                                                     car_s, car_d, previous_path_x, previous_path_y, prev_size);
+              }
+              else
+              {
+                // generate SPLINE trajectory in x and y
+                trajectory = generate_trajectory(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
+                                                     car_s, car_d, previous_path_x, previous_path_y, prev_size);
+              }
 
               double cost = cost_function(trajectory, target_lane, target_vel, predictions);
               costs.push_back(cost);
@@ -167,10 +175,10 @@ int main() {
                 min_cost_index = i;
               }
             }
-            lane = targets[min_cost_index][0];
+            car_lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
 
-            cout << "lowest cost for target " << min_cost_index << " = (lane=" << lane
+            cout << "lowest cost for target " << min_cost_index << " = (lane=" << car_lane
                  << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;
 
 

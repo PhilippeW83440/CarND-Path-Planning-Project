@@ -16,7 +16,8 @@ const double param_dt = 0.02; // 1 point every 0.02 s
 
 const double param_lane_width = 4.0; // meters
 
-const double param_max_speed_mph = 49.5;
+//const double param_max_speed_mph = 49.5;
+const double param_max_speed_mph = 49;
 
 const double param_max_speed = 22; // m.s-1
 const double param_max_accel = 10; // m.s-2
@@ -31,8 +32,9 @@ const double param_dist_slow_down = 30; // when a car is 30 m ahead of us => adj
 
 //const double param_dist_collision = 3; // meters
 const double param_dist_collision = 2.75; // meters
+const int param_prev_size = 25; // so far unused
 
-const int param_prev_size = 25;
+const bool param_trajectory_jmt = false;
 
 
 #endif // PARAMS_H
