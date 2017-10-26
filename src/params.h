@@ -29,7 +29,10 @@ const double param_max_speed_inc_mph = ms_to_mph(param_max_speed_inc);
 
 const double param_dist_slow_down = 30; // when a car is 30 m ahead of us => adjust speed if needed
 
-const double param_dist_collision = 3; // meters
+//const double param_dist_collision = 3; // meters
+const double param_dist_collision = 2.75; // meters
+
+const int param_prev_size = 25;
 
 
 #endif // PARAMS_H

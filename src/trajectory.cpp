@@ -96,10 +96,9 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y)
+vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
 {
 
-  int prev_size = previous_path_x.size();
   //int last_point = param_nb_points - prev_size - 1;
   int last_point = param_nb_points - 1;
 
@@ -112,7 +111,7 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
   double si_dot = store_path_s[last_point][1];
   double si_ddot = store_path_s[last_point][2];
 
-  double sf_dot = target_vel;
+  double sf_dot = mph_to_ms(target_vel);
   double sf = si + 0.5*(si_dot+sf_dot) * T;
 
   double di = store_path_d[last_point][0];
@@ -172,7 +171,7 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
 
 
 
-vector<vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y)
+vector<vector<double>> generate_trajectory(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
 {
   vector<double> ptsx;
   vector<double> ptsy;
@@ -181,8 +180,6 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, M
   double ref_y = car_y;
   double ref_yaw = deg2rad(car_yaw);
 
-  int prev_size = previous_path_x.size();
-  
   if (prev_size < 2)
   {
     double prev_car_x = car_x - cos(car_yaw);

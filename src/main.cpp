@@ -51,10 +51,11 @@ int main() {
 
   int lane = 1;
   double ref_vel = 0.0; // mph
+  bool start = true;
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map, &ref_vel, &lane](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &ref_vel, &lane, &start](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -98,17 +99,26 @@ int main() {
 
             //////////////////////////////////////////////////////////////////////
 
+
             map.testError(car_x, car_y, car_yaw);
 
             int prev_size = previous_path_x.size();
             cout << "prev_size=" << prev_size << " car_s=" << car_s << " car_d=" << car_d << 
                     " car_speed=" << car_speed << " lane=" << lane << " ref_vel=" << ref_vel << endl;
 
+            //prev_size = min(prev_size, param_prev_size);
+
             vector<double> frenet = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
             cout << "car_frenet_s=" << frenet[0] << " car_frenet_d=" << frenet[1] << endl;
 
             car_s = frenet[0];
             car_d = frenet[1];
+
+            if (start)
+            {
+              JMT_init(car_s, car_d);
+              start = false;
+            }
 
             // 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
             std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
@@ -123,8 +133,11 @@ int main() {
               car_d = frenet[1];
             }
 
+            //int car_lane = get_lane(car_d);
+            //assert(lane == car_lane);
+
             // TODO use predictions to find better targets
-            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, prev_size, lane /* car_lane */, 
+            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, previous_path_x.size(), lane /* car_lane */, 
                                                                            car_s, car_d, ref_vel /* car_vel */);
 
             vector<double> costs;
@@ -133,10 +146,11 @@ int main() {
             {
               int target_lane = targets[i][0];
               double target_vel = targets[i][1];
+              double target_time = 2.0;
 
               // vector of (traj_x, traj_y)
-              vector<vector<double>> trajectory = generate_trajectory(target_lane, target_vel, map, car_x, car_y, 
-                                                                      car_yaw, car_s, car_d, previous_path_x, previous_path_y);
+              vector<vector<double>> trajectory = generate_trajectory(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
+                                                                      car_s, car_d, previous_path_x, previous_path_y, prev_size);
 
               double cost = cost_function(trajectory, target_lane, target_vel, predictions);
               costs.push_back(cost);

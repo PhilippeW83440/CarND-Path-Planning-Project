@@ -7,6 +7,7 @@
 
 #include "map.h"
 
+void JMT_init(double car_s, double car_d);
 
 // INPUTS:
 //    target       : lane, ref_vel
@@ -17,6 +18,8 @@
 
 // OUTPUTS:
 //    trajectory: next_x_vals, next_y_vals
-std::vector<std::vector<double>> generate_trajectory(int target_lane, double target_vel, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y);
+std::vector<std::vector<double>> generate_trajectory(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
+
+std::vector<std::vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
 
 #endif // TRAJECTORY_H
