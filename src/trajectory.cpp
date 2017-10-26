@@ -132,7 +132,8 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
   {
     sf_ddot = 0;
     sf_dot = mph_to_ms(target_vel);
-    //sf = si + 0.5*(si_dot+sf_dot) * T;
+    //sf_dot = map.getSpeedToFrenet(mph_to_ms(target_vel), si+10);
+    sf_dot *= 0.98; // this is a hack. To be fixed properly 
     sf = si + sf_dot * T;
 
     df = get_dcenter(target_lane);

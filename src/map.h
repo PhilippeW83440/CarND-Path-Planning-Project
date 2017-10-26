@@ -24,6 +24,7 @@ public:
   std::vector<double> getFrenet(double x, double y, double theta);
   std::vector<double> getXY(double s, double d);
   std::vector<double> getXYspline(double s, double d); // with splines
+  double getSpeedToFrenet(double Vxy, double s);
 
   void plot(void);
   double testError(double x, double y, double yaw); // (x,y) -> (s,d) -> (x,y) conversions and dump accuracy

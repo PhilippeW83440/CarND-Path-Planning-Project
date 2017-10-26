@@ -34,7 +34,7 @@ const double param_dist_slow_down = 30; // when a car is 30 m ahead of us => adj
 const double param_dist_collision = 2.75; // meters
 const int param_prev_size = 25; // so far unused
 
-const bool param_trajectory_jmt = false;
+const bool param_trajectory_jmt = true;
 
 
 #endif // PARAMS_H

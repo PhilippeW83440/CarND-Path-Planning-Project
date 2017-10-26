@@ -347,6 +347,15 @@ vector<double> Map::getXYspline(double s, double d)
 	return {x,y};
 }
 
+double Map::getSpeedToFrenet(double Vxy, double s)
+{
+  s = fmod(s, max_s);
+  double dx_over_ds = spline_x.deriv(1, s);
+  double dy_over_ds = spline_y.deriv(1, s);
+  double Vs = (Vxy / sqrt(dx_over_ds*dx_over_ds + dy_over_ds*dy_over_ds));
+  return Vs;
+}
+
 double Map::testError(double car_x, double car_y, double car_yaw)
 {
   double error = 0;

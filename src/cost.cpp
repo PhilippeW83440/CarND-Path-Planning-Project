@@ -110,7 +110,7 @@ bool check_collision(vector<vector<double>> &trajectory, std::map<int, vector<ve
       {
         cout << "=====> DMIN = " << dmin << endl;
         cout << "collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
-        assert(1 == 0); // TODO temp just for checking purposes
+        //assert(1 == 0); // TODO temp just for checking purposes
         return true;
       }
     }
