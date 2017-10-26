@@ -66,11 +66,10 @@ bool check_max_capabilities(vector<vector<double>> &traj)
 
   jerk_per_second = total_jerk / (param_nb_points * param_dt);
 
-  cout << "max_vel=" << max_vel << " max_acc=" << max_acc << " jerk_per_second=" << jerk_per_second  << endl;
-
-  if (max_vel > param_max_speed || roundf(max_acc) > param_max_accel || jerk_per_second > param_max_jerk)
+  if (roundf(max_vel) > param_max_speed || roundf(max_acc) > param_max_accel || jerk_per_second > param_max_jerk)
   {
-    assert(1 == 0);
+    cout << "max_vel=" << max_vel << " max_acc=" << max_acc << " jerk_per_second=" << jerk_per_second  << endl;
+    //assert(1 == 0);
     return true;
   }
   else
@@ -82,11 +81,13 @@ bool check_max_capabilities(vector<vector<double>> &traj)
 
 bool check_collision(vector<vector<double>> &trajectory, std::map<int, vector<vector<double>>> &predictions)
 {
+  double dmin = 1e10;
+
   std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
   while(it != predictions.end())
   {
-    int obj_id = it->first;
-    //cout << "obj_id=" << obj_id << endl;
+    int fusion_index = it->first;
+    //cout << "fusion_index=" << fusion_index << endl;
     vector<vector<double>> prediction = it->second;
 
     assert(prediction.size() == trajectory[0].size());
@@ -100,16 +101,23 @@ bool check_collision(vector<vector<double>> &trajectory, std::map<int, vector<ve
       double ego_y = trajectory[1][i];
 
       double dist = distance(ego_x, ego_y, obj_x, obj_y);
+      if (dist < dmin)
+      {
+        dmin = dist;
+      }
       //cout << "dist[" << i << "]=" << dist << endl; 
       if (dist <= param_dist_collision)
       {
-        cout << "collision in " << i << " steps with fusion obj_id " << obj_id << " (dist=" << dist << ")" << endl;
+        cout << "=====> DMIN = " << dmin << endl;
+        cout << "collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
         assert(1 == 0); // TODO temp just for checking purposes
         return true;
       }
     }
     it++;
   }
+
+  cout << "=====> dmin = " << dmin << endl;
   return false;
 }
 
@@ -135,10 +143,10 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   {
     cost_feasibility += 10;
   }
-  if (check_max_capabilities(trajectory))
-  {
-    cost_feasibility += 1;
-  }
+  //if (check_max_capabilities(trajectory))
+  //{
+  //  cost_feasibility += 1;
+  //}
   cost = cost + weight_feasibility * cost_feasibility;
 
   // 2) SAFETY cost
