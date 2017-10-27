@@ -105,7 +105,7 @@ int main() {
             cout << "prev_size=" << prev_size << " car_x=" << car_x << " car_y=" << car_y << " car_s=" << 
                     car_s << " car_d=" << car_d << " car_speed=" << car_speed << " ref_vel=" << ref_vel << endl;
 
-            //prev_size = min(prev_size, param_prev_size);
+            prev_size = min(prev_size, param_prev_size);
 
             vector<double> frenet = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
             cout << "car_frenet_s=" << frenet[0] << " car_frenet_d=" << frenet[1] << endl;
@@ -144,6 +144,7 @@ int main() {
               int target_lane = targets[i][0];
               double target_vel = targets[i][1];
               double target_time = 2.0; // TODO should be behavior_planner job
+              //cout << "target_lane=" << target_lane << " target_vel=" << target_vel << endl;
 
               // vector of (traj_x, traj_y)
               vector<vector<double>> trajectory;
@@ -178,8 +179,11 @@ int main() {
             car_lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
 
-            cout << "lowest cost for target " << min_cost_index << " = (lane=" << car_lane
-                 << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;
+            if (min_cost_index > 0)
+            {
+              cout << "=======================================> BACKUP TARGET: lowest cost for target " << min_cost_index << " = (lane=" << car_lane
+                   << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;
+            }
 
 
             //////////////////////////////////////////////////////////////////////

@@ -79,7 +79,7 @@ bool check_max_capabilities(vector<vector<double>> &traj)
 }
 
 
-bool check_collision(vector<vector<double>> &trajectory, std::map<int, vector<vector<double>>> &predictions)
+double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vector<vector<double>>> &predictions)
 {
   double dmin = 1e10;
 
@@ -109,16 +109,15 @@ bool check_collision(vector<vector<double>> &trajectory, std::map<int, vector<ve
       if (dist <= param_dist_collision)
       {
         cout << "=====> DMIN = " << dmin << endl;
-        cout << "collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
+        cout << "predicted collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
         //assert(1 == 0); // TODO temp just for checking purposes
-        return true;
       }
     }
     it++;
   }
 
   cout << "=====> dmin = " << dmin << endl;
-  return false;
+  return dmin;
 }
 
 
@@ -139,10 +138,11 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   double weight_efficiency  = 1; // vs target lane, target speed and time to goal
 
   // 1) FEASIBILITY cost
-  if (check_collision(trajectory, predictions))
-  {
-    cost_feasibility += 10;
-  }
+  // TODO: handled via safety so far
+  //if (check_collision(trajectory, predictions))
+  //{
+  //  cost_feasibility += 10;
+  //}
   //if (check_max_capabilities(trajectory))
   //{
   //  cost_feasibility += 1;
@@ -150,6 +150,16 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   cost = cost + weight_feasibility * cost_feasibility;
 
   // 2) SAFETY cost
+  double dmin = get_predicted_dmin(trajectory, predictions);
+  assert(dmin >= 0);
+  if (dmin < param_dist_safety)
+  {
+    cost_safety = param_dist_safety - dmin;
+  }
+  else
+  {
+    cost_safety = 0;
+  }
   cost = cost + weight_safety * cost_safety;
 
   // 3) LEGALITY cost

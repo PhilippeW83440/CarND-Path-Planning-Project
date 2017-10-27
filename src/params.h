@@ -11,7 +11,7 @@ const double max_s = 6945.554;
 const double param_center_x = 1000;
 const double param_center_y = 2000;
 
-const int param_nb_points = 50; // in the trajectory sent to simulator
+const int param_nb_points = 30; // in the trajectory sent to simulator
 const double param_dt = 0.02; // 1 point every 0.02 s
 
 const double param_lane_width = 4.0; // meters
@@ -30,11 +30,13 @@ const double param_max_speed_inc_mph = ms_to_mph(param_max_speed_inc);
 
 const double param_dist_slow_down = 30; // when a car is 30 m ahead of us => adjust speed if needed
 
+const double param_dist_safety = 3.5; // meters
 //const double param_dist_collision = 3; // meters
 const double param_dist_collision = 2.75; // meters
-const int param_prev_size = 25; // so far unused
 
-const bool param_trajectory_jmt = true;
+const int param_prev_size = 5; // reduce latency reaction to 100 ms
+
+const bool param_trajectory_jmt = false;
 
 
 #endif // PARAMS_H
