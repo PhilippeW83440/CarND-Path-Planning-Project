@@ -121,7 +121,7 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
 }
 
 
-double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, vector<vector<double>>> &predictions, vector<vector<double>> &sensor_fusion)
+double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, vector<vector<double>>> &predictions, vector<vector<double>> &sensor_fusion, int car_lane)
 {
   double cost = 0; // lower cost preferred
 
@@ -173,19 +173,38 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   cost = cost + weight_efficiency * cost_efficiency;
 
   // 5) LANE cost
+  double ego_x = trajectory[0][0];
+  double ego_y = trajectory[1][0];
+
+
+  bool free_lane = true;
+
   std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
   while(it != predictions.end())
   {
     int fusion_index = it->first;
     double obj_d = sensor_fusion[fusion_index][6];
+
+    double obj_x = sensor_fusion[fusion_index][1];
+    double obj_y = sensor_fusion[fusion_index][1];
+    double dist = distance(ego_x, ego_y, obj_x, obj_y);
+
     if (get_lane(obj_d) == target_lane)
     {
-      cost++;
+      if (target_lane != car_lane)
+      {
+        cost += (dist/param_fov); // penalize lane changes
+      }
+      free_lane = false;
     }
     it++;
   }
+  if (free_lane)
+  {
+    cost--;
+  }
 
-  cout << "target_lane=" << target_lane << " target_vel=" << target_vel << " cost=" << cost << endl;
+  cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_vel=" << target_vel << " cost=" << cost << endl;
 
   return cost;
 }

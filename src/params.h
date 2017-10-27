@@ -11,7 +11,7 @@ const double max_s = 6945.554;
 const double param_center_x = 1000;
 const double param_center_y = 2000;
 
-const int param_nb_points = 30; // in the trajectory sent to simulator
+const int param_nb_points = 50; // in the trajectory sent to simulator
 const double param_dt = 0.02; // 1 point every 0.02 s
 
 const double param_lane_width = 4.0; // meters
@@ -23,7 +23,7 @@ const double param_max_speed = 22; // m.s-1
 const double param_max_accel = 10; // m.s-2
 const double param_max_jerk  = 10; // m.s-3 average jerk over 1 second
 
-const double param_fov = 100.0; // Field Of View 100 meters
+const double param_fov = 50.0; // Field Of View 100 meters
 
 const double param_max_speed_inc = param_max_accel * param_dt; // m.s-1 per 0.02 sec
 const double param_max_speed_inc_mph = ms_to_mph(param_max_speed_inc);

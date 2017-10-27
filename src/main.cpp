@@ -161,7 +161,7 @@ int main() {
                                                      car_s, car_d, previous_path_x, previous_path_y, prev_size);
               }
 
-              double cost = cost_function(trajectory, target_lane, target_vel, predictions, sensor_fusion);
+              double cost = cost_function(trajectory, target_lane, target_vel, predictions, sensor_fusion, car_lane);
               costs.push_back(cost);
               trajectories.push_back(trajectory);
             }
