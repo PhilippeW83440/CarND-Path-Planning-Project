@@ -112,27 +112,24 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       break;
   }
 
-  if (param_trajectory_jmt == false) // TODO temporary
+  // 1) target velocity on backup lanes
+  for (int i = 0; i < backup_lanes.size(); i++)
   {
-    // 1) target velocity on backup lanes
-    for (int i = 0; i < backup_lanes.size(); i++)
-    {
-      possible_targets.push_back({(double)backup_lanes[i], ref_vel});
-    }
+    possible_targets.push_back({(double)backup_lanes[i], ref_vel});
+  }
 
-    // 2) backup velocities on target lane
-    for (int i = 0; i < backup_vel.size(); i++)
-    {
-      possible_targets.push_back({(double)lane, backup_vel[i]});
-    }
+  // 2) backup velocities on target lane
+  for (int i = 0; i < backup_vel.size(); i++)
+  {
+    possible_targets.push_back({(double)lane, backup_vel[i]});
+  }
 
-    // 2) backup velocities on backup lanes
-    for (int i = 0; i < backup_vel.size(); i++)
+  // 2) backup velocities on backup lanes
+  for (int i = 0; i < backup_vel.size(); i++)
+  {
+    for (int j = 0; j < backup_lanes.size(); j++)
     {
-      for (int j = 0; j < backup_lanes.size(); j++)
-      {
-        possible_targets.push_back({(double)backup_lanes[j], backup_vel[i]});
-      }
+      possible_targets.push_back({(double)backup_lanes[j], backup_vel[i]});
     }
   }
 

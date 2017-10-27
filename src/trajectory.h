@@ -7,7 +7,14 @@
 
 #include "map.h"
 
-void JMT_init(double car_s, double car_d);
+
+struct trajectory_jmt {
+  std::vector<std::vector<double>> trajectory;
+  std::vector<std::vector<double>> path_s;
+  std::vector<std::vector<double>> path_d;
+};
+
+struct trajectory_jmt JMT_init(double car_s, double car_d);
 
 // INPUTS:
 //    target       : lane, ref_vel
@@ -20,6 +27,6 @@ void JMT_init(double car_s, double car_d);
 //    trajectory: next_x_vals, next_y_vals
 std::vector<std::vector<double>> generate_trajectory(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
 
-std::vector<std::vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
+struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size, std::vector<std::vector<double>> &ref_path_s, std::vector<std::vector<double>> &ref_path_d);
 
 #endif // TRAJECTORY_H

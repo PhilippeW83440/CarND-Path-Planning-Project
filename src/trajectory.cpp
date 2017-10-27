@@ -10,17 +10,26 @@ using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-// 50 x {s, s_dot, s_ddot}
-static vector<vector<double>> store_path_s(param_nb_points, {0, 0, 0});
-static vector<vector<double>> store_path_d(param_nb_points, {0, 0, 0});
 
-void JMT_init(double car_s, double car_d)
+
+
+struct trajectory_jmt JMT_init(double car_s, double car_d)
 {
+  struct trajectory_jmt traj_jmt;
+  // 50 x {s, s_dot, s_ddot}
+  vector<vector<double>> store_path_s(param_nb_points, {0, 0, 0});
+  vector<vector<double>> store_path_d(param_nb_points, {0, 0, 0});
+
   for (int i = 0; i < param_nb_points; i++)
   {
     store_path_s[i] = { car_s, 0, 0};
     store_path_d[i] = { car_d, 0, 0};
   }
+
+  traj_jmt.path_s = store_path_s;
+  traj_jmt.path_d = store_path_d;
+
+  return traj_jmt;
 }
   
 
@@ -99,8 +108,12 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
+struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size, vector<vector<double>> &prev_path_s, vector<vector<double>> &prev_path_d)
 {
+  struct trajectory_jmt traj_jmt;
+
+  vector<vector<double>> new_path_s(param_nb_points, {0, 0, 0});
+  vector<vector<double>> new_path_d(param_nb_points, {0, 0, 0});
 
   //cout << "prev_size=" << prev_size << endl;
   //int last_point = param_nb_points - prev_size - 1;
@@ -119,13 +132,13 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
   double T = target_time; // 2 seconds si car_d center of line
 
   // si si_dot si_ddot: to be retieved
-  double si = store_path_s[last_point][0];
-  double si_dot = store_path_s[last_point][1];
-  double si_ddot = store_path_s[last_point][2];
+  double si = prev_path_s[last_point][0];
+  double si_dot = prev_path_s[last_point][1];
+  double si_ddot = prev_path_s[last_point][2];
 
-  double di = store_path_d[last_point][0];
-  double di_dot = store_path_d[last_point][1];
-  double di_ddot = store_path_d[last_point][2];
+  double di = prev_path_d[last_point][0];
+  double di_dot = prev_path_d[last_point][1];
+  double di_ddot = prev_path_d[last_point][2];
 
   double sf, sf_dot, sf_ddot;
   double df, df_dot, df_ddot;
@@ -169,8 +182,8 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
   
   for (int i = 0; i < prev_size; i++)
   {
-    store_path_s[i] = store_path_s[param_nb_points - previous_path_x.size() + i];
-    store_path_d[i] = store_path_d[param_nb_points - previous_path_x.size() + i];
+    new_path_s[i] = prev_path_s[param_nb_points - previous_path_x.size() + i];
+    new_path_d[i] = prev_path_d[param_nb_points - previous_path_x.size() + i];
 
     next_x_vals.push_back(previous_path_x[i]);
     next_y_vals.push_back(previous_path_y[i]);
@@ -188,8 +201,8 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
     double d_dot = polyeval_dot(poly_d, t);
     double d_ddot = polyeval_ddot(poly_d, t);
 
-    store_path_s[i] = { s, s_dot, s_ddot };
-    store_path_d[i] = { d, d_dot, d_ddot };
+    new_path_s[i] = { s, s_dot, s_ddot };
+    new_path_d[i] = { d, d_dot, d_ddot };
 
     vector<double> point_xy = map.getXYspline(s, d);
 
@@ -199,7 +212,11 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
     t += param_dt;
   }
 
-  return { next_x_vals, next_y_vals };
+  traj_jmt.trajectory = { next_x_vals, next_y_vals};
+  traj_jmt.path_s = new_path_s;
+  traj_jmt.path_d = new_path_d;
+
+  return traj_jmt;
 }
 
 

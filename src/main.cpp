@@ -49,12 +49,14 @@ int main() {
   Map map(map_file_);
   map.plot();
 
-  double ref_vel = 0.0; // mph
   bool start = true;
+  double ref_vel = 0.0; // mph
+  vector<vector<double>> ref_path_s;
+  vector<vector<double>> ref_path_d;
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map, &ref_vel, &start](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &ref_vel, &start, &ref_path_s, &ref_path_d](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -115,7 +117,9 @@ int main() {
 
             if (start)
             {
-              JMT_init(car_s, car_d);
+              struct trajectory_jmt traj_jmt = JMT_init(car_s, car_d);
+              ref_path_s = traj_jmt.path_s;
+              ref_path_d = traj_jmt.path_d;
               start = false;
             }
 
@@ -133,26 +137,32 @@ int main() {
 
             int car_lane = get_lane(car_d);
 
-            // TODO use predictions to find better targets
             vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, previous_path_x.size(), car_lane, 
                                                                            car_s, car_d, ref_vel /* car_vel */);
 
             vector<double> costs;
             vector<vector<vector<double>>> trajectories;
+            vector<vector<vector<double>>> paths_s;
+            vector<vector<vector<double>>> paths_d;
+
             for (int i = 0; i < targets.size(); i++)
             {
               int target_lane = targets[i][0];
               double target_vel = targets[i][1];
               double target_time = 2.0; // TODO should be behavior_planner job
-              //cout << "target_lane=" << target_lane << " target_vel=" << target_vel << endl;
 
               // vector of (traj_x, traj_y)
               vector<vector<double>> trajectory;
               if (param_trajectory_jmt)
               {
+                struct trajectory_jmt traj_jmt;
+
                 // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-                trajectory = generate_trajectory_jmt(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
-                                                     car_s, car_d, previous_path_x, previous_path_y, prev_size);
+                traj_jmt = generate_trajectory_jmt(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
+                                                     car_s, car_d, previous_path_x, previous_path_y, prev_size, ref_path_s, ref_path_d);
+                trajectory = traj_jmt.trajectory;
+                paths_s.push_back(traj_jmt.path_s);
+                paths_d.push_back(traj_jmt.path_d);
               }
               else
               {
@@ -178,6 +188,11 @@ int main() {
             }
             car_lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
+            if (param_trajectory_jmt)
+            {
+              ref_path_s = paths_s[min_cost_index];
+              ref_path_d = paths_d[min_cost_index];
+            }
 
             if (min_cost_index > 0)
             {
