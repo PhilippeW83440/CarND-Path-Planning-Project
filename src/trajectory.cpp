@@ -16,8 +16,11 @@ static vector<vector<double>> store_path_d(param_nb_points, {0, 0, 0});
 
 void JMT_init(double car_s, double car_d)
 {
-  store_path_s[param_nb_points-1] = { car_s, 0, 0};
-  store_path_d[param_nb_points-1] = { car_d, 0, 0};
+  for (int i = 0; i < param_nb_points; i++)
+  {
+    store_path_s[i] = { car_s, 0, 0};
+    store_path_d[i] = { car_d, 0, 0};
+  }
 }
   
 
@@ -99,8 +102,17 @@ double polyeval_ddot(vector<double> c, double t) {
 vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
 {
 
+  //cout << "prev_size=" << prev_size << endl;
   //int last_point = param_nb_points - prev_size - 1;
-  int last_point = param_nb_points - 1;
+  int last_point;
+  if (param_truncated_prev_size < param_nb_points)
+  {
+    last_point = param_nb_points - previous_path_x.size() + prev_size - 1;
+  }
+  else
+  {
+    last_point = param_nb_points - 1;
+  }
 
   /////////////////////////////////////////////////////////////
 
@@ -157,8 +169,8 @@ vector<vector<double>> generate_trajectory_jmt(int target_lane, double target_ve
   
   for (int i = 0; i < prev_size; i++)
   {
-    store_path_s[i] = store_path_s[param_nb_points - prev_size + i];
-    store_path_d[i] = store_path_d[param_nb_points - prev_size + i];
+    store_path_s[i] = store_path_s[param_nb_points - previous_path_x.size() + i];
+    store_path_d[i] = store_path_d[param_nb_points - previous_path_x.size() + i];
 
     next_x_vals.push_back(previous_path_x[i]);
     next_y_vals.push_back(previous_path_y[i]);

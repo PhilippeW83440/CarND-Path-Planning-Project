@@ -105,7 +105,7 @@ int main() {
             cout << "prev_size=" << prev_size << " car_x=" << car_x << " car_y=" << car_y << " car_s=" << 
                     car_s << " car_d=" << car_d << " car_speed=" << car_speed << " ref_vel=" << ref_vel << endl;
 
-            prev_size = min(prev_size, param_prev_size);
+            prev_size = min(prev_size, param_truncated_prev_size);
 
             vector<double> frenet = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
             cout << "car_frenet_s=" << frenet[0] << " car_frenet_d=" << frenet[1] << endl;

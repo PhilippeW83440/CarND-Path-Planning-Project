@@ -34,7 +34,11 @@ const double param_dist_safety = 3.5; // meters
 //const double param_dist_collision = 3; // meters
 const double param_dist_collision = 2.75; // meters
 
-const int param_prev_size = 5; // reduce latency reaction to 100 ms
+// reduce latency reaction, but account for simulator latency ...
+// assume 100 ms max simulator latency
+// default param_nb_points
+//const int param_truncated_prev_size = param_nb_points; // reduce latency reaction to 100 ms
+const int param_truncated_prev_size = 5;
 
 const bool param_trajectory_jmt = false;
 
