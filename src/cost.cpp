@@ -121,7 +121,7 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
 }
 
 
-double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, vector<vector<double>>> &predictions)
+double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, vector<vector<double>>> &predictions, vector<vector<double>> &sensor_fusion)
 {
   double cost = 0; // lower cost preferred
 
@@ -131,11 +131,11 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   double cost_comfort = 0; // vs jerk
   double cost_efficiency = 0; // vs desired lane and time to goal
 
-  double weight_feasibility = 10000; // vs collisions, vs vehicle capabilities
-  double weight_safety      = 1000; // vs buffer distance, vs visibility or curvature
-  double weight_legality    = 100; // vs speed limits
-  double weight_comfort     = 10; // vs jerk
-  double weight_efficiency  = 1; // vs target lane, target speed and time to goal
+  double weight_feasibility = 100000; // vs collisions, vs vehicle capabilities
+  double weight_safety      = 10000; // vs buffer distance, vs visibility or curvature
+  double weight_legality    = 1000; // vs speed limits
+  double weight_comfort     = 100; // vs jerk
+  double weight_efficiency  = 10; // vs target lane, target speed and time to goal
 
   // 1) FEASIBILITY cost
   // TODO: handled via safety so far
@@ -172,6 +172,20 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   cost_efficiency = param_max_speed_mph - target_vel;
   cost = cost + weight_efficiency * cost_efficiency;
 
-  return cost;
+  // 5) LANE cost
+  std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
+  while(it != predictions.end())
+  {
+    int fusion_index = it->first;
+    double obj_d = sensor_fusion[fusion_index][6];
+    if (get_lane(obj_d) == target_lane)
+    {
+      cost++;
+    }
+    it++;
+  }
 
+  cout << "target_lane=" << target_lane << " target_vel=" << target_vel << " cost=" << cost << endl;
+
+  return cost;
 }
