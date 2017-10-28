@@ -145,25 +145,34 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
 
   if (target_vel <= 10) // mph
   {
-    sf_ddot = 0;
-    sf_dot = mph_to_ms(target_vel);
-    sf = si + 2 * sf_dot * T;
-
     df = di;
     df_dot = 0;
     df_ddot = 0;
+
+    sf_ddot = 0;
+    sf_dot = mph_to_ms(target_vel);
+    sf = si + 2 * sf_dot * T;
   }
   else
   {
-    sf_ddot = 0;
-    sf_dot = mph_to_ms(target_vel);
-    //sf_dot = map.getSpeedToFrenet(mph_to_ms(target_vel), si+10);
-    sf_dot *= 0.97; // this is a hack. To be fixed properly 
-    sf = si + sf_dot * T;
-
     df = get_dcenter(target_lane);
     df_dot = 0;
     df_ddot = 0;
+
+    sf_ddot = 0;
+    sf_dot = mph_to_ms(target_vel);
+    //sf_dot = map.getSpeedToFrenet(mph_to_ms(target_vel), si+10);
+    if (df >= 8)
+    {
+      // this is a hack. To be fixed properly 
+      // some small speed violations on the most external lane
+      sf_dot *= 0.96;
+    }
+    else
+    {
+      sf_dot *= 0.98;
+    }
+    sf = si + sf_dot * T;
   }
 
   vector<double> start_s = { si, si_dot, si_ddot};
