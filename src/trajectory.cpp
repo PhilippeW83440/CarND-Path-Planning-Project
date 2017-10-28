@@ -158,7 +158,7 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
     sf_ddot = 0;
     sf_dot = mph_to_ms(target_vel);
     //sf_dot = map.getSpeedToFrenet(mph_to_ms(target_vel), si+10);
-    sf_dot *= 0.98; // this is a hack. To be fixed properly 
+    sf_dot *= 0.97; // this is a hack. To be fixed properly 
     sf = si + sf_dot * T;
 
     df = get_dcenter(target_lane);

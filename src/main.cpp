@@ -145,9 +145,10 @@ int main() {
             vector<vector<vector<double>>> paths_s;
             vector<vector<vector<double>>> paths_d;
 
+            int target_lane;
             for (int i = 0; i < targets.size(); i++)
             {
-              int target_lane = targets[i][0];
+              target_lane = targets[i][0];
               double target_vel = targets[i][1];
               double target_time = 2.0; // TODO should be behavior_planner job
 
@@ -186,7 +187,7 @@ int main() {
                 min_cost_index = i;
               }
             }
-            car_lane = targets[min_cost_index][0];
+            target_lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
             if (param_trajectory_jmt)
             {
@@ -194,10 +195,10 @@ int main() {
               ref_path_d = paths_d[min_cost_index];
             }
 
-            if (min_cost_index > 0)
+            if (target_lane != car_lane)
             {
-              cout << "=======================================> BACKUP TARGET: lowest cost for target " << min_cost_index << " = (lane=" << car_lane
-                   << ", vel=" << ref_vel << ", cost="<< min_cost << ")" << endl;
+              cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane
+                   << " target_vel=" << ref_vel << " car_lane=" << car_lane << " cost="<< min_cost << ")" << endl;
             }
 
 
