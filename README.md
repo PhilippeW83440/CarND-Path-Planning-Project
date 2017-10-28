@@ -110,6 +110,17 @@ cf map.cpp
      <br>track.png
 </p>
 
+```cpp
+vector<double> Map::getXYspline(double s, double d)
+{
+     s = fmod(s, max_s);
+     double x = spline_x(s) + d * spline_dx(s);
+     double y = spline_y(s) + d * spline_dy(s);
+
+     return {x,y};
+}
+```
+
 ### Predictions
 
 cf prediction.cpp  
@@ -150,11 +161,92 @@ cf trajectory.cpp
      <br>jmt_conditions_bis.png
 </p>
 
+```cpp
+  double T = target_time; // 2 seconds if car_d center of line
+
+  // si si_dot si_ddot: to be retieved
+  double si = prev_path_s[last_point][0];
+  double si_dot = prev_path_s[last_point][1];
+  double si_ddot = prev_path_s[last_point][2];
+
+  double di = prev_path_d[last_point][0];
+  double di_dot = prev_path_d[last_point][1];
+  double di_ddot = prev_path_d[last_point][2];
+
+  double sf, sf_dot, sf_ddot;
+  double df, df_dot, df_ddot;
+
+  if (target_vel <= 10) // mph
+  {
+    // special handling at low speed: cf werling paper
+    df = di;
+    df_dot = 0;
+    df_ddot = 0;
+
+    sf_ddot = 0;
+    sf_dot = mph_to_ms(target_vel);
+    sf = si + 2 * sf_dot * T;
+  }
+  else
+  {
+    df = get_dcenter(target_lane);
+    df_dot = 0;
+    df_ddot = 0;
+
+    sf_ddot = 0;
+    sf_dot = mph_to_ms(target_vel);
+    sf = si + sf_dot * T;
+  }
+
+  vector<double> start_s = { si, si_dot, si_ddot};
+  vector<double> end_s = { sf, sf_dot, 0};
+
+  vector<double> start_d = { di, di_dot, di_ddot };
+  vector<double> end_d = { df, df_dot, df_ddot};
+```
+
 
 <p align="center">
      <img src="./img/jmt_solver.png" alt="pipeline" width="50%" height="50%">
      <br>jmt_conditions.png
 </p>
+
+```cpp
+vector<double> JMT(vector< double> start, vector <double> end, double T)
+{
+    /*
+    Calculate the Jerk Minimizing Trajectory that connects the initial state
+    to the final state in time T.
+
+    INPUTS
+    start - the vehicles start location given as a length three array
+            corresponding to initial values of [s, s_dot, s_double_dot]
+    end   - the desired end state for vehicle. Like "start" this is a
+            length three array.
+    T     - The duration, in seconds, over which this maneuver should occur.
+
+    OUTPUT 
+    an array of length 6, each value corresponding to a coefficent in the polynomial 
+    s(t) = a_0 + a_1 * t + a_2 * t**2 + a_3 * t**3 + a_4 * t**4 + a_5 * t**5
+    */
+
+    MatrixXd A(3,3);
+    VectorXd b(3);
+    VectorXd x(3);
+
+    A <<   pow(T,3),    pow(T,4),    pow(T,5),
+         3*pow(T,2),  4*pow(T,3),  5*pow(T,4),
+                6*T, 12*pow(T,2), 20*pow(T,3);
+
+    b << end[0] - (start[0] + start[1]*T + 0.5*start[2]*T*T), 
+         end[1] - (start[1] + start[2]*T), 
+         end[2] - start[2];
+
+    x = A.inverse() * b;
+
+    return {start[0], start[1], start[2]/2, x[0], x[1], x[2]};
+}
+```
 
 ### Trajectories cost ranking
 
@@ -165,9 +257,72 @@ cf cost.cp
      <br>trajectories.png
 </p>
 
+```cpp
+double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, vector<vector<double>>> &predictions, vector<vector<double>> &sensor_fusion, int car_lane)
+{
+  double cost = 0; // lower cost preferred
+
+  double cost_feasibility = 0; // vs collisions, vs vehicle capabilities
+  double cost_safety = 0; // vs buffer distance, vs visibility
+  double cost_legality = 0; // vs speed limits
+  double cost_comfort = 0; // vs jerk
+  double cost_efficiency = 0; // vs desired lane and time to goal
+
+  double weight_feasibility = 100000; // vs collisions, vs vehicle capabilities
+  double weight_safety      = 10000; // vs buffer distance, vs visibility or curvature
+  double weight_legality    = 1000; // vs speed limits
+  double weight_comfort     = 100; // vs jerk
+  double weight_efficiency  = 10; // vs target lane, target speed and time to goal
+
+  // 1) FEASIBILITY cost
+  if (check_collision(trajectory, predictions)) cost_feasibility += 10;
+  if (check_max_capabilities(trajectory)) cost_feasibility += 1;
+  cost = cost + weight_feasibility * cost_feasibility;
+
+  // 2) SAFETY cost
+  double dmin = get_predicted_dmin(trajectory, predictions);
+  if (dmin < param_dist_safety) cost_safety = param_dist_safety - dmin;
+  cost = cost + weight_safety * cost_safety;
+   
+   ...
+
+  return cost;
+}
+```
+
 ### Configurable parameters
 
 cf params.h and params.cpp
+
+```cpp
+// Waypoint map to read from
+std::string map_file_ = "../data/highway_map.csv";
+// The max s value before wrapping around the track back to 0
+const double max_s = 6945.554;
+// center point of the track
+const double param_center_x = 1000;
+const double param_center_y = 2000;
+
+const int param_nb_points = 50; // in the trajectory sent to simulator
+const double param_dt = 0.02; // 1 point every 0.02 s
+const double param_lane_width = 4.0; // meters
+const double param_max_speed_mph = 49;
+const double param_max_speed = 22; // m.s-1
+const double param_max_accel = 10; // m.s-2
+const double param_max_jerk  = 10; // m.s-3 average jerk over 1 second
+const double param_fov = 70.0; // Field Of View
+const double param_max_speed_inc = param_max_accel * param_dt; // m.s-1 per 0.02 sec
+const double param_max_speed_inc_mph = ms_to_mph(param_max_speed_inc);
+const double param_dist_slow_down = 30; // when a car is 30 m ahead of us => adjust speed if needed
+const double param_dist_safety = 3.5; // meters
+const double param_dist_collision = 2.75; // meters
+// reduce latency reaction, but account for simulator latency ...
+// assume 100 ms max simulator latency
+const int param_truncated_prev_size = 5;
+
+const bool param_trajectory_jmt = true;
+
+```
 
 ### Conclusion and next steps
 
