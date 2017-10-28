@@ -51,12 +51,14 @@ int main() {
 
   bool start = true;
   double ref_vel = 0.0; // mph
-  vector<vector<double>> ref_path_s;
-  vector<vector<double>> ref_path_d;
+
+  // keep track of previous s and d paths: to initialize for continuity the new trajectory
+  vector<vector<double>> prev_path_s;
+  vector<vector<double>> prev_path_d;
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map, &ref_vel, &start, &ref_path_s, &ref_path_d](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &ref_vel, &start, &prev_path_s, &prev_path_d](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -98,6 +100,20 @@ int main() {
 
           	json msgJson;
 
+            // --- just for debugging purposes
+            double dist_min = 1e10;
+            for (int i = 0; i < sensor_fusion.size(); i++)
+            {
+              // sensor_fusion: pre object [ID, x, y, vx, vy, s, d]
+              double obj_x = sensor_fusion[i][1];
+              double obj_y = sensor_fusion[i][2];
+              double dist = distance(car_x, car_y, obj_x, obj_y);
+              if (dist < dist_min)
+                dist_min = dist;
+            }
+            cout << "************** closest object at " << dist_min << " meters *************" << endl;
+            assert(dist_min >= 1);
+
             //////////////////////////////////////////////////////////////////////
 
 
@@ -107,43 +123,56 @@ int main() {
             cout << "prev_size=" << prev_size << " car_x=" << car_x << " car_y=" << car_y << " car_s=" << 
                     car_s << " car_d=" << car_d << " car_speed=" << car_speed << " ref_vel=" << ref_vel << endl;
 
-            prev_size = min(prev_size, param_truncated_prev_size);
-
-            vector<double> frenet = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
-            cout << "car_frenet_s=" << frenet[0] << " car_frenet_d=" << frenet[1] << endl;
-
-            car_s = frenet[0];
-            car_d = frenet[1];
+            vector<double> frenet_car = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
+            car_s = frenet_car[0];
+            car_d = frenet_car[1];
+            cout << "car_frenet_s=" << car_s << " car_frenet_d=" << car_d << endl;
 
             if (start)
             {
               struct trajectory_jmt traj_jmt = JMT_init(car_s, car_d);
-              ref_path_s = traj_jmt.path_s;
-              ref_path_d = traj_jmt.path_d;
+              prev_path_s = traj_jmt.path_s;
+              prev_path_d = traj_jmt.path_d;
               start = false;
             }
 
-            // 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
+            // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
             std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
 
-            if (prev_size > 0)
+
+
+            // --- long time horizon (close to look onwards at 1 sec when possible) analysis for behavior planner ---
+            vector<double> frenet_far;
+            if (prev_size > 0) // prev_size typically close to 1 sec
             {
               //car_s = end_path_s;
               //car_d = end_path_d;
-              frenet = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
-              car_s = frenet[0];
-              car_d = frenet[1];
+              frenet_far = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
+              car_s = frenet_far[0];
+              car_d = frenet_far[1];
             }
-
             int car_lane = get_lane(car_d);
 
-            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, previous_path_x.size(), car_lane, 
+            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, prev_size, car_lane, 
                                                                            car_s, car_d, ref_vel /* car_vel */);
+
+
+
+            // -- short time horizon (close to 100 msec when possible; not lower bcz of simulator latency) for trajectory (re)generation ---
+            prev_size = min(prev_size, param_truncated_prev_size);
+            vector<double> frenet_close;
+            if (prev_size > 0) // prev_size typically close to 100 msec
+            {
+              frenet_close = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
+              car_s = frenet_close[0];
+              car_d = frenet_close[1];
+            }
+            car_lane = get_lane(car_d);
 
             vector<double> costs;
             vector<vector<vector<double>>> trajectories;
-            vector<vector<vector<double>>> paths_s;
-            vector<vector<vector<double>>> paths_d;
+            vector<vector<vector<double>>> prev_paths_s;
+            vector<vector<vector<double>>> prev_paths_d;
 
             int target_lane;
             for (int i = 0; i < targets.size(); i++)
@@ -160,10 +189,10 @@ int main() {
 
                 // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
                 traj_jmt = generate_trajectory_jmt(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
-                                                     car_s, car_d, previous_path_x, previous_path_y, prev_size, ref_path_s, ref_path_d);
+                                                     car_s, car_d, previous_path_x, previous_path_y, prev_size, prev_path_s, prev_path_d);
                 trajectory = traj_jmt.trajectory;
-                paths_s.push_back(traj_jmt.path_s);
-                paths_d.push_back(traj_jmt.path_d);
+                prev_paths_s.push_back(traj_jmt.path_s);
+                prev_paths_d.push_back(traj_jmt.path_d);
               }
               else
               {
@@ -177,6 +206,7 @@ int main() {
               trajectories.push_back(trajectory);
             }
 
+            // --- retrieve the lowest cost trajectory ---
             double min_cost = 1e10;
             int min_cost_index = 0;
             for (int i = 0; i < costs.size(); i++)
@@ -191,8 +221,8 @@ int main() {
             ref_vel = targets[min_cost_index][1];
             if (param_trajectory_jmt)
             {
-              ref_path_s = paths_s[min_cost_index];
-              ref_path_d = paths_d[min_cost_index];
+              prev_path_s = prev_paths_s[min_cost_index];
+              prev_path_d = prev_paths_d[min_cost_index];
             }
 
             if (target_lane != car_lane)

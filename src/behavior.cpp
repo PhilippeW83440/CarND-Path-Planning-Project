@@ -11,7 +11,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   bool too_close = false;
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
   
-  // find ref_v to use
+  // find ref_v to use based on car in front of us
   for (int i = 0; i < sensor_fusion.size(); i++)
   {
     // car is in my lane
@@ -28,24 +28,9 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   
       if ((check_car_s > car_s) && ((check_car_s - car_s) < param_dist_slow_down))
       {
-        // do some logic here: lower reference velocity so we dont crash into the car infront of us, could
-        // also flag to try to change lane
+        // do some logic here: lower reference velocity so we dont crash into the car infront of us
         //ref_vel = 29.5; //mph
         too_close = true;
-        
-        //if (lane < 2)
-        //{
-        //  lane++;
-        //}
-  
-        if (lane > 0)
-        {
-          lane--;
-        }
-        else
-        {
-          lane++;
-        }
       }  
     }
   }
@@ -65,7 +50,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
     ref_vel_inc = +1;
   }
 
-  // our nominal target
+  // our nominal target .. same lane
   possible_targets.push_back({(double)lane, ref_vel});
 
   ///////////////////////////////////////////////////////////////////
@@ -112,16 +97,16 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       break;
   }
 
-  // 1) target velocity on backup lanes
-  for (int i = 0; i < backup_lanes.size(); i++)
-  {
-    possible_targets.push_back({(double)backup_lanes[i], ref_vel});
-  }
-
-  // 2) backup velocities on target lane
+  // 1) backup velocities on target lane
   for (int i = 0; i < backup_vel.size(); i++)
   {
     possible_targets.push_back({(double)lane, backup_vel[i]});
+  }
+
+  // 2) target velocity on backup lanes
+  for (int i = 0; i < backup_lanes.size(); i++)
+  {
+    possible_targets.push_back({(double)backup_lanes[i], ref_vel});
   }
 
   // 2) backup velocities on backup lanes

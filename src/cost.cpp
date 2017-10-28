@@ -106,12 +106,12 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
         dmin = dist;
       }
       //cout << "dist[" << i << "]=" << dist << endl; 
-      if (dist <= param_dist_collision)
-      {
-        cout << "=====> DMIN = " << dmin << endl;
-        cout << "predicted collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
-        //assert(1 == 0); // TODO temp just for checking purposes
-      }
+      //if (dist <= param_dist_collision)
+      //{
+      //  cout << "=====> DMIN = " << dmin << endl;
+      //  cout << "predicted collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
+      //  //assert(1 == 0); // TODO temp just for checking purposes
+      //}
     }
     it++;
   }
