@@ -24,11 +24,11 @@ Self-Driving Car Engineer Nanodegree Program
 
 
 In an Autonomous Driving pipeline we deal sequentially with the following modules:
-* perception: sensors in charge of detecting objects
-* fusion: sensor fusion providing a consolidated view of detected objects
-* localization (optionnally): 
-* path planning: in charge of planning the vehicule trajectory up to a specific goal
-* comand and control: taking as inputs the planned path it will control the actuators of the vehicle 
+* **perception:** sensors in charge of detecting objects
+* **fusion:** sensor fusion providing a consolidated view of detected objects
+* **localization (optionnally):** 
+* **path planning:** in charge of planning the vehicule trajectory up to a specific goal
+* **comand and control:** taking as inputs the planned path it will control the actuators of the vehicle 
 
 The path planning module is using as inputs:
 * the sensor fusion outputs
@@ -37,10 +37,10 @@ The path planning module is using as inputs:
 It then provides as output a set of waypoints to follow.  
 
 The Path Planning module is typically decomposed into the following set of sub-modules:
-* prediction: will predict the trajectories of the surrounding detected objects
-* behavior planner: will define a set of candidate high level targets for the vehicle to follow (lane changes, slow down ...)
-* trajectories generation: for every possible high level targets, a percise path to follow will be computed
-* trajectories cost ranking: for each trajectory a cost will be derived (depending on feasibility, safety, legality, comfort and efficiency) and the trajectory with the lowest cost will be chosen  
+* **predictions:* will predict the trajectories of the surrounding detected objects
+* **behavior planner:** will define a set of candidate high level targets for the vehicle to follow (lane changes, slow down ...)
+* **trajectories generation:** for every possible high level targets, a percise path to follow will be computed
+* **trajectories cost ranking:** for each trajectory a cost will be derived (depending on feasibility, safety, legality, comfort and efficiency) and the trajectory with the lowest cost will be chosen  
 
 So the driving policy is fully defined by these cost functions. It can be tuned to have a very conservative driving experience (which is the case in the below implementation: keep a rather big safety distance with the vehicule in front of you, do lane changes only when there is lots of free space on the target lane...) or it can be tuned to target a more speedy driving experience (making lots of lane changes as soon as possible to drive as fast as possible...)
 
@@ -53,6 +53,14 @@ The main reference for the below implementation is the following paper: **"Optim
      <img src="./img/overview.png" alt="pipeline" width="50%" height="50%">
      <br>overview.png
 </p>
+
+In the code excerpt below we do the following:
+* **generate predictions:** based on sensor fusion information, we locate for every lane the car closest in front and in back of the ego vehicule. This provides a sort of basic scene detection or summary. For these objects we extrapolate the trajectories up to a specific horizon (typically 1 second)  
+* **the behavior planner defines candidate targets**: a set of candidate {target_lane, target_speed, target_time for maneuver }
+* **for every candidate targets a trajectory is computed**
+* **for every candidate trajectories a cost is computed**
+* **the trajectory with the lowest cost is chosen**  
+  
 
 ```cpp
      // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
