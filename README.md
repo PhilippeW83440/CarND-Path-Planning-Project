@@ -324,6 +324,31 @@ const bool param_trajectory_jmt = true;
 
 ```
 
+### Logs
+
+************** closest object at 11.5728 meters *************  
+closestWaypoint=358  
+corrected closestWaypoint=359  
+error=0.806243 trt_time=37 us (max_error=1.13948 avg_error=0.764559)  
+prev_size=47 car_x=1134.5 car_y=1179.96 car_s=358.026 car_d=9.68375 car_speed=46.3776 ref_vel=49  
+car_frenet_s=358.093 car_frenet_d=9.79866  
+  
+lane 0: front -1 at 1e+10 s_meters ; back 6 at 22.8066 s_meters  
+lane 1: front 9 at 18.2398 s_meters ; back 1 at 11.2983 s_meters  
+lane 2: front -1 at 1e+10 s_meters ; back 7 at 66.2703 s_meters  
+
+=====> dmin = 11.9632  
+car_lane=2 target_lane=2 target_vel=49 cost=0  
+=====> dmin = 11.9632  
+car_lane=2 target_lane=2 target_vel=48.552 cost=4.48  
+=====> dmin = 11.9632  
+car_lane=2 target_lane=1 target_vel=49 cost=1.2929  
+=====> dmin = 11.9632  
+car_lane=2 target_lane=1 target_vel=48.552 cost=5.7729  
+  
+======> CHANGE LANE: lowest cost for target xxx = (target_lane=xxx target_vel=xxx car_lane=xxx cost=xxx)  
+
+
 ### Conclusion and next steps
 
 ### References:  
