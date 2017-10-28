@@ -40,7 +40,7 @@ const double param_dist_collision = 2.75; // meters
 //const int param_truncated_prev_size = param_nb_points; // reduce latency reaction to 100 ms
 const int param_truncated_prev_size = 5;
 
-const bool param_trajectory_jmt = true;
+const bool param_trajectory_jmt = false;
 
 
 #endif // PARAMS_H
