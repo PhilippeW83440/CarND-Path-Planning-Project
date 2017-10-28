@@ -139,12 +139,32 @@ In the code excerpt below we do the following:
 
 ### Coordinate transforms
 
-cf map.cpp
+cf map.cpp  
+
+Most of the work and reflection is done in the Frenet space where the longitudinal s(t) and lateral d(t) trajectories of the vehicle are tracked with respect to a reference curve wich is provided by a map (or a reference curve; e.g. middle of the road; provided at runtime in case there would be no map based localization module).
+
+The reference curve is depicted below: it is the center line of a circular track of close to 7 kilometers. The s and d information enable to locate a point relatively to this reference curve.  
+  
+In terms of reasoning, lane change or not, forward progress of the vehicule, ... it is much more convenient to reason in Frenet (s, d) coordinates rather than in Cartesian (x, y) coordinates.  
+  
+So a key point in the implementation is being able to do accurate (x, y) -> (s, d) -> (x, y) transformations.   
+It is even more important if you plan to generate trajectories in the Frenet space like described in the Morotz Werling paper.  
+Unfortunatelly the starter code provided initially for these conversions was not accurate enough to generate trajectories in the Frenet space: I checked by converting back and forth to (x, y) coordinates that sometimes errors as big as 10 meters occurs. So I spent some  time to improve these default coordinate transforms.  
 
 <p align="center">
      <img src="./img/track.png" alt="pipeline" width="50%" height="50%">
      <br>track.png
 </p>
+
+The changes done are the folowing:
+* improved accuracy map: the track is described basically by 1 point and its associated normal vector every 30 meters. So we have 181 points for a close to 7 km circuit. I have used splines to interpolate the track in between these points and create a new discrete map with 1 point every meter. Which is providing a much better accuracy when doing getFrenet (x, y) -> (s, d) conversions
+* improved getXY accuracy: again spline comes to the rescue here. 
+We are provided with x(t), s(t) and compute a x(s) spline.  
+We are provided with y(t), s(t) and compute a y(s) slpine.    
+We are provided with dx(t), s(t) and compute a dx(s) spline. 
+We are provided with dy(t), s(t) and compute a dy(s) slpine. 
+dx and dy rekate to x and y component of the normal vector (misleading names ...)
+From there doing a (s, d) -> (x, y) conversion is very simple: cf code below.  
 
 ```cpp
 vector<double> Map::getXYspline(double s, double d)
@@ -156,6 +176,12 @@ vector<double> Map::getXYspline(double s, double d)
      return {x,y};
 }
 ```
+
+I also proposed 2 fixes in the NextWaypoint code which had some issues at s wraparound: https://waffle.io/udacity/sdc-issue-reports/cards/59e8ee756ff7e100813ad856  
+
+While driving a full track I checked that my conversions error (x, y) -> (s, d) -> (x, y) are now on average around 0.6 meters (with a peak at 1.2 meters) which is well below the initial more than 10 meters error. I think this is probably the main reason why most of Udacity students reported issues while trying to work with JMT (s, d) frenet trajectories generations and finaly went back to generate spline X, Y trajectories: where the dependency on the conversion functions is much lower.  
+
+As a final note, I am wondering if the accuracy of the conversions could be further improved, but the fact that the map is  provided as a discrete set of 30 meters spaced points may prevent us for getting a perfect accuracy when doing frenet <-> cartesian conversions.    
 
 ### Predictions
 
