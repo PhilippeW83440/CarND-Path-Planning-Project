@@ -15,27 +15,81 @@ Self-Driving Car Engineer Nanodegree Program
 
 ## Project description
 
-### Overview
+<p align="center">
+     <img src="./img/driving.png" alt="pipeline" width="50%" height="50%">
+     <br>driving.png
+</p>
+
+### Overview  
+
+<p align="center">
+     <img src="./img/overview.png" alt="pipeline" width="50%" height="50%">
+     <br>overview.png
+</p>
 
 ### Coordinate transforms
 
 cf map.cpp
 
+<p align="center">
+     <img src="./img/track.png" alt="pipeline" width="50%" height="50%">
+     <br>track.png
+</p>
+
 ### Predictions
 
-cf prediction.cpp
+cf prediction.cpp  
+
+<p align="center">
+     <img src="./img/predictions.png" alt="pipeline" width="50%" height="50%">
+     <br>predictions.png
+</p>
 
 ### Behavior planner
 
-cf behavior.cpp
+cf behavior.cpp  
+
+<p align="center">
+     <img src="./img/behavior.png" alt="pipeline" width="50%" height="50%">
+     <br>behavior.png
+</p>
+
 
 ### Trajectories generation
 
-cf trajectory.cpp
+cf trajectory.cpp  
+
+
+<p align="center">
+     <img src="./img/jmt.png" alt="pipeline" width="50%" height="50%">
+     <br>jmt.png
+</p>
+
+
+<p align="center">
+     <img src="./img/jmt_conditions.png" alt="pipeline" width="50%" height="50%">
+     <br>jmt_conditions.png
+</p>
+
+<p align="center">
+     <img src="./img/jmt_conditions_bis.png" alt="pipeline" width="50%" height="50%">
+     <br>jmt_conditions_bis.png
+</p>
+
+
+<p align="center">
+     <img src="./img/jmt_solver.png" alt="pipeline" width="50%" height="50%">
+     <br>jmt_conditions.png
+</p>
 
 ### Trajectories cost ranking
 
-cf cost.cp
+cf cost.cp  
+
+<p align="center">
+     <img src="./img/trajectories.png" alt="pipeline" width="50%" height="50%">
+     <br>trajectories.png
+</p>
 
 ### Configurable parameters
 
