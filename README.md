@@ -29,6 +29,7 @@ Self-Driving Car Engineer Nanodegree Program
 
 ```cpp
      // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
+     // 6 cars: closest front and back per lane (with 3 lanes)
      map<int, vector<vector<double>>> predictions = generate_predictions(sensor_fusion, car_s, car_d, horizon);
 
      // --- long time horizon (close to look onwards at 1 sec when possible) analysis for behavior planner ---
