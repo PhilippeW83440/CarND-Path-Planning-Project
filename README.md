@@ -295,60 +295,6 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
 
 cf params.h and params.cpp
 
-```cpp
-// Waypoint map to read from
-std::string map_file_ = "../data/highway_map.csv";
-// The max s value before wrapping around the track back to 0
-const double max_s = 6945.554;
-// center point of the track
-const double param_center_x = 1000;
-const double param_center_y = 2000;
-
-const int param_nb_points = 50; // in the trajectory sent to simulator
-const double param_dt = 0.02; // 1 point every 0.02 s
-const double param_lane_width = 4.0; // meters
-const double param_max_speed_mph = 49;
-const double param_max_speed = 22; // m.s-1
-const double param_max_accel = 10; // m.s-2
-const double param_max_jerk  = 10; // m.s-3 average jerk over 1 second
-const double param_fov = 70.0; // Field Of View
-const double param_max_speed_inc = param_max_accel * param_dt; // m.s-1 per 0.02 sec
-const double param_max_speed_inc_mph = ms_to_mph(param_max_speed_inc);
-const double param_dist_slow_down = 30; // when a car is 30 m ahead of us => adjust speed if needed
-const double param_dist_safety = 3.5; // meters
-const double param_dist_collision = 2.75; // meters
-// reduce latency reaction, but account for simulator latency ...
-// assume 100 ms max simulator latency
-const int param_truncated_prev_size = 5;
-
-const bool param_trajectory_jmt = true;
-
-```
-
-### Logs
-
-************** closest object at 11.5728 meters *************  
-closestWaypoint=358  
-corrected closestWaypoint=359  
-error=0.806243 trt_time=37 us (max_error=1.13948 avg_error=0.764559)  
-prev_size=47 car_x=1134.5 car_y=1179.96 car_s=358.026 car_d=9.68375 car_speed=46.3776 ref_vel=49  
-car_frenet_s=358.093 car_frenet_d=9.79866  
-  
-lane 0: front -1 at 1e+10 s_meters ; back 6 at 22.8066 s_meters  
-lane 1: front 9 at 18.2398 s_meters ; back 1 at 11.2983 s_meters  
-lane 2: front -1 at 1e+10 s_meters ; back 7 at 66.2703 s_meters  
-
-=====> dmin = 11.9632  
-car_lane=2 target_lane=2 target_vel=49 cost=0  
-=====> dmin = 11.9632  
-car_lane=2 target_lane=2 target_vel=48.552 cost=4.48  
-=====> dmin = 11.9632  
-car_lane=2 target_lane=1 target_vel=49 cost=1.2929  
-=====> dmin = 11.9632  
-car_lane=2 target_lane=1 target_vel=48.552 cost=5.7729  
-  
-======> CHANGE LANE: lowest cost for target xxx = (target_lane=xxx target_vel=xxx car_lane=xxx cost=xxx)  
-
 
 ### Conclusion and next steps
 
