@@ -22,6 +22,33 @@ Self-Driving Car Engineer Nanodegree Program
 
 ### Overview  
 
+
+In an Autonomous Driving pipeline we deal sequentially with the following modules:
+* perception: sensors in charge of detecting objects
+* fusion: sensor fusion providing a consolidated view of detected objects
+* localization (optionnally): 
+* path planning: in charge of planning the vehicule trajectory up to a specific goal
+* comand and control: taking as inputs the planned path it will control the actuators of the vehicle 
+
+The path planning module is using as inputs:
+* the sensor fusion outputs
+* the map and the localization of the ego vehicule and the relative localization of the surrounding detected objects  
+  
+It then provides as output a set of waypoints to follow.  
+
+The Path Planning module is typically decomposed into the following set of sub-modules:
+* prediction: will predict the trajectories of the surrounding detected objects
+* behavior planner: will define a set of candidate high level targets for the vehicle to follow (lane changes, slow down ...)
+* trajectories generation: for every possible high level targets, a percise path to follow will be computed
+* trajectories cost ranking: for each trajectory a cost will be derived (depending on feasibility, safety, legality, comfort and efficiency) and the trajectory with the lowest cost will be chosen  
+
+So the driving policy is fully defined by these cost functions. It can be tuned to have a very conservative driving experience (which is the case in the below implementation: keep a rather big safety distance with the vehicule in front of you, do lane changes only when there is lots of free space on the target lane...) or it can be tuned to target a more speedy driving experience (making lots of lane changes as soon as possible to drive as fast as possible...)
+
+In the below implementation, the behavior planner is not implemented as a Finite State Machine and is not taking a decision right away like lane change or not but it rather defines several possible targets. It will be up to the cost function to choose the best decision based on its applicability: i.e. based on cost evaluation of the generated trajectories.  
+
+The main reference for the below implementation is the following paper: **"Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame" from Moritz Werling and all**  https://pdfs.semanticscholar.org/0e4c/282471fda509e8ec3edd555e32759fedf4d7.pdf   
+
+
 <p align="center">
      <img src="./img/overview.png" alt="pipeline" width="50%" height="50%">
      <br>overview.png
