@@ -37,9 +37,9 @@ The path planning module is using as inputs:
 It then provides as output a set of waypoints to follow.  
 
 The Path Planning module is typically decomposed into the following set of sub-modules:
-* **predictions:* will predict the trajectories of the surrounding detected objects
+* **predictions:** will predict the trajectories of the surrounding detected objects
 * **behavior planner:** will define a set of candidate high level targets for the vehicle to follow (lane changes, slow down ...)
-* **trajectories generation:** for every possible high level targets, a percise path to follow will be computed
+* **trajectories generation:** for every possible high level targets, a percise path to follow will be computed  
 * **trajectories cost ranking:** for each trajectory a cost will be derived (depending on feasibility, safety, legality, comfort and efficiency) and the trajectory with the lowest cost will be chosen  
 
 So the driving policy is fully defined by these cost functions. It can be tuned to have a very conservative driving experience (which is the case in the below implementation: keep a rather big safety distance with the vehicule in front of you, do lane changes only when there is lots of free space on the target lane...) or it can be tuned to target a more speedy driving experience (making lots of lane changes as soon as possible to drive as fast as possible...)
