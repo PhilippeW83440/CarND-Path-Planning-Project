@@ -161,10 +161,10 @@ The changes done are the folowing:
 * improved getXY accuracy: again spline comes to the rescue here. 
 We are provided with x(t), s(t) and compute a x(s) spline.  
 We are provided with y(t), s(t) and compute a y(s) slpine.    
-We are provided with dx(t), s(t) and compute a dx(s) spline. 
-We are provided with dy(t), s(t) and compute a dy(s) slpine. 
-dx and dy rekate to x and y component of the normal vector (misleading names ...)
-From there doing a (s, d) -> (x, y) conversion is very simple: cf code below.  
+We are provided with dx(t), s(t) and compute a dx(s) spline.  
+We are provided with dy(t), s(t) and compute a dy(s) slpine.  
+dx and dy rekate to x and y component of the normal vector (misleading names ...)  
+From there doing a (s, d) -> (x, y) conversion is very simple: cf code below.   
 
 ```cpp
 vector<double> Map::getXYspline(double s, double d)
@@ -358,6 +358,21 @@ cf params.h and params.cpp
 
 
 ### Conclusion and next steps
+  
+That was a lot of work ... And there is still much more left to do ...
+
+ Some possible next steps and topics for further improvement:  
+ * driving policy (via cost functions) that targets maximal speed: to be tested on bosch challenge tracks as well. This should be fun to do.
+ * MPC integration: so we have path planning and control command tested together. The combined testing of path planning and command and control is very important.
+ * emergency braking or emergency collision avoidances: in some cases other vehicules randomly merge into our lane even when we are dangerously close. So we have remaining potential collisions; even if they are quite rare. But we should further check if and how we could improve our collision avoidance scheme.
+ * better predictions: the trajectory predictions of other vehicles is really key to the path planning module. Cf paper listed in below references: Vehicle Trajectory Prediction based on Motion Model and Maneuver Recognition. The use of machine learning and deep learning techniques could be investigated also here. 
+ * by default here the simulated sensor fusion outputs are fully accurate: generate some noise (as in real life) and check how robust we still are
+ * When the simulator reports an issue we should assert the software under test: for easier analysis of the problem.
+ * How to speed up simulation ?
+ * Currently a new trajectory is generated every 3 + 5 points: so we are dealing with a latency of 160 ms in terms of how fast we can react to a new sensor fusion output. This is not by Path Planning module design but related to th test and simulation environment. 
+ * Some code clean up: properly define additional classes ... add more comments ...
+ * Code efficiency to be checked...
+ * JMT trajectory generation: 2 points left for further improvement (low speed cases, cf Moritz Werling paper) + curvature impact when dealing with speed 
 
 ### References:  
 Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame  
