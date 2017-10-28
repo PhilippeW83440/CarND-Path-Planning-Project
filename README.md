@@ -1,7 +1,66 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
+
+[//]: # (Image References)
+[image1]: ./img/behavior.png
+[image2]: ./img/driving.png
+[image3]: ./img/jmt.png
+[image4]: ./img/jmt_conditions.png
+[image5]: ./img/jmt_conditions_bis.png
+[image6]: ./img/jmt_solver.png
+[image7]: ./img/overview.png
+[image8]: ./img/predictions.png
+[image9]: ./img/track.png
+[image9]: ./img/trajectories.png
+
+## Project description
+
+### Overview
+
+### Coordinate transforms
+
+cf map.cpp
+
+### Predictions
+
+cf prediction.cpp
+
+### Behavior planner
+
+cf behavior.cpp
+
+### Trajectories generation
+
+cf trajectory.cpp
+
+### Trajectories cost ranking
+
+cf cost.cp
+
+### Configurable parameters
+
+cf params.h and params.cpp
+
+### Conclusion and next steps
+
+### References:  
+Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame  
+https://pdfs.semanticscholar.org/0e4c/282471fda509e8ec3edd555e32759fedf4d7.pdf   
+  
+Sampling Based Motion Planning for Heavy Duty Autonomous Vehicles  
+http://liu.diva-portal.org/smash/get/diva2:1049189/FULLTEXT01.pdf  
+  
+Towards Fully Autonomous Driving: Systems and Algorithms  
+https://www.cs.cmu.edu/~zkolter/pubs/levinson-iv2011.pdf  
+  
+Vehicle Trajectory Prediction based on Motion Model and Maneuver Recognition  
+https://hal.inria.fr/hal-00881100/PDF/IROS13_PIN_161867_.pdf  
+  
+Jerk Minimization Trajectory  
+http://www.shadmehrlab.org/book/minimum_jerk/minimumjerk.htm  
+
    
-### Simulator.
+## Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
 
 ### Goals
