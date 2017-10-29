@@ -506,7 +506,7 @@ Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame htt
 Sampling Based Motion Planning for Heavy Duty Autonomous Vehicles http://liu.diva-portal.org/smash/get/diva2:1049189/FULLTEXT01.pdf  
 Towards Fully Autonomous Driving: Systems and Algorithms https://www.cs.cmu.edu/~zkolter/pubs/levinson-iv2011.pdf  
 Jerk Minimization Trajectory http://www.shadmehrlab.org/book/minimum_jerk/minimumjerk.htm http://mplab.ucsd.edu/tutorials/minimumJerk.pdf  
-Path Planning for Highly Automated Vehicles publications.lib.chalmers.se/records/fulltext/182538/182538.pdf  
+Path Planning for Highly Automated Vehicles http://publications.lib.chalmers.se/records/fulltext/182538/182538.pdf  
  
 **For further investigation:**  
 Vehicle Trajectory Prediction based on Motion Model and Maneuver Recognition https://hal.inria.fr/hal-00881100/PDF/IROS13_PIN_161867_.pdf  
