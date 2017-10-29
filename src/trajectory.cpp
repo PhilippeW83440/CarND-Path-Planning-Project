@@ -161,12 +161,16 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
 
     sf_ddot = 0;
     sf_dot = mph_to_ms(target_vel);
-    //sf_dot = map.getSpeedToFrenet(mph_to_ms(target_vel), si+10);
+    //sf_dot = map.getSpeedToFrenet(sf_dot, si+50);
+    // this is a hack. To be fixed properly 
+    // the ratio should be related to curvature and d
     if (df >= 8)
     {
-      // this is a hack. To be fixed properly 
-      // some small speed violations on the most external lane
-      sf_dot *= 0.96;
+      sf_dot *= 0.95;
+    }
+    else if (df >= 4)
+    {
+      sf_dot *= 0.97;
     }
     else
     {
