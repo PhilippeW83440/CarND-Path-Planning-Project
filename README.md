@@ -267,6 +267,19 @@ For the start conditions, there is no other choice than using a point from the p
 * take into account new sensor fusion to adapt (re compute) the trajectory to take into account new information. As soon as we have new sensor fusion information, we would like to re evaluate our trajectory. So idealy every point, every 20 ms here.  
 
 Now you may be wondering why are we then evaluating a trajectory for 50 points if we only use 8 points and then recompute a new trajectory ? This is for collision avoidance checks. We generate the trajectory over a 1 second horizon to check for potential future collisions.  
+  
+After defining the start conditions we have to define proper end conditions.  
+  
+For the lateral d(t) trajectory it is pretty simple. We define as end conditions:
+* df: a d corresponding to the center of the target lane
+* df_dot and df_ddot are set to zero: no variations at the end of our maneuver for the lateral movement.
+
+For the longitudinal s(t) trajectory we define as end conditions:
+* sf_ddot = 0: no acceleration
+* sf_dot: final speed corresponding to our target speed
+* sf = si + sf_dot * T: where T is set to 2 seconds. We do not want to spend to much time while doing the lane change.
+  
+Note that in theory there is a conversion to do from cartesian speed to longitudinal speed: that is why a getSpeedToFrenet function is provided for the conversion. But in practice for now on (in the real code, not the excerpt below), I am using a simple hard coded heuristic to do the conversion with some safety margin. Typically sf_dot is set to 98% of the target cartesian speed. This is a point left for further investigation and improvement.  
 
 
 ```cpp
@@ -313,6 +326,14 @@ Now you may be wondering why are we then evaluating a trajectory for 50 points i
   vector<double> end_d = { df, df_dot, df_ddot};
 ```
 
+So now the problem is well defined. We have:
+* a target trajectory that is a quintic polynomial (for s(t) and d(t))
+* 6 unknowns
+* 6 equations defined via the definition of start and end conditions
+* T: the time duration of the trajectory properly defined. So the trajectory starts at t_start=0 and the endpoint is at t_end=T
+
+We just have the solve the equations i.e. do a matrix inversion to derive our 6 unknown coefficients. This is done in the **JMT** polynomial solver described below: diagram and code.  
+
 
 <p align="center">
      <img src="./img/jmt_solver.png" alt="pipeline" width="50%" height="50%">
@@ -355,6 +376,10 @@ vector<double> JMT(vector< double> start, vector <double> end, double T)
     return {start[0], start[1], start[2]/2, x[0], x[1], x[2]};
 }
 ```
+
+  
+Once the s(t) and d(t) have been found for the trajectory, we convert back to (x, y) coordinates using the accurate getXYspline function: we want to check speeed and acceleration in cartesian coordinates.  
+Also for convenience, we have predictions from sensor fusion informations that are in (x, y) coordinates: so ultimately we check collision avoidance and safety distances in (x, y) coordinates.  
 
 ### Trajectories cost ranking
 
