@@ -205,6 +205,15 @@ These predictions will be used later on to check for potential collisions and sa
 
 cf behavior.cpp  
 
+In this implementation the behavior planner will provide a list of candidate targets rather than a single suggested maneuver.
+The first possible target will relate to adjusting the speed in our lane and keeping basically a rather big 30 meters distance with the vehicule in front of us; we end up driving at the same speed, 30 meters behind the vehicule in front of us.  
+
+Then other targets are proposed: for every other adjacent lane. Then for every lane target, the behavior planner proposes a speed target corresponding to either our current lane speed target or a slower speed.  
+
+So this typically provide a set of at most 9 targets, assuming you are in the midle lane with 3 speed targets (max acceleration, constant speed, max deceleration) per lane.  
+
+Later on a trajectory for every possible target wil be computed and they will be ranked against some cost functions to choose the best option.  
+
 <p align="center">
      <img src="./img/behavior.png" alt="pipeline" width="50%" height="50%">
      <br>behavior.png
