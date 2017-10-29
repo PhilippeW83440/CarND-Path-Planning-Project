@@ -480,9 +480,13 @@ The configurable parameters are:
 
 ### Conclusion and next steps
   
-That was a lot of work ... And there is still much more left to do ...
+That was a lot of work ...  
+  
+I would like to thank Udacity and their partners, mainly here in the context of Path Planning, the people from Mercedes-Benz for setting up high quality class courses on Autonomous Driving. I would like also to thank Aaron Brown from Udacity for providing this cool Unity based simulator and testing environment, David Silver from Udacity for creating this NanoDegree, the people on the Udacity forums and on the Udacity slack channels for providing valuable information and ideas.  
 
- Some possible next steps and topics for further improvement:  
+I have spent a lot of time on this project, learnt a lot and I am pretty happy with the result but there is nevertheless still much more work left to do...  
+  
+ Thinking about some possible next steps and topics for further improvement, I would list:  
  * driving policy (via cost functions) that targets maximal speed: to be tested on bosch challenge tracks as well. This should be fun to do.
  * MPC integration: so we have path planning and control command tested together. The combined testing of path planning and command and control is very important.
  * emergency braking or emergency collision avoidances: in some cases other vehicules randomly merge into our lane even when we are dangerously close. So we have remaining potential collisions; even if they are quite rare. But we should further check if and how we could improve our collision avoidance scheme.
