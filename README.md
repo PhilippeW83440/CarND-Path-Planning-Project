@@ -224,12 +224,31 @@ Later on a trajectory for every possible target wil be computed and they will be
 
 cf trajectory.cpp  
 
+The trajectories can be generated in 2 different ways:
+* in (x, y) coordinates by using spline functions.
+* in (s, d) coordinates by using the Jerk Minimizing Trajectory approach described in the Moritz Werling paper.
+
+The first method is the one proposed in the walk through video of the project where s and d coordinates are used only to define the final target eg s 30 meters away with a d corresponding to the target lane. But then this target point is converting into (x, y) coordinates and a trajectory going from the start point up to the end point (in cartesian coordinates) is computed by using splines. Using splines ensures that continuity is preserved for the generated trajectory and its 1st and 2nd derivatives: so we guarantee continuity in terms of trajectory, speed and acceleration including end points and previous trajectory. The advantage of this method is that it works pretty well even if the (s, d) estimates are not that accurate as it mainly works in (x, y) coordinates and most of the maths is handled via the C++ spline library which is very simple to use. In terms of drawbacks, it does not guarantee Minimum Jerk which is related to maximum comfort for the user.  
+
+So that is why in the lectures from Udacity & Daimler Benz of the Self Driving Car Nanodegree, an approach based on Jerk Minimization Trajectory is presented. This approach is described in details in the paper from Moritz Werling and has been implemented here. It is the 2nd method: JMT trajectory generation in (s, d) coordinates.  
+  
+ So the starting point is trying to find a trajectory that has minimum jerk i.e. maximum comfort for the user. 
+ 
+ The jerk corresponds to variations in acceleration. So we are looking at the 3rd derivaties and we want to minimize the sum of these 3rd derivatives from t_start to t_end. As demonstrated in the folowing link http://www.shadmehrlab.org/book/minimum_jerk/minimumjerk.htm, a Jerk Minimizing Trajectory has to be a quintic polynomial.  
+   
+ So we end up looking for:
+ * a quintic polynomial for the longitudinal part: s(t) is a polynom of order 5
+ * a quintic polynomial for the lateral part: d(t) is a polynom of order 5
+  
+Note that at high speed, s(t) and d(t) can be computed independently and then converted back to (x, y) coordinates whereas at low speed s(t) and d(t) can not be computed independently (cf Moritz Werling paper for more details on this topic). That is why in the code there is a special case at low speed, so typically at the begining, where we vary only s(t) and keep d(t) constant. Nevertheless we can observe that our cold start, with JMT trajectory generation is not that good: we have useless wheels movements. It is typicaly a topics for further improvement (even if it does not violate any speed, acceleration and jerk criteria). But then after the cold start, everything is good and running smoothly.   
 
 <p align="center">
      <img src="./img/jmt.png" alt="pipeline" width="50%" height="50%">
      <br>jmt.png
 </p>
 
+
+So the problem is now to find these s(t) and d(t) quintic polynomials.  So we are left with 6 unknown coefficient and so we need 6 equations to solve this problem. By using start conditions and end conditions applied to the function and its 1st and 2nd derivaties we will define 6 equations and so we wil be able to solve for the unknown coefficients.
 
 <p align="center">
      <img src="./img/jmt_conditions.png" alt="pipeline" width="50%" height="50%">
@@ -240,6 +259,15 @@ cf trajectory.cpp
      <img src="./img/jmt_conditions_bis.png" alt="pipeline" width="50%" height="50%">
      <br>jmt_conditions_bis.png
 </p>
+
+The critical point now is to properly define the start and end conditions.  
+
+For the start conditions, there is no other choice than using a point from the previous generated trajectory. To ensure continuity for the position, speed and acceleration. The point has to be placed somewhere on the previous generated trajectory where the position has not yet been reached in practice by the vehicle. In the implementation below we are typicaly using the 8th point (so 8 * 20ms) in the previous 50 points (1 second) generated trajectory. This is a tradeoff here to account for:
+* simulator latency on one side. When we send a trajectory to the simulator and get an answer back, usually 3 points have been consumed. Then we compute a new trajectory; send it to the simulator. But while we compute a new trajectory, the simulator is still consuming points from the previous trajectory. So the 8th point here is to make sure that we start a new trajectory from a point that has not yet been consumed: applied in practice by the simulator or our vehicle.
+* take into account new sensor fusion to adapt (re compute) the trajectory to take into account new information. As soon as we have new sensor fusion information, we would like to re evaluate our trajectory. So idealy every point, every 20 ms here.  
+
+Now you may be wondering why are we then evaluating a trajectory for 50 points if we only use 8 points and then recompute a new trajectory ? This is for collision avoidance checks. We generate the trajectory over a 1 second horizon to check for potential future collisions.  
+
 
 ```cpp
   double T = target_time; // 2 seconds if car_d center of line
