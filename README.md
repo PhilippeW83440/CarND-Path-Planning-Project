@@ -46,7 +46,8 @@ So the driving policy is fully defined by these cost functions. It can be tuned 
 
 In the below implementation, the behavior planner is not implemented as a Finite State Machine and is not taking a decision right away like lane change or not but it rather defines several possible targets. It will be up to the cost function to choose the best decision based on its applicability: i.e. based on cost evaluation of the generated trajectories.  
 
-The main reference for the below implementation is the following paper: **"Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame" from Moritz Werling and all**  https://pdfs.semanticscholar.org/0e4c/282471fda509e8ec3edd555e32759fedf4d7.pdf   
+The main reference for the below implementation is the following paper:  
+**"Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame" from Moritz Werling and all** https://pdfs.semanticscholar.org/0e4c/282471fda509e8ec3edd555e32759fedf4d7.pdf   
 
 
 <p align="center">
@@ -145,10 +146,10 @@ Most of the work and reflection is done in the Frenet space where the longitudin
 
 The reference curve is depicted below: it is the center line of a circular track of close to 7 kilometers. The s and d information enable to locate a point relatively to this reference curve.  
   
-In terms of reasoning, lane change or not, forward progress of the vehicule, ... it is much more convenient to reason in Frenet (s, d) coordinates rather than in Cartesian (x, y) coordinates.  
+In terms of thinking, lane change or not, forward progress of the vehicule, ... it is much more convenient to think in terms of Frenet (s, d) coordinates rather than in Cartesian (x, y) coordinates.  
   
 So a key point in the implementation is being able to do accurate (x, y) -> (s, d) -> (x, y) transformations.   
-It is even more important if you plan to generate trajectories in the Frenet space like described in the Morotz Werling paper.  
+It is even more important if you plan to generate trajectories in the Frenet space like described in the paper from Moritz Werling paper.  
 Unfortunatelly the starter code provided initially for these conversions was not accurate enough to generate trajectories in the Frenet space: I checked by converting back and forth to (x, y) coordinates that sometimes errors as big as 10 meters occurs. So I spent some  time to improve these default coordinate transforms.  
 
 <p align="center">
@@ -157,8 +158,8 @@ Unfortunatelly the starter code provided initially for these conversions was not
 </p>
 
 The changes done are the folowing:
-* improved accuracy map: the track is described basically by 1 point and its associated normal vector every 30 meters. So we have 181 points for a close to 7 km circuit. I have used splines to interpolate the track in between these points and create a new discrete map with 1 point every meter. Which is providing a much better accuracy when doing getFrenet (x, y) -> (s, d) conversions
-* improved getXY accuracy: again spline comes to the rescue here. 
+* improved accuracy map: the track is described basically by 1 point and its associated normal vector every 30 meters. So we have 181 points for a close to 7 km circuit. Splines are used to interpolate the track in between these points and create a new discrete map with 1 point every meter. Which is providing a much better accuracy when doing getFrenet (x, y) -> (s, d) conversions
+* improved getXY accuracy: again spline comes to the rescue here.  
 We are provided with x(t), s(t) and compute a x(s) spline.  
 We are provided with y(t), s(t) and compute a y(s) slpine.    
 We are provided with dx(t), s(t) and compute a dx(s) spline.  
@@ -177,15 +178,23 @@ vector<double> Map::getXYspline(double s, double d)
 }
 ```
 
-I also proposed 2 fixes in the NextWaypoint code which had some issues at s wraparound: https://waffle.io/udacity/sdc-issue-reports/cards/59e8ee756ff7e100813ad856  
+Two fixes were done in the NextWaypoint code which had some issues at s wraparound:  
+https://waffle.io/udacity/sdc-issue-reports/cards/59e8ee756ff7e100813ad856  
 
-While driving a full track I checked that my conversions error (x, y) -> (s, d) -> (x, y) are now on average around 0.6 meters (with a peak at 1.2 meters) which is well below the initial more than 10 meters error. I think this is probably the main reason why most of Udacity students reported issues while trying to work with JMT (s, d) frenet trajectories generations and finaly went back to generate spline X, Y trajectories: where the dependency on the conversion functions is much lower.  
+While driving a full track I checked that conversions error (x, y) -> (s, d) -> (x, y) are now on average around 0.6 meters (with a peak at 1.2 meters) which is well below the initial more than 10 meters error. I think this is probably the main reason why most of Udacity students reported issues while trying to work with JMT (s, d) frenet trajectories generations and finaly went back to generate spline X, Y trajectories: where the dependency on the conversion functions is much lower.  
 
 As a final note, I am wondering if the accuracy of the conversions could be further improved, but the fact that the map is  provided as a discrete set of 30 meters spaced points may prevent us for getting a perfect accuracy when doing frenet <-> cartesian conversions.    
 
 ### Predictions
 
 cf prediction.cpp  
+
+First we look for the closest objects: the car just in front of the ego vehicle and the car just behind the ego vehicle for every lane; assuming a Field Of View of 70 meters, front and back (which is a configurable parameter). So this provides a sort of scene summary with at most 6 surrounding cars: as we are dealing with 3 lanes here.  
+Thanks to the sensor fusion information, a speed estimate is provided and used to compute the future positions of these (at most) 6 objects up to an horizon of typically 1 second.  
+
+These predictions will be used later on to check for potential collisions and safety distances and evaluate whether a lane is a good target or not e.g. depending on the presence and/or speed of surrounding cars in these lanes.  
+  
+ So we use here a pure model based approach for the predictions. This could be improved and should be improved later on especially when dealing with more complex environments like city traffic or croassing roads: as depicted in the picture below different potential tracks for every surrounding object could be estimated and associated with probabilities that would evolve as we get more evidences related to a specific maneuver. And here typically machine learning and deep learning techniques could be used.  
 
 <p align="center">
      <img src="./img/predictions.png" alt="pipeline" width="50%" height="50%">
