@@ -500,22 +500,25 @@ I have spent a lot of time on this project, learnt a lot and I am pretty happy w
  * JMT trajectory generation: 2 points left for further improvement (low speed cases, cf Moritz Werling paper) + curvature impact when dealing with speed 
 
 ### References:  
-Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame  
-https://pdfs.semanticscholar.org/0e4c/282471fda509e8ec3edd555e32759fedf4d7.pdf   
-  
-Sampling Based Motion Planning for Heavy Duty Autonomous Vehicles  
-http://liu.diva-portal.org/smash/get/diva2:1049189/FULLTEXT01.pdf  
-  
-Towards Fully Autonomous Driving: Systems and Algorithms  
-https://www.cs.cmu.edu/~zkolter/pubs/levinson-iv2011.pdf  
-  
-Vehicle Trajectory Prediction based on Motion Model and Maneuver Recognition  
-https://hal.inria.fr/hal-00881100/PDF/IROS13_PIN_161867_.pdf  
-  
-Jerk Minimization Trajectory  
-http://www.shadmehrlab.org/book/minimum_jerk/minimumjerk.htm  
 
-   
+Directly related to this project and implementation:  
+**Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame** https://pdfs.semanticscholar.org/0e4c/282471fda509e8ec3edd555e32759fedf4d7.pdf   
+**Sampling Based Motion Planning for Heavy Duty Autonomous Vehicles** http://liu.diva-portal.org/smash/get/diva2:1049189/FULLTEXT01.pdf  
+**Towards Fully Autonomous Driving: Systems and Algorithms** https://www.cs.cmu.edu/~zkolter/pubs/levinson-iv2011.pdf  
+**Jerk Minimization Trajectory** http://www.shadmehrlab.org/book/minimum_jerk/minimumjerk.htm http://mplab.ucsd.edu/tutorials/minimumJerk.pdf  
+**Path Planning for Highly Automated Vehicles** publications.lib.chalmers.se/records/fulltext/182538/182538.pdf  
+ 
+For further investigation:  
+**Vehicle Trajectory Prediction based on Motion Model and Maneuver Recognition** https://hal.inria.fr/hal-00881100/PDF/IROS13_PIN_161867_.pdf  
+**Dynamic Speed Adaptation for Path Tracking Based on Curvature Information and Speed Limits** https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5492420/   
+**The formula for curvature** https://www.ima.umn.edu/~miller/1372curvature.pdf  
+**Interaction aware trajectory planning for merge scenarios in congested traffic situations** http://ieeexplore.ieee.org/document/7795596/  
+
+Some maths (french only sorry for that):  
+**Introduction a l'optimisation (cours d'agrégation)** https://www.ljll.math.upmc.fr/privat/documents/optimAgreg.pdf   
+**Les multiplicateurs de Lagrange expliqués aux lycéens** http://www.math.ens.fr/~budzinski/polys/Alg%C3%A8bre/Avanc%C3%A9/2011_ineg_cours.pdf  
+
+
 ## Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
 
