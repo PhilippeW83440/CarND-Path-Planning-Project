@@ -332,6 +332,28 @@ vector<double> JMT(vector< double> start, vector <double> end, double T)
 
 cf cost.cp  
 
+Trajectories are ranked against a cost function. The cost function is decomposed into several sub-cost functions.  
+By decreasing order of importance, corresponding to decreasing cost weights, we can list:
+* feasibility cost: with respect to collision avoidance and vehicule capabilities ...
+* safety cost: perfering to keep some buffer distance, good visibility ...
+* legality cost: complying to speed limits ...
+* comfort cost: minimizing jerk ...
+* efficiency cost: with respect to speed and time to goal ...
+
+
+In the current implementation we are taking into account:
+* collision avoidance and safety distances: by checking the minimum distance between the predictions and the trajectory over a 1 second time horizon
+* capabilities cost: a function is provided to check for max velocity, acceleration and jerk associated to every candidate trajectory.
+* efficiency cost: we perfer higher target speeds (it is a short term speed)
+* lane cost: we usually prefer staying in our lane (assuming other costs are equal) so we over penalize adjacent lanes when they are occupied (penality is based on distance wrt ego vehicule). And we give priority to "free lanes" without vehicle in Field Of View.
+
+**So it is a rather conservative driving policy, doing lane changes only when there is lots of free space in the target lane.**  
+
+**As a further evolution, a long term speed should be associated to every lane based on the speed of the vehicule in front of us (per lane) and we should try to drive into the lane with the best long term speed capability.**  
+
+As a summary, with the current implementation we end up with ranking up to 9 candidate trajectories and choose the one that best match our driving policy defined via a set of weighted cost functions.  
+
+
 <p align="center">
      <img src="./img/trajectories.png" alt="pipeline" width="50%" height="50%">
      <br>trajectories.png
