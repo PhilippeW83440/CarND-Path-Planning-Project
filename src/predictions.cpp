@@ -4,6 +4,8 @@
 
 using namespace std;
 
+double predictions_lane_speed[3];
+
 //double get_sdistance(double s1, double s2)
 //{
 //  // account for s wraparound at max_s
@@ -50,6 +52,8 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     {
       double d = sensor_fusion[i][6];
       int lane = get_lane(d);
+      if (lane < 0 || lane > 2)
+          continue; // some garbage values in sensor_fusion from time to time
 
       // s wraparound already handled via FOV shift
       //double dist = get_sdistance(s, car_s);
@@ -79,6 +83,32 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     cout << "lane " << i << ": ";
     cout << "front " << front[i] << " at " << front_dmin[i] << " s_meters ; ";
     cout << "back " << back[i] << " at " << back_dmin[i] << " s_meters" << endl;
+
+    if (front[i] >= 0)
+    {
+      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10))
+      {
+        double vx = sensor_fusion[front[i]][3];
+        double vy = sensor_fusion[front[i]][4];
+        predictions_lane_speed[i] = sqrt(vx*vx+vy*vy);
+      }
+      else
+      {
+        predictions_lane_speed[i] = 0;
+      }
+    }
+    else
+    {
+      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10))
+      {
+        predictions_lane_speed[i] = param_max_speed_mph;
+      }
+      else
+      {
+        predictions_lane_speed[i] = 0;
+      }
+    }
+    cout << "predictions_lane_speed[" << i << "]=" << predictions_lane_speed[i] << endl;
   }
 
   return { front[0], back[0], front[1], back[1], front[2], back[2] };

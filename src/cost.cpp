@@ -1,6 +1,7 @@
 #include "cost.h"
 #include "utility.h"
 #include "params.h"
+#include "predictions.h"
 
 #include <cassert>
 #include <cmath>
@@ -169,7 +170,8 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   cost = cost + weight_comfort * cost_comfort;
 
   // 5) EFFICIENCY cost
-  cost_efficiency = param_max_speed_mph - target_vel;
+  //cost_efficiency = param_max_speed_mph - target_vel;
+  cost_efficiency = param_max_speed_mph - predictions_lane_speed[target_lane];
   cost = cost + weight_efficiency * cost_efficiency;
 
   // 5) LANE cost
@@ -191,10 +193,10 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
 
     if (get_lane(obj_d) == target_lane)
     {
-      if (target_lane != car_lane)
-      {
-        cost += (dist/param_fov); // penalize lane changes
-      }
+      //if (target_lane != car_lane)
+      //{
+          cost += (dist/param_fov); // penalize lane changes
+      //}
       free_lane = false;
     }
     it++;
@@ -204,7 +206,7 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
     cost--;
   }
 
-  cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_vel=" << target_vel << " cost=" << cost << endl;
+  cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_lvel=" << predictions_lane_speed[target_lane] << " cost=" << cost << endl;
 
   return cost;
 }

@@ -6,10 +6,18 @@
 
 extern std::string map_file_; // cf params.cpp
 // The max s value before wrapping around the track back to 0
-const double max_s = 6945.554;
+// const double max_s = 6945.554;
+// // center point of the track
+// const double param_center_x = 1000;
+// const double param_center_y = 2000;
+
+//const double max_s = 5128.31;
+//const double max_s = 5129;
+const double max_s = 6000;
+//const double max_s = 5200;
 // center point of the track
-const double param_center_x = 1000;
-const double param_center_y = 2000;
+const double param_center_x = 0;
+const double param_center_y = 0;
 
 const int param_nb_points = 50; // in the trajectory sent to simulator
 const double param_dt = 0.02; // 1 point every 0.02 s

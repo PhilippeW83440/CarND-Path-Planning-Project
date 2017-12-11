@@ -283,27 +283,23 @@ vector<double> Map::getFrenet(double x, double y, double theta)
 
 	//see if d value is positive or negative by comparing it to a center point
 
+#if 0
 	double center_x = param_center_x - maps_x[prev_wp];
 	double center_y = param_center_y - maps_y[prev_wp];
 	double centerToPos = distance(center_x,center_y,x_x,x_y);
 	double centerToRef = distance(center_x,center_y,proj_x,proj_y);
 
-	if(centerToPos <= centerToRef)
-	{
+	if (centerToPos <= centerToRef) {
 		frenet_d *= -1;
 	}
-
-	// calculate s value
-	// XXX double frenet_s = 0;
-	// XXX for(int i = 0; i < prev_wp; i++)
-	// XXX {
-	// XXX 	frenet_s += distance(maps_x[i],maps_y[i],maps_x[i+1],maps_y[i+1]);
-	// XXX }
+#endif
 
   double frenet_s = maps_s[prev_wp]; // XXX faster
 	frenet_s += distance(0,0,proj_x,proj_y);
 
-	return {frenet_s,frenet_d};
+  assert(frenet_d >= 0);
+
+	return {frenet_s, frenet_d};
 }
 
 
