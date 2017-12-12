@@ -17,10 +17,10 @@ struct trajectory_jmt JMT_init(double car_s, double car_d)
 {
   struct trajectory_jmt traj_jmt;
   // 50 x {s, s_dot, s_ddot}
-  vector<vector<double>> store_path_s(param_nb_points, {0, 0, 0});
-  vector<vector<double>> store_path_d(param_nb_points, {0, 0, 0});
+  vector<vector<double>> store_path_s(PARAM_NB_POINTS, {0, 0, 0});
+  vector<vector<double>> store_path_d(PARAM_NB_POINTS, {0, 0, 0});
 
-  for (int i = 0; i < param_nb_points; i++)
+  for (int i = 0; i < PARAM_NB_POINTS; i++)
   {
     store_path_s[i] = { car_s, 0, 0};
     store_path_d[i] = { car_d, 0, 0};
@@ -112,19 +112,19 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
 {
   struct trajectory_jmt traj_jmt;
 
-  vector<vector<double>> new_path_s(param_nb_points, {0, 0, 0});
-  vector<vector<double>> new_path_d(param_nb_points, {0, 0, 0});
+  vector<vector<double>> new_path_s(PARAM_NB_POINTS, {0, 0, 0});
+  vector<vector<double>> new_path_d(PARAM_NB_POINTS, {0, 0, 0});
 
   //cout << "prev_size=" << prev_size << endl;
-  //int last_point = param_nb_points - prev_size - 1;
+  //int last_point = PARAM_NB_POINTS - prev_size - 1;
   int last_point;
-  if (param_truncated_prev_size < param_nb_points)
+  if (PARAM_TRUNCATED_PREV_SIZE < PARAM_NB_POINTS)
   {
-    last_point = param_nb_points - previous_path_x.size() + prev_size - 1;
+    last_point = PARAM_NB_POINTS - previous_path_x.size() + prev_size - 1;
   }
   else
   {
-    last_point = param_nb_points - 1;
+    last_point = PARAM_NB_POINTS - 1;
   }
 
   /////////////////////////////////////////////////////////////
@@ -197,16 +197,16 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
   
   for (int i = 0; i < prev_size; i++)
   {
-    new_path_s[i] = prev_path_s[param_nb_points - previous_path_x.size() + i];
-    new_path_d[i] = prev_path_d[param_nb_points - previous_path_x.size() + i];
+    new_path_s[i] = prev_path_s[PARAM_NB_POINTS - previous_path_x.size() + i];
+    new_path_d[i] = prev_path_d[PARAM_NB_POINTS - previous_path_x.size() + i];
 
     next_x_vals.push_back(previous_path_x[i]);
     next_y_vals.push_back(previous_path_y[i]);
   }
 
   //double t = 0.0; continuity point reused
-  double t = param_dt;
-  for (int i = prev_size; i < param_nb_points; i++)
+  double t = PARAM_DT;
+  for (int i = prev_size; i < PARAM_NB_POINTS; i++)
   {
     double s = polyeval(poly_s, t);
     double s_dot = polyeval_dot(poly_s, t);
@@ -224,7 +224,7 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
     next_x_vals.push_back(point_xy[0]);
     next_y_vals.push_back(point_xy[1]);
 
-    t += param_dt;
+    t += PARAM_DT;
   }
 
   traj_jmt.trajectory = { next_x_vals, next_y_vals};
@@ -326,9 +326,9 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
   
   // fill up the rest of our path planner after filing it with previous points
   // here we will always output 50 points
-  for (int i = 1; i <= param_nb_points - prev_size; i++)
+  for (int i = 1; i <= PARAM_NB_POINTS - prev_size; i++)
   {
-    double N = (target_dist / (param_dt * mph_to_ms(target_vel))); // divide by 2.24: mph -> m/s
+    double N = (target_dist / (PARAM_DT * mph_to_ms(target_vel))); // divide by 2.24: mph -> m/s
     double x_point = x_add_on + target_x/N;
     double y_point = spl(x_point);
   

@@ -137,7 +137,7 @@ int main() {
             }
 
             // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
-            std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, param_nb_points /* 50 */);
+            std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, PARAM_NB_POINTS /* 50 */);
 
 
 
@@ -159,7 +159,7 @@ int main() {
 
 
             // -- short time horizon (close to 100 msec when possible; not lower bcz of simulator latency) for trajectory (re)generation ---
-            prev_size = min(prev_size, param_truncated_prev_size);
+            prev_size = min(prev_size, PARAM_TRUNCATED_PREV_SIZE);
             vector<double> frenet_close;
             if (prev_size > 0) // prev_size typically close to 100 msec
             {
@@ -183,7 +183,7 @@ int main() {
 
               // vector of (traj_x, traj_y)
               vector<vector<double>> trajectory;
-              if (param_trajectory_jmt)
+              if (PARAM_TRAJECTORY_JMT)
               {
                 struct trajectory_jmt traj_jmt;
 
@@ -219,7 +219,7 @@ int main() {
             }
             target_lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
-            if (param_trajectory_jmt)
+            if (PARAM_TRAJECTORY_JMT)
             {
               prev_path_s = prev_paths_s[min_cost_index];
               prev_path_d = prev_paths_d[min_cost_index];

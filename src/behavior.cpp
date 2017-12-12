@@ -26,14 +26,14 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       double car_vel = mph_to_ms(ref_vel);
       double front_vel = check_speed;
       cout << "obj_idx=" << i << " CAR_VEL=" << car_vel << " FRONT_VEL=" << front_vel << endl;
-      double dist_safety = param_dist_slow_down;
+      double dist_safety = PARAM_DIST_SLOW_DOWN;
       if (fabs(car_vel - front_vel) <= 2)
         dist_safety = 10;
   
       // if using previous points can project s value outwards in time
-      check_car_s+=((double)prev_size * param_dt * check_speed);
+      check_car_s+=((double)prev_size * PARAM_DT * check_speed);
   
-      //if ((check_car_s > car_s) && ((check_car_s - car_s) < param_dist_slow_down))
+      //if ((check_car_s > car_s) && ((check_car_s - car_s) < PARAM_DIST_SLOW_DOWN))
       if ((check_car_s > car_s) && ((check_car_s - car_s) < dist_safety))
       {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
@@ -46,15 +46,15 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   if (too_close)
   {
     //ref_vel -= 2 * .224; // 5 m.s-2 under the 10 requirement
-    ref_vel -= param_max_speed_inc_mph;
+    ref_vel -= PARAM_MAX_SPEED_INC_MPH;
     ref_vel = max(ref_vel, 0.0); // no backwards driving ... just in case
     ref_vel_inc = -1;
   }
-  else if (ref_vel < param_max_speed_mph)
+  else if (ref_vel < PARAM_MAX_SPEED_MPH)
   {
     //ref_vel += 2 * .224;
-    ref_vel += param_max_speed_inc_mph;
-    ref_vel = min(ref_vel, param_max_speed_mph);
+    ref_vel += PARAM_MAX_SPEED_INC_MPH;
+    ref_vel = min(ref_vel, PARAM_MAX_SPEED_MPH);
     ref_vel_inc = +1;
   }
 
@@ -87,18 +87,18 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   switch (ref_vel_inc)
   {
     case 1:
-      backup_vel.push_back(ref_vel - param_max_speed_inc_mph);
-      backup_vel.push_back(ref_vel - 2 * param_max_speed_inc_mph);
+      backup_vel.push_back(ref_vel - PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(ref_vel - 2 * PARAM_MAX_SPEED_INC_MPH);
       break;
     case 0: // already max speed
-      backup_vel.push_back(ref_vel - param_max_speed_inc_mph);
+      backup_vel.push_back(ref_vel - PARAM_MAX_SPEED_INC_MPH);
       break;
     case -1:
       // emergency breaking
-      backup_vel.push_back(ref_vel - param_max_speed_inc_mph);
+      backup_vel.push_back(ref_vel - PARAM_MAX_SPEED_INC_MPH);
 
       // emergency acceleration (dangerous here)
-      //backup_vel.push_back(ref_vel + param_max_speed_inc_mph);
+      //backup_vel.push_back(ref_vel + PARAM_MAX_SPEED_INC_MPH);
       break;
     default:
       assert(1 == 0); // something went wrong

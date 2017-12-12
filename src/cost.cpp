@@ -36,25 +36,25 @@ bool check_max_capabilities(vector<vector<double>> &traj)
     y_2 = traj[1][t-2];
     y_3 = traj[1][t-3];
 
-    vx = (x - x_1) / param_dt;
-    vy = (y - y_1) / param_dt;
+    vx = (x - x_1) / PARAM_DT;
+    vy = (y - y_1) / PARAM_DT;
 
-    ax = (x - 2*x_1 + x_2) / (param_dt * param_dt);
-    ay = (y - 2*y_1 + y_2) / (param_dt * param_dt);
+    ax = (x - 2*x_1 + x_2) / (PARAM_DT * PARAM_DT);
+    ay = (y - 2*y_1 + y_2) / (PARAM_DT * PARAM_DT);
 
     // rounding to 2 decimals (cm precision) to ensure numerical stability
     jx = (x - 3*x_1 + 3*x_2 - x_3);
     jx = roundf(jx * 100) / 100;
-    jx = jx / (param_dt * param_dt * param_dt);
+    jx = jx / (PARAM_DT * PARAM_DT * PARAM_DT);
     jy = (y - 3*y_1 + 3*y_2 - y_3);
     jy = roundf(jy * 100) / 100;
-    jy = jy / (param_dt * param_dt * param_dt);
+    jy = jy / (PARAM_DT * PARAM_DT * PARAM_DT);
 
     vel = sqrt(vx*vx + vy*vy);
     acc = sqrt(ax*ax + ay*ay);
     jerk = sqrt(jx*jx + jy*jy);
 
-    total_jerk += jerk * param_dt;
+    total_jerk += jerk * PARAM_DT;
 
     //cout << "jx=" << jx << " jy=" << jy << endl;
     //cout << "vel=" << vel << " acc=" << acc << " jerk=" << jerk << endl;
@@ -65,9 +65,9 @@ bool check_max_capabilities(vector<vector<double>> &traj)
       max_acc = acc;
   }
 
-  jerk_per_second = total_jerk / (param_nb_points * param_dt);
+  jerk_per_second = total_jerk / (PARAM_NB_POINTS * PARAM_DT);
 
-  if (roundf(max_vel) > param_max_speed || roundf(max_acc) > param_max_accel || jerk_per_second > param_max_jerk)
+  if (roundf(max_vel) > PARAM_MAX_SPEED || roundf(max_acc) > PARAM_MAX_ACCEL || jerk_per_second > PARAM_MAX_JERK)
   {
     cout << "max_vel=" << max_vel << " max_acc=" << max_acc << " jerk_per_second=" << jerk_per_second  << endl;
     //assert(1 == 0);
@@ -107,7 +107,7 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
         dmin = dist;
       }
       //cout << "dist[" << i << "]=" << dist << endl; 
-      //if (dist <= param_dist_collision)
+      //if (dist <= PARAM_DIST_COLLISION)
       //{
       //  cout << "=====> DMIN = " << dmin << endl;
       //  cout << "predicted collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
@@ -153,9 +153,9 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   // 2) SAFETY cost
   double dmin = get_predicted_dmin(trajectory, predictions);
   assert(dmin >= 0);
-  if (dmin < param_dist_safety)
+  if (dmin < PARAM_DIST_SAFETY)
   {
-    cost_safety = param_dist_safety - dmin;
+    cost_safety = PARAM_DIST_SAFETY - dmin;
   }
   else
   {
@@ -170,12 +170,12 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   cost = cost + weight_comfort * cost_comfort;
 
   // 5) EFFICIENCY cost
-  //cost_efficiency = param_max_speed_mph - target_vel;
-  //cost_efficiency = param_max_speed_mph - predictions_lane_speed[target_lane];
+  //cost_efficiency = PARAM_MAX_SPEED_MPH - target_vel;
+  //cost_efficiency = PARAM_MAX_SPEED_MPH - predictions_lane_speed[target_lane];
 
   // sensor_fusion speed in m/s !!!
-  //cost_efficiency = param_max_speed - predictions_lane_speed[target_lane];
-  cost_efficiency = param_fov - predictions_free_space[target_lane];
+  //cost_efficiency = PARAM_MAX_SPEED - predictions_lane_speed[target_lane];
+  cost_efficiency = PARAM_FOV - predictions_free_space[target_lane];
   cost = cost + weight_efficiency * cost_efficiency;
 
   // 5) LANE cost
@@ -200,7 +200,7 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
     {
       //if (target_lane != car_lane)
       //{
-          //cost += (dist/param_fov); // penalize lane changes
+          //cost += (dist/PARAM_FOV); // penalize lane changes
           //cost += dist;
       //}
       free_lane = false;

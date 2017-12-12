@@ -10,21 +10,21 @@ double ms_to_mph(double ms) { return ms * 2.24; } // mph
 // d coord for left lane
 double get_dleft(int lane)
 {
-  double dleft = lane * param_lane_width;
+  double dleft = lane * PARAM_LANE_WIDTH;
   return dleft;
 }
 
 // d coord for right lane
 double get_dright(int lane)
 {
-  double dright = (lane + 1) * param_lane_width;
+  double dright = (lane + 1) * PARAM_LANE_WIDTH;
   return dright;
 }
 
 // d coord for center lane
 double get_dcenter(int lane)
 {
-  double dcenter = (lane + 0.5) * param_lane_width;
+  double dcenter = (lane + 0.5) * PARAM_LANE_WIDTH;
   if (dcenter >= 10)
   {
     // this a workaround for a simulator issue I think (reported by others as well on udacity forums)
@@ -37,7 +37,7 @@ double get_dcenter(int lane)
 
 int get_lane(double d)
 {
-  return (int)(d / param_lane_width);
+  return (int)(d / PARAM_LANE_WIDTH);
 }
 
 double distance(double x1, double y1, double x2, double y2)

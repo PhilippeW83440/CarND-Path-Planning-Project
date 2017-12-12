@@ -61,7 +61,7 @@ Map::Map(string map_file)
   // to get a good spline approximation on last segment wrapping around
   map_waypoints_x.push_back(x0);
   map_waypoints_y.push_back(y0);
-  map_waypoints_s.push_back(max_s);
+  map_waypoints_s.push_back(MAX_S);
   map_waypoints_dx.push_back(dx0);
   map_waypoints_dy.push_back(dy0);
   map_waypoints_normx.push_back(x0+10*dx0);
@@ -84,7 +84,7 @@ Map::Map(string map_file)
   double len_ref = 0;
   double prev_x = spline_x(0);
   double prev_y = spline_y(0);
-  for (double s = 1; s <= floor(max_s); s++)
+  for (double s = 1; s <= floor(MAX_S); s++)
   {
     double x = spline_x(s);
     double y = spline_y(s);
@@ -99,7 +99,7 @@ Map::Map(string map_file)
   new_map_waypoints_y;
   new_map_waypoints_dx;
   new_map_waypoints_dy;
-  for (double s = 0; s <= floor(max_s); s++)
+  for (double s = 0; s <= floor(MAX_S); s++)
   {
     double x = spline_x(s);
     double y = spline_y(s);
@@ -284,8 +284,8 @@ vector<double> Map::getFrenet(double x, double y, double theta)
 	//see if d value is positive or negative by comparing it to a center point
 
 #if 0
-	double center_x = param_center_x - maps_x[prev_wp];
-	double center_y = param_center_y - maps_y[prev_wp];
+	double center_x = PARAM_CENTER_X - maps_x[prev_wp];
+	double center_y = PARAM_CENTER_Y - maps_y[prev_wp];
 	double centerToPos = distance(center_x,center_y,x_x,x_y);
 	double centerToRef = distance(center_x,center_y,proj_x,proj_y);
 
@@ -336,7 +336,7 @@ vector<double> Map::getXY(double s, double d)
 
 vector<double> Map::getXYspline(double s, double d)
 {
-  s = fmod(s, max_s); // bug fix for JMT wraparound
+  s = fmod(s, MAX_S); // bug fix for JMT wraparound
 	double x = spline_x(s) + d * spline_dx(s);
 	double y = spline_y(s) + d * spline_dy(s);
 
@@ -345,7 +345,7 @@ vector<double> Map::getXYspline(double s, double d)
 
 double Map::getSpeedToFrenet(double Vxy, double s)
 {
-  s = fmod(s, max_s);
+  s = fmod(s, MAX_S);
   double dx_over_ds = spline_x.deriv(1, s);
   double dy_over_ds = spline_y.deriv(1, s);
   double Vs = (Vxy / sqrt(dx_over_ds*dx_over_ds + dy_over_ds*dy_over_ds));

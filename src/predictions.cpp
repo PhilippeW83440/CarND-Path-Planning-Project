@@ -9,8 +9,8 @@ double predictions_free_space[3];
 
 //double get_sdistance(double s1, double s2)
 //{
-//  // account for s wraparound at max_s
-//  double sdistance = min( fabs(s1 - s2), min(fabs((s1+max_s) - s2), fabs(s1 - (s2+max_s))) );
+//  // account for s wraparound at MAX_S
+//  double sdistance = min( fabs(s1 - s2), min(fabs((s1+MAX_S) - s2), fabs(s1 - (s2+MAX_S))) );
 //  return sdistance;
 //}
 
@@ -28,21 +28,21 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
   vector<double> back_dmin = {1e10, 1e10, 1e10}; // per lane
 
   // Handle FOV and s wraparound
-  double sfov_min = car_s - param_fov;
-  double sfov_max = car_s + param_fov;
+  double sfov_min = car_s - PARAM_FOV;
+  double sfov_max = car_s + PARAM_FOV;
   double sfov_shit = 0;
   if (sfov_min < 0)
   {
     sfov_shit = -sfov_min;
   }
-  else if (sfov_max > max_s)
+  else if (sfov_max > MAX_S)
   {
-    sfov_shit = max_s - sfov_max;
+    sfov_shit = MAX_S - sfov_max;
   }
   sfov_min += sfov_shit;
   sfov_max += sfov_shit;
-  assert(sfov_min >= 0 && sfov_min <= max_s);
-  assert(sfov_max >= 0 && sfov_max <= max_s);
+  assert(sfov_min >= 0 && sfov_min <= MAX_S);
+  assert(sfov_max >= 0 && sfov_max <= MAX_S);
 
   car_s += sfov_shit;
 
@@ -105,8 +105,8 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     {
       if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10))
       {
-        predictions_lane_speed[i] = param_max_speed_mph;
-        predictions_free_space[i] = param_fov;
+        predictions_lane_speed[i] = PARAM_MAX_SPEED_MPH;
+        predictions_free_space[i] = PARAM_FOV;
       }
       else
       {
@@ -143,7 +143,7 @@ std::map< int, vector<vector<double> > > generate_predictions(vector<vector<doub
       vector<vector<double>> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
       for (int j = 0; j < horizon; j++)
       {
-        prediction.push_back({x + vx * j*param_dt, y + vy * j*param_dt});
+        prediction.push_back({x + vx * j*PARAM_DT, y + vy * j*PARAM_DT});
       }
       //predictions.push_back(prediction);
       predictions[fusion_index] = prediction;
