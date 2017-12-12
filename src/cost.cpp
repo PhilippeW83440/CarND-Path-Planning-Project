@@ -171,7 +171,11 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
 
   // 5) EFFICIENCY cost
   //cost_efficiency = param_max_speed_mph - target_vel;
-  cost_efficiency = param_max_speed_mph - predictions_lane_speed[target_lane];
+  //cost_efficiency = param_max_speed_mph - predictions_lane_speed[target_lane];
+
+  // sensor_fusion speed in m/s !!!
+  //cost_efficiency = param_max_speed - predictions_lane_speed[target_lane];
+  cost_efficiency = param_fov - predictions_free_space[target_lane];
   cost = cost + weight_efficiency * cost_efficiency;
 
   // 5) LANE cost
@@ -179,6 +183,7 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   double ego_y = trajectory[1][0];
 
 
+#if 0
   bool free_lane = true;
 
   std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
@@ -195,7 +200,8 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
     {
       //if (target_lane != car_lane)
       //{
-          cost += (dist/param_fov); // penalize lane changes
+          //cost += (dist/param_fov); // penalize lane changes
+          //cost += dist;
       //}
       free_lane = false;
     }
@@ -205,6 +211,7 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   {
     cost--;
   }
+#endif
 
   cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_lvel=" << predictions_lane_speed[target_lane] << " cost=" << cost << endl;
 

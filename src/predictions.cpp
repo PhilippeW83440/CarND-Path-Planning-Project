@@ -5,6 +5,7 @@
 using namespace std;
 
 double predictions_lane_speed[3];
+double predictions_free_space[3];
 
 //double get_sdistance(double s1, double s2)
 //{
@@ -86,15 +87,18 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
 
     if (front[i] >= 0)
     {
+
       if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10))
       {
         double vx = sensor_fusion[front[i]][3];
         double vy = sensor_fusion[front[i]][4];
         predictions_lane_speed[i] = sqrt(vx*vx+vy*vy);
+        predictions_free_space[i] = front_dmin[i];
       }
       else
       {
         predictions_lane_speed[i] = 0;
+        predictions_free_space[i] = 0; // too dangerous
       }
     }
     else
@@ -102,10 +106,12 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
       if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10))
       {
         predictions_lane_speed[i] = param_max_speed_mph;
+        predictions_free_space[i] = param_fov;
       }
       else
       {
         predictions_lane_speed[i] = 0;
+        predictions_free_space[i] = 0; // too dangerous
       }
     }
     cout << "predictions_lane_speed[" << i << "]=" << predictions_lane_speed[i] << endl;
