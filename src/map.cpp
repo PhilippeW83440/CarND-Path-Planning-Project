@@ -391,7 +391,7 @@ double Map::testError(double car_x, double car_y, double car_yaw)
   sum_error += error;
   num_error++;
   avg_error = sum_error / num_error;
-  assert(error < 4);
+  //assert(error < 4);
   if (error > max_error)
   {
     max_error = error;
