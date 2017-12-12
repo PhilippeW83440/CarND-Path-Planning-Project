@@ -22,11 +22,19 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       double vy = sensor_fusion[i][4];
       double check_speed = sqrt(vx*vx+vy*vy);
       double check_car_s = sensor_fusion[i][5];
+
+      double car_vel = mph_to_ms(ref_vel);
+      double front_vel = check_speed;
+      cout << "obj_idx=" << i << " CAR_VEL=" << car_vel << " FRONT_VEL=" << front_vel << endl;
+      double dist_safety = param_dist_slow_down;
+      if (fabs(car_vel - front_vel) <= 2)
+        dist_safety = 10;
   
       // if using previous points can project s value outwards in time
       check_car_s+=((double)prev_size * param_dt * check_speed);
   
-      if ((check_car_s > car_s) && ((check_car_s - car_s) < param_dist_slow_down))
+      //if ((check_car_s > car_s) && ((check_car_s - car_s) < param_dist_slow_down))
+      if ((check_car_s > car_s) && ((check_car_s - car_s) < dist_safety))
       {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
         //ref_vel = 29.5; //mph
@@ -64,8 +72,8 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       backup_lanes.push_back(1);
       break;
     case 1:
-      backup_lanes.push_back(0);
       backup_lanes.push_back(2);
+      backup_lanes.push_back(0);
       break;
     case 0:
       backup_lanes.push_back(1);
