@@ -23,8 +23,8 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
   vector<int> front = {-1, -1, -1}; // idx of closest object per lane
   vector<int> back = {-1, -1, -1}; // idx of closest object per lane
 
-  vector<double> front_dmin = {1e10, 1e10, 1e10}; // per lane
-  vector<double> back_dmin = {1e10, 1e10, 1e10}; // per lane
+  vector<double> front_dmin = {INF, INF, INF}; // per lane
+  vector<double> back_dmin = {INF, INF, INF}; // per lane
 
   // Handle FOV and s wraparound
   double sfov_min = car_s - PARAM_FOV;

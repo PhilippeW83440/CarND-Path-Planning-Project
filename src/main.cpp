@@ -101,7 +101,7 @@ int main() {
           	json msgJson;
 
             // --- just for debugging purposes
-            double dist_min = 1e10;
+            double dist_min = INF;
             for (int i = 0; i < sensor_fusion.size(); i++)
             {
               // sensor_fusion: pre object [ID, x, y, vx, vy, s, d]
@@ -207,7 +207,7 @@ int main() {
             }
 
             // --- retrieve the lowest cost trajectory ---
-            double min_cost = 1e10;
+            double min_cost = INF;
             int min_cost_index = 0;
             for (int i = 0; i < costs.size(); i++)
             {

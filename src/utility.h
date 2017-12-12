@@ -1,6 +1,30 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
+#include <vector>
+
+// Computationnal defines
+#define INF 1e10
+enum {
+  ID = 0, // 0
+  X  = 1, // 1
+  Y  = 2, // 2
+  VX = 3, // 3
+  VY = 4, // 4
+  S  = 5, // 5
+  D  = 6, // 6
+  SIZE    // 7
+};
+
+typedef std::vector<double > t_coord;
+typedef std::vector<t_coord> t_traj;
+typedef std::vector<t_traj > t_trajSet;
+
+typedef struct {
+  double s;
+  double d;
+} t_frenet;
+
 // For converting back and forth between radians and degrees.
 double deg2rad(double x);
 double rad2deg(double x);

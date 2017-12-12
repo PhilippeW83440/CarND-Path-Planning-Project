@@ -78,7 +78,7 @@ bool check_max_capabilities(vector<vector<double>> &traj)
 
 double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vector<vector<double>>> &predictions)
 {
-  double dmin = 1e10;
+  double dmin = INF;
 
   std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
   while(it != predictions.end())
