@@ -166,11 +166,13 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
     // the ratio should be related to curvature and d
     if (df >= 8)
     {
-      sf_dot *= 0.95;
+      //sf_dot *= 0.95;
+      sf_dot *= 0.94;
     }
     else if (df >= 4)
     {
-      sf_dot *= 0.97;
+      //sf_dot *= 0.97;
+      sf_dot *= 0.96;
     }
     else
     {
