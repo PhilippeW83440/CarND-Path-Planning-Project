@@ -12,12 +12,10 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
   
   // find ref_v to use based on car in front of us
-  for (int i = 0; i < sensor_fusion.size(); i++)
-  {
+  for (size_t i = 0; i < sensor_fusion.size(); i++) {
     // car is in my lane
     float d = sensor_fusion[i][6];
-    if (d > get_dleft(lane) && d < get_dright(lane))
-    {
+    if (d > get_dleft(lane) && d < get_dright(lane)) {
       double vx = sensor_fusion[i][3];
       double vy = sensor_fusion[i][4];
       double check_speed = sqrt(vx*vx+vy*vy);
@@ -28,14 +26,12 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       cout << "obj_idx=" << i << " CAR_VEL=" << car_vel << " FRONT_VEL=" << front_vel << endl;
       double dist_safety = PARAM_DIST_SLOW_DOWN;
       if (fabs(car_vel - front_vel) <= 2)
-        dist_safety = 10;
+        dist_safety = 10; // XXX TODO remove harcoded value
   
       // if using previous points can project s value outwards in time
-      check_car_s+=((double)prev_size * PARAM_DT * check_speed);
+      check_car_s += (double)prev_size * PARAM_DT * check_speed;
   
-      //if ((check_car_s > car_s) && ((check_car_s - car_s) < PARAM_DIST_SLOW_DOWN))
-      if ((check_car_s > car_s) && ((check_car_s - car_s) < dist_safety))
-      {
+      if ((check_car_s > car_s) && ((check_car_s - car_s) < dist_safety)) {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
         //ref_vel = 29.5; //mph
         too_close = true;
@@ -43,15 +39,12 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
     }
   }
   
-  if (too_close)
-  {
+  if (too_close) {
     //ref_vel -= 2 * .224; // 5 m.s-2 under the 10 requirement
     ref_vel -= PARAM_MAX_SPEED_INC_MPH;
     ref_vel = max(ref_vel, 0.0); // no backwards driving ... just in case
     ref_vel_inc = -1;
-  }
-  else if (ref_vel < PARAM_MAX_SPEED_MPH)
-  {
+  } else if (ref_vel < PARAM_MAX_SPEED_MPH) {
     //ref_vel += 2 * .224;
     ref_vel += PARAM_MAX_SPEED_INC_MPH;
     ref_vel = min(ref_vel, PARAM_MAX_SPEED_MPH);
@@ -61,9 +54,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   // our nominal target .. same lane
   possible_targets.push_back({(double)lane, ref_vel});
 
-  ///////////////////////////////////////////////////////////////////
-  // Backup targets
-  ///////////////////////////////////////////////////////////////////
+  // Backup targets (lane and speed)
 
   vector<int> backup_lanes;
   switch (lane)
@@ -106,27 +97,22 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   }
 
   // 1) backup velocities on target lane
-  for (int i = 0; i < backup_vel.size(); i++)
-  {
+  for (size_t i = 0; i < backup_vel.size(); i++) {
     possible_targets.push_back({(double)lane, backup_vel[i]});
   }
 
   // 2) target velocity on backup lanes
-  for (int i = 0; i < backup_lanes.size(); i++)
-  {
+  for (size_t i = 0; i < backup_lanes.size(); i++) {
     possible_targets.push_back({(double)backup_lanes[i], ref_vel});
   }
 
   // 2) backup velocities on backup lanes
-  for (int i = 0; i < backup_vel.size(); i++)
-  {
-    for (int j = 0; j < backup_lanes.size(); j++)
-    {
+  for (size_t i = 0; i < backup_vel.size(); i++) {
+    for (size_t j = 0; j < backup_lanes.size(); j++) {
       possible_targets.push_back({(double)backup_lanes[j], backup_vel[i]});
     }
   }
 
-  ///////////////////////////////////////////////////////////////////
 
   return possible_targets;
 }

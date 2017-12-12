@@ -19,8 +19,7 @@ double predictions_free_space[3];
 // => at most 6 predictions (for now on) as we have 3 lanes
 
 // sort of simple scene detection
-vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double car_s)
-{
+vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double car_s) {
   vector<int> front = {-1, -1, -1}; // idx of closest object per lane
   vector<int> back = {-1, -1, -1}; // idx of closest object per lane
 
@@ -31,12 +30,9 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
   double sfov_min = car_s - PARAM_FOV;
   double sfov_max = car_s + PARAM_FOV;
   double sfov_shit = 0;
-  if (sfov_min < 0)
-  {
+  if (sfov_min < 0) { // Handle s wrapping
     sfov_shit = -sfov_min;
-  }
-  else if (sfov_max > MAX_S)
-  {
+  } else if (sfov_max > MAX_S) {
     sfov_shit = MAX_S - sfov_max;
   }
   sfov_min += sfov_shit;
@@ -46,11 +42,9 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
 
   car_s += sfov_shit;
 
-  for (int i = 0; i < sensor_fusion.size(); i++)
-  {
+  for (size_t i = 0; i < sensor_fusion.size(); i++) {
     double s = sensor_fusion[i][5] + sfov_shit;
-    if (s >= sfov_min && s <= sfov_max) // object in FOV
-    {
+    if (s >= sfov_min && s <= sfov_max) { // object in FOV
       double d = sensor_fusion[i][6];
       int lane = get_lane(d);
       if (lane < 0 || lane > 2)
@@ -60,18 +54,13 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
       //double dist = get_sdistance(s, car_s);
       double dist = fabs(s - car_s);
 
-      if (s >= car_s) /* front */
-      {
-        if (dist < front_dmin[lane])
-        {
+      if (s >= car_s) { /* front */
+        if (dist < front_dmin[lane]) {
           front[lane] = i;
           front_dmin[lane] = dist;
         }
-      }
-      else /* back */
-      {
-        if (dist < back_dmin[lane])
-        {
+      } else /* back */ {
+        if (dist < back_dmin[lane]) {
           back[lane] = i;
           back_dmin[lane] = dist;
         }
@@ -79,37 +68,28 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     }
   }
 
-  for (int i = 0; i < front.size(); i++)
-  {
+  for (size_t i = 0; i < front.size(); i++) {
     cout << "lane " << i << ": ";
     cout << "front " << front[i] << " at " << front_dmin[i] << " s_meters ; ";
     cout << "back " << back[i] << " at " << back_dmin[i] << " s_meters" << endl;
 
-    if (front[i] >= 0)
-    {
+    if (front[i] >= 0) {
 
-      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10))
-      {
+      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10)) {
         double vx = sensor_fusion[front[i]][3];
         double vy = sensor_fusion[front[i]][4];
         predictions_lane_speed[i] = sqrt(vx*vx+vy*vy);
         predictions_free_space[i] = front_dmin[i];
-      }
-      else
-      {
+      } else {
         predictions_lane_speed[i] = 0;
         predictions_free_space[i] = 0; // too dangerous
       }
     }
-    else
-    {
-      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10))
-      {
+    else {
+      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10)) {
         predictions_lane_speed[i] = PARAM_MAX_SPEED_MPH;
         predictions_free_space[i] = PARAM_FOV;
-      }
-      else
-      {
+      } else {
         predictions_lane_speed[i] = 0;
         predictions_free_space[i] = 0; // too dangerous
       }
@@ -130,19 +110,16 @@ std::map< int, vector<vector<double> > > generate_predictions(vector<vector<doub
   // vector of indexes in sensor_fusion
   vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s); 
 
-  for (int i = 0; i < closest_objects.size(); i++)
-  {
+  for (int i = 0; i < closest_objects.size(); i++) {
     int fusion_index = closest_objects[i];
-    if (fusion_index >= 0)
-    {
+    if (fusion_index >= 0) {
       //double fusion_id = sensor_fusion[fusion_index][0];
       double x = sensor_fusion[fusion_index][1];
       double y = sensor_fusion[fusion_index][2];
       double vx = sensor_fusion[fusion_index][3];
       double vy = sensor_fusion[fusion_index][4];
       vector<vector<double>> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
-      for (int j = 0; j < horizon; j++)
-      {
+      for (int j = 0; j < horizon; j++) {
         prediction.push_back({x + vx * j*PARAM_DT, y + vy * j*PARAM_DT});
       }
       //predictions.push_back(prediction);

@@ -18,45 +18,37 @@ using namespace std;
 /**
  * Initializes Vehicle
  */
-Map::Map(string map_file) 
-{
+Map::Map(string map_file) {
   ifstream in_map_(map_file_.c_str(), ifstream::in);
-
   string line;
-
   bool not_started = true;
-  double x0;
-  double y0;
-  double dx0;
-  double dy0;
+  double x0, y0, dx0, dy0;
 
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
   while (getline(in_map_, line)) {
-  	istringstream iss(line);
-  	double x;
-  	double y;
-  	float s;
-  	float d_x;
-  	float d_y;
+    istringstream iss(line);
+  	double x, y;
+  	float s, d_x, d_y;
   	iss >> x;
   	iss >> y;
   	iss >> s;
   	iss >> d_x;
   	iss >> d_y;
-    if (not_started)
-    {
+    if (not_started) {
       x0 = x; y0 = y; dx0 = d_x; dy0 = d_y;
       not_started = false;
     }
-  	map_waypoints_x.push_back(x);
-  	map_waypoints_y.push_back(y);
-  	map_waypoints_s.push_back(s);
+
+    map_waypoints_x.push_back(x);
+    map_waypoints_y.push_back(y);
+    map_waypoints_s.push_back(s);
   	map_waypoints_dx.push_back(d_x);
   	map_waypoints_dy.push_back(d_y);
 
   	map_waypoints_normx.push_back(x+10*d_x);
   	map_waypoints_normy.push_back(y+10*d_y);
   }
+  assert(map_waypoints_x.size() && "map not loaded, probably path include is missing");
 
   // to get a good spline approximation on last segment wrapping around
   map_waypoints_x.push_back(x0);
@@ -84,8 +76,7 @@ Map::Map(string map_file)
   double len_ref = 0;
   double prev_x = spline_x(0);
   double prev_y = spline_y(0);
-  for (double s = 1; s <= floor(MAX_S); s++)
-  {
+  for (double s = 1; s <= floor(MAX_S); s++) {
     double x = spline_x(s);
     double y = spline_y(s);
     len_ref += distance(x, y, prev_x, prev_y);
@@ -99,8 +90,7 @@ Map::Map(string map_file)
   new_map_waypoints_y;
   new_map_waypoints_dx;
   new_map_waypoints_dy;
-  for (double s = 0; s <= floor(MAX_S); s++)
-  {
+  for (double s = 0; s <= floor(MAX_S); s++) {
     double x = spline_x(s);
     double y = spline_y(s);
     double dx = spline_dx(s);
@@ -112,18 +102,18 @@ Map::Map(string map_file)
     new_map_waypoints_dy.push_back(dy);
   }
 
-	double frenet_s = 0;
+	double frenet_s = 0.0;
   map_s.push_back(0.0);
-	for(int i = 1; i < map_waypoints_x.size(); i++)
+	for(size_t i = 1; i < map_waypoints_x.size(); i++)
 	{
 		frenet_s += distance(map_waypoints_x[i], map_waypoints_y[i], map_waypoints_x[i-1], map_waypoints_y[i-1]);
     map_s.push_back(frenet_s);
 	}
 
-	frenet_s = 0;
+	frenet_s = 0.0;
   new_map_s.push_back(0.0);
   // new map: 1 point every meter
-	for(int i = 1; i < new_map_waypoints_x.size(); i++)
+	for(size_t i = 1; i < new_map_waypoints_x.size(); i++)
 	{
 		frenet_s += distance(new_map_waypoints_x[i], new_map_waypoints_y[i], new_map_waypoints_x[i-1], new_map_waypoints_y[i-1]);
     //new_map_s.push_back(frenet_s); // TODO test both alternatives
@@ -140,8 +130,7 @@ Map::Map(string map_file)
 Map::~Map() {}
 
 
-void Map::plot(void)
-{
+void Map::plot(void) {
   plt::title("Map");
   plt::plot(map_waypoints_x, map_waypoints_y, "r*");
   plt::plot(map_waypoints_normx, map_waypoints_normy, "g*");
@@ -154,8 +143,7 @@ void Map::plot(void)
   plt::show();
 }
 
-int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vector<double> &maps_y)
-{
+int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vector<double> &maps_y) {
 
 	double closestLen = 100000; //large number
 	int closestWaypoint = 0;
@@ -224,10 +212,7 @@ int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const
 	return closestWaypoint;
 }
 
-
-int Map::NextWaypoint(double x, double y, double theta, const vector<double> &maps_x, const vector<double> &maps_y)
-{
-
+int Map::NextWaypoint(double x, double y, double theta, const vector<double> &maps_x, const vector<double> &maps_y) {
 	int closestWaypoint = ClosestWaypoint(x,y,maps_x,maps_y);
 
 	double map_x = maps_x[closestWaypoint];
@@ -254,8 +239,7 @@ int Map::NextWaypoint(double x, double y, double theta, const vector<double> &ma
 
 
 // Transform from Cartesian x,y coordinates to Frenet s,d coordinates
-vector<double> Map::getFrenet(double x, double y, double theta)
-{
+vector<double> Map::getFrenet(double x, double y, double theta) {
   vector<double> &maps_s = this->new_map_s; ; 
   vector<double> &maps_x = this->new_map_waypoints_x;
   vector<double> &maps_y = this->new_map_waypoints_y;
@@ -304,16 +288,14 @@ vector<double> Map::getFrenet(double x, double y, double theta)
 
 
 // Transform from Frenet s,d coordinates to Cartesian x,y
-vector<double> Map::getXY(double s, double d)
-{
+vector<double> Map::getXY(double s, double d) {
   vector<double> &maps_s = map_waypoints_s; ; 
   vector<double> &maps_x = map_waypoints_x;
   vector<double> &maps_y = map_waypoints_y;
 
 	int prev_wp = -1;
 
-	while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) ))
-	{
+	while(s > maps_s[prev_wp+1] && (prev_wp < (int)(maps_s.size()-1) )) {
 		prev_wp++;
 	}
 
@@ -334,8 +316,7 @@ vector<double> Map::getXY(double s, double d)
 	return {x,y};
 }
 
-vector<double> Map::getXYspline(double s, double d)
-{
+vector<double> Map::getXYspline(double s, double d) {
   s = fmod(s, MAX_S); // bug fix for JMT wraparound
 	double x = spline_x(s) + d * spline_dx(s);
 	double y = spline_y(s) + d * spline_dy(s);
@@ -343,8 +324,7 @@ vector<double> Map::getXYspline(double s, double d)
 	return {x,y};
 }
 
-double Map::getSpeedToFrenet(double Vxy, double s)
-{
+double Map::getSpeedToFrenet(double Vxy, double s) {
   s = fmod(s, MAX_S);
   double dx_over_ds = spline_x.deriv(1, s);
   double dy_over_ds = spline_y.deriv(1, s);
@@ -352,8 +332,7 @@ double Map::getSpeedToFrenet(double Vxy, double s)
   return Vs;
 }
 
-double Map::testError(double car_x, double car_y, double car_yaw)
-{
+double Map::testError(double car_x, double car_y, double car_yaw) {
   double error = 0;
 
   // TEST XXX TODO TEMP
@@ -374,15 +353,11 @@ double Map::testError(double car_x, double car_y, double car_yaw)
   // check transformations accuracy
   clock_t start = clock();
   vector<double> frenet = getFrenet(car_x, car_y, deg2rad(car_yaw));
-  //vector<double> frenet = getFrenet(car_x, car_y, deg2rad(car_yaw), new_map_waypoints_x, new_map_waypoints_y, new_map_s);
-  //vector<double> frenet = getFrenet(car_x, car_y, deg2rad(car_yaw), map_waypoints_x, map_waypoints_y, map_s);
 
   int frenet_s = frenet[0];
   int frenet_d = frenet[1];
 
   vector<double> car_xy = getXYspline(frenet_s, frenet_d);
-  //auto car_xy = getXY(frenet_s, frenet_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-  //auto car_xy = getXY(frenet_s, frenet_d, new_map_s, new_map_waypoints_x, new_map_waypoints_y);
 
   clock_t stop = clock();
   double elapsed = (double)(stop - start) * 1000000.0 / CLOCKS_PER_SEC;
@@ -392,8 +367,7 @@ double Map::testError(double car_x, double car_y, double car_yaw)
   num_error++;
   avg_error = sum_error / num_error;
   //assert(error < 4);
-  if (error > max_error)
-  {
+  if (error > max_error) {
     max_error = error;
   }
 

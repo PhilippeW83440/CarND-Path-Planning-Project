@@ -76,13 +76,10 @@ vector<double> JMT(vector< double> start, vector <double> end, double T)
     return {start[0], start[1], start[2]/2, x[0], x[1], x[2]};
 }
 
-
 // c: coefficients of polynom
-double polyeval(vector<double> c, double t)
-{
+double polyeval(vector<double> c, double t) {
   double res = 0.0;
-  for (int i = 0; i < c.size(); i++)
-  {
+  for (size_t i = 0; i < c.size(); i++) {
     res += c[i] * pow(t, i);
   }
   return res;
@@ -91,7 +88,7 @@ double polyeval(vector<double> c, double t)
 // 1st derivative of a polynom
 double polyeval_dot(vector<double> c, double t) {
   double res = 0.0;
-  for (int i = 1; i < c.size(); ++i) {
+  for (size_t i = 1; i < c.size(); ++i) {
     res += i * c[i] * pow(t, i-1);
   }
   return res;
@@ -100,7 +97,7 @@ double polyeval_dot(vector<double> c, double t) {
 // 2nd derivative of a polynom
 double polyeval_ddot(vector<double> c, double t) {
   double res = 0.0;
-  for (int i = 2; i < c.size(); ++i) {
+  for (size_t i = 2; i < c.size(); ++i) {
     res += i * (i-1) * c[i] * pow(t, i-2);
   }
   return res;
@@ -127,55 +124,46 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
     last_point = PARAM_NB_POINTS - 1;
   }
 
-  /////////////////////////////////////////////////////////////
 
   double T = target_time; // 2 seconds si car_d center of line
 
-  // si si_dot si_ddot: to be retieved
-  double si = prev_path_s[last_point][0];
-  double si_dot = prev_path_s[last_point][1];
-  double si_ddot = prev_path_s[last_point][2];
+  double si, si_dot=0, si_ddot;
+  double di, di_dot, di_ddot;
 
-  double di = prev_path_d[last_point][0];
-  double di_dot = prev_path_d[last_point][1];
-  double di_ddot = prev_path_d[last_point][2];
+  si      = prev_path_s[last_point][0];
+  si_dot  = prev_path_s[last_point][1];
+  si_ddot = prev_path_s[last_point][2];
+
+  di      = prev_path_d[last_point][0];
+  di_dot  = prev_path_d[last_point][1];
+  di_ddot = prev_path_d[last_point][2];
 
   double sf, sf_dot, sf_ddot;
   double df, df_dot, df_ddot;
 
-  if (target_vel <= 10) // mph
-  {
-    df = di;
-    df_dot = 0;
-    df_ddot = 0;
+  if (target_vel <= 10) { // mph
+    df_ddot =  0;
+    df_dot  =  0;
+    df      = di;
 
     sf_ddot = 0;
-    sf_dot = mph_to_ms(target_vel);
-    sf = si + 2 * sf_dot * T;
-  }
-  else
-  {
-    df = get_dcenter(target_lane);
-    df_dot = 0;
+    sf_dot  = mph_to_ms(target_vel);
+    sf      = si + 2 * sf_dot * T;
+  } else {
     df_ddot = 0;
+    df_dot  = 0;
+    df      = get_dcenter(target_lane);
 
     sf_ddot = 0;
     sf_dot = mph_to_ms(target_vel);
     //sf_dot = map.getSpeedToFrenet(sf_dot, si+50);
-    // this is a hack. To be fixed properly 
+    // this is a hack. To be fixed properly
     // the ratio should be related to curvature and d
-    if (df >= 8)
-    {
-      //sf_dot *= 0.95;
+    if (df >= 8) {
       sf_dot *= 0.94;
-    }
-    else if (df >= 4)
-    {
-      //sf_dot *= 0.97;
+    } else if (df >= 4) {
       sf_dot *= 0.96;
-    }
-    else
-    {
+    } else {
       sf_dot *= 0.98;
     }
     sf = si + sf_dot * T;
@@ -206,8 +194,7 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
 
   //double t = 0.0; continuity point reused
   double t = PARAM_DT;
-  for (int i = prev_size; i < PARAM_NB_POINTS; i++)
-  {
+  for (int i = prev_size; i < PARAM_NB_POINTS; i++) {
     double s = polyeval(poly_s, t);
     double s_dot = polyeval_dot(poly_s, t);
     double s_ddot = polyeval_ddot(poly_s, t);

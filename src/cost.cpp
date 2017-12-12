@@ -24,8 +24,7 @@ bool check_max_capabilities(vector<vector<double>> &traj)
 
   assert(traj[0].size() == traj[1].size()); // as much x than y ...
 
-  for (int t = 3; t < traj[0].size(); t++)
-  {
+  for (size_t t = 3; t < traj[0].size(); t++) {
     x   = traj[0][t];
     x_1 = traj[0][t-1];
     x_2 = traj[0][t-2];
@@ -67,14 +66,11 @@ bool check_max_capabilities(vector<vector<double>> &traj)
 
   jerk_per_second = total_jerk / (PARAM_NB_POINTS * PARAM_DT);
 
-  if (roundf(max_vel) > PARAM_MAX_SPEED || roundf(max_acc) > PARAM_MAX_ACCEL || jerk_per_second > PARAM_MAX_JERK)
-  {
+  if (roundf(max_vel) > PARAM_MAX_SPEED || roundf(max_acc) > PARAM_MAX_ACCEL || jerk_per_second > PARAM_MAX_JERK) {
     cout << "max_vel=" << max_vel << " max_acc=" << max_acc << " jerk_per_second=" << jerk_per_second  << endl;
     //assert(1 == 0);
     return true;
-  }
-  else
-  {
+  } else {
     return false;
   }
 }
@@ -94,7 +90,7 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
     assert(prediction.size() == trajectory[0].size());
     assert(prediction.size() == trajectory[1].size());
 
-    for (int i = 0; i < prediction.size(); i++) // up to 50 (x,y) coordinates
+    for (size_t i = 0; i < prediction.size(); i++) // up to 50 (x,y) coordinates
     {
       double obj_x = prediction[i][0];
       double obj_y = prediction[i][1];
@@ -102,17 +98,9 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
       double ego_y = trajectory[1][i];
 
       double dist = distance(ego_x, ego_y, obj_x, obj_y);
-      if (dist < dmin)
-      {
+      if (dist < dmin) {
         dmin = dist;
       }
-      //cout << "dist[" << i << "]=" << dist << endl; 
-      //if (dist <= PARAM_DIST_COLLISION)
-      //{
-      //  cout << "=====> DMIN = " << dmin << endl;
-      //  cout << "predicted collision in " << i << " steps with fusion_index " << fusion_index << " (dist=" << dist << ")" << endl;
-      //  //assert(1 == 0); // TODO temp just for checking purposes
-      //}
     }
     it++;
   }
@@ -153,12 +141,9 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   // 2) SAFETY cost
   double dmin = get_predicted_dmin(trajectory, predictions);
   assert(dmin >= 0);
-  if (dmin < PARAM_DIST_SAFETY)
-  {
+  if (dmin < PARAM_DIST_SAFETY) {
     cost_safety = PARAM_DIST_SAFETY - dmin;
-  }
-  else
-  {
+  } else {
     cost_safety = 0;
   }
   cost = cost + weight_safety * cost_safety;
@@ -181,37 +166,6 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   // 5) LANE cost
   double ego_x = trajectory[0][0];
   double ego_y = trajectory[1][0];
-
-
-#if 0
-  bool free_lane = true;
-
-  std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
-  while(it != predictions.end())
-  {
-    int fusion_index = it->first;
-    double obj_d = sensor_fusion[fusion_index][6];
-
-    double obj_x = sensor_fusion[fusion_index][1];
-    double obj_y = sensor_fusion[fusion_index][1];
-    double dist = distance(ego_x, ego_y, obj_x, obj_y);
-
-    if (get_lane(obj_d) == target_lane)
-    {
-      //if (target_lane != car_lane)
-      //{
-          //cost += (dist/PARAM_FOV); // penalize lane changes
-          //cost += dist;
-      //}
-      free_lane = false;
-    }
-    it++;
-  }
-  if (free_lane)
-  {
-    cost--;
-  }
-#endif
 
   cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_lvel=" << predictions_lane_speed[target_lane] << " cost=" << cost << endl;
 
