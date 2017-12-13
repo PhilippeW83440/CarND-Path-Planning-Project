@@ -19,7 +19,7 @@ double predictions_free_space[3];
 // => at most 6 predictions (for now on) as we have 3 lanes
 
 // sort of simple scene detection
-vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double car_s) {
+vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double car_s, double car_d) {
   vector<int> front = {-1, -1, -1}; // idx of closest object per lane
   vector<int> back = {-1, -1, -1}; // idx of closest object per lane
 
@@ -68,32 +68,35 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     }
   }
 
+  int car_lane = get_lane(car_d);
   for (size_t i = 0; i < front.size(); i++) {
     cout << "lane " << i << ": ";
     cout << "front " << front[i] << " at " << front_dmin[i] << " s_meters ; ";
     cout << "back " << back[i] << " at " << back_dmin[i] << " s_meters" << endl;
 
-    if (front[i] >= 0) {
+    // !!! This should be part of the behavior planner behavior.cpp
+    int lane = get_lane(sensor_fusion[front[i]][6]);
 
-      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10)) {
+    if (front[i] >= 0) { // a car in front of us
+      if (lane != car_lane && (back_dmin[i] <= 10 || front_dmin[i] <= 10)) {
+        predictions_lane_speed[i] = 0;
+        predictions_free_space[i] = 0; // too dangerous
+      } else {
         double vx = sensor_fusion[front[i]][3];
         double vy = sensor_fusion[front[i]][4];
         predictions_lane_speed[i] = sqrt(vx*vx+vy*vy);
         predictions_free_space[i] = front_dmin[i];
-      } else {
+      }
+    } else { // if nobody in front of us
+      if (lane != car_lane && back_dmin[i] <= 10) {
         predictions_lane_speed[i] = 0;
         predictions_free_space[i] = 0; // too dangerous
-      }
-    }
-    else {
-      if (back[i] < 0 || (back[i] > 0 && back_dmin[i] >= 10)) {
+      } else {
         predictions_lane_speed[i] = PARAM_MAX_SPEED_MPH;
         predictions_free_space[i] = PARAM_FOV;
-      } else {
-        predictions_lane_speed[i] = 0;
-        predictions_free_space[i] = 0; // too dangerous
       }
     }
+
     cout << "predictions_lane_speed[" << i << "]=" << predictions_lane_speed[i] << endl;
   }
 
@@ -108,7 +111,7 @@ std::map< int, vector<vector<double> > > generate_predictions(vector<vector<doub
   std::map<int, vector<vector<double> > > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
 
   // vector of indexes in sensor_fusion
-  vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s); 
+  vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s, car_d); 
 
   for (int i = 0; i < closest_objects.size(); i++) {
     int fusion_index = closest_objects[i];
