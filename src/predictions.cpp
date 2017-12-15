@@ -74,9 +74,8 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     cout << "front " << front[i] << " at " << front_dmin[i] << " s_meters ; ";
     cout << "back " << back[i] << " at " << back_dmin[i] << " s_meters" << endl;
 
+    int lane = i;
     // !!! This should be part of the behavior planner behavior.cpp
-    int lane = get_lane(sensor_fusion[front[i]][6]);
-
     if (front[i] >= 0) { // a car in front of us
       if (lane != car_lane && (back_dmin[i] <= 10 || front_dmin[i] <= 10)) {
         predictions_lane_speed[i] = 0;
