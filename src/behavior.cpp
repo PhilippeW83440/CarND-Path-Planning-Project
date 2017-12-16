@@ -11,6 +11,10 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   bool too_close = false;
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
   double dist_safety = PARAM_DIST_SLOW_DOWN;
+
+  double ref_vel_ms = mph_to_ms(ref_vel);
+  double closest_speed_ms = INF;
+  double closest_dist = INF;
   
   // find ref_v to use based on car in front of us
   for (size_t i = 0; i < sensor_fusion.size(); i++) {
@@ -22,11 +26,9 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       double check_speed = sqrt(vx*vx+vy*vy);
       double check_car_s = sensor_fusion[i][5];
 
-      double car_vel = mph_to_ms(ref_vel);
-      double front_vel = check_speed;
-      cout << "obj_idx=" << i << " CAR_VEL=" << car_vel << " FRONT_VEL=" << front_vel << endl;
+      cout << "obj_idx=" << i << " REF_VEL_MS=" << ref_vel_ms << " CHECK_SPEED=" << check_speed << endl;
       dist_safety = PARAM_DIST_SLOW_DOWN;
-      if (fabs(car_vel - front_vel) <= 2)
+      if (fabs(ref_vel_ms - check_speed) <= 2)
         dist_safety = 10; // XXX TODO remove harcoded value
   
       // if using previous points can project s value outwards in time
@@ -36,16 +38,23 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
         //ref_vel = 29.5; //mph
         too_close = true;
+        double dist_to_check_car_s = check_car_s - car_s;
+        if (dist_to_check_car_s < closest_dist) {
+          closest_dist = dist_to_check_car_s;
+          closest_speed_ms = check_speed;
+        }
       }  
     }
   }
   
   if (too_close) {
     //ref_vel -= 2 * .224; // 5 m.s-2 under the 10 requirement
-    ref_vel -= PARAM_MAX_SPEED_INC_MPH;
-
-    //if (dist_safety <= 10)
-    //  ref_vel -= 4 * PARAM_MAX_SPEED_INC_MPH;
+    if (ref_vel_ms > closest_speed_ms) { // in m.s-1 !
+      ref_vel -= PARAM_MAX_SPEED_INC_MPH; // in mph !
+      if (closest_dist <= 10 && ref_vel > closest_speed_ms) {
+        ref_vel -= 2 * PARAM_MAX_SPEED_INC_MPH;
+      }
+    }
 
     ref_vel = max(ref_vel, 0.0); // no backwards driving ... just in case
     ref_vel_inc = -1;
