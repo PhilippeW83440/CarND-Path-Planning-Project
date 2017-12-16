@@ -35,7 +35,6 @@ const double PARAM_MAX_SPEED_INC_MPH = ms_to_mph(PARAM_MAX_SPEED_INC);
 const double PARAM_DIST_SLOW_DOWN = 30; // when a car is 30 m ahead of us => adjust speed if needed
 
 const double PARAM_DIST_SAFETY = 3.5; // meters
-const double PARAM_DIST_COLLISION = 2.75; // meters
 
 // reduce latency reaction, but account for simulator latency ...
 // assume 100 ms max simulator latency
@@ -43,5 +42,9 @@ const int PARAM_TRUNCATED_PREV_SIZE = 5;
 
 const bool PARAM_TRAJECTORY_JMT = true;
 
+// some extra margin for safety: safety box around the car
+const double PARAM_CAR_SAFETY_W = 3; // meters
+const double PARAM_CAR_SAFETY_L = 6; // meters
+const int PARAM_MAX_COLLISION_STEP = 25;
 
 #endif // PARAMS_H

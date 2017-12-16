@@ -21,7 +21,7 @@ using Eigen::Vector2d;
 // to identify collision between 2 convex rectangular objects
 // cf http://www.dyn4j.org/2010/01/sat/
 // ------------------------------------------------------------
-bool checkCollision(double x0, double y0, double theta0, double x1, double y1, double theta1) 
+bool check_collision(double x0, double y0, double theta0, double x1, double y1, double theta1) 
 {
   Vector2d trans0; 
   trans0 << x0, y0;
@@ -33,8 +33,8 @@ bool checkCollision(double x0, double y0, double theta0, double x1, double y1, d
   rot1 << cos(theta1), -sin(theta1),
           sin(theta1),  cos(theta1);
   
-  double W = 2;
-  double L = 5;
+  double W = PARAM_CAR_SAFETY_W; //2;
+  double L = PARAM_CAR_SAFETY_L; //5;
 
   MatrixXd car(2,4);
   car << -L/2, L/2,  L/2, -L/2,
@@ -87,6 +87,41 @@ bool checkCollision(double x0, double y0, double theta0, double x1, double y1, d
 
   return true;
 }
+
+int check_collision_on_trajectory(vector<vector<double>> &trajectory, std::map<int, vector<vector<double>>> &predictions)
+{
+  std::map<int, vector<vector<double> > >::iterator it = predictions.begin();
+  while(it != predictions.end()) {
+    int fusion_index = it->first;
+    vector<vector<double>> prediction = it->second;
+
+    assert(prediction.size() == trajectory[0].size());
+    assert(prediction.size() == trajectory[1].size());
+
+    for (int i = 0; i < PARAM_MAX_COLLISION_STEP; i++) { // up to 50 (x,y) coordinates
+      double obj_x = prediction[i][0];
+      double obj_y = prediction[i][1];
+      double obj_x_next = prediction[i+1][0];
+      double obj_y_next = prediction[i+1][1];
+      double obj_heading = atan2(obj_y_next - obj_y, obj_x_next - obj_x);
+
+      double ego_x = trajectory[0][i];
+      double ego_y = trajectory[1][i];
+      double ego_x_next = trajectory[0][i+1];
+      double ego_y_next = trajectory[1][i+1];
+      double ego_heading = atan2(ego_y_next - ego_y, ego_x_next - ego_x);
+
+      if (check_collision(obj_x, obj_y, obj_heading, ego_x, ego_y, ego_heading)) {
+        cout << "!!! ... COLLISION predicted on candidate trajectory at step " << i << "  ... !!!" << endl;
+        return (i+1);
+      }
+    }
+    it++;
+  }
+
+  return 0;
+}
+
 
 // check max speed, acceleration, jerk
 bool check_max_capabilities(vector<vector<double>> &traj)
@@ -199,18 +234,14 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   double cost_comfort = 0; // vs jerk
   double cost_efficiency = 0; // vs desired lane and time to goal
 
-  double weight_feasibility = 100000; // vs collisions, vs vehicle capabilities
-  double weight_safety      = 10000; // vs buffer distance, vs visibility or curvature
-  double weight_legality    = 1000; // vs speed limits
-  double weight_comfort     = 100; // vs jerk
-  double weight_efficiency  = 10; // vs target lane, target speed and time to goal
+  double weight_feasibility = 10000; // vs collisions, vs vehicle capabilities
+  double weight_safety      = 1000; // vs buffer distance, vs visibility or curvature
+  double weight_legality    = 100; // vs speed limits
+  double weight_comfort     = 10; // vs jerk
+  double weight_efficiency  = 1; // vs target lane, target speed and time to goal
 
   // 1) FEASIBILITY cost
-  // TODO: handled via safety so far
-  //if (check_collision(trajectory, predictions))
-  //{
-  //  cost_feasibility += 10;
-  //}
+  cost_feasibility += check_collision_on_trajectory(trajectory, predictions);
   //if (check_max_capabilities(trajectory))
   //{
   //  cost_feasibility += 1;
@@ -218,13 +249,13 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   cost = cost + weight_feasibility * cost_feasibility;
 
   // 2) SAFETY cost
-  double dmin = get_predicted_dmin(trajectory, predictions);
-  assert(dmin >= 0);
-  if (dmin < PARAM_DIST_SAFETY) {
-    cost_safety = PARAM_DIST_SAFETY - dmin;
-  } else {
-    cost_safety = 0;
-  }
+  // double dmin = get_predicted_dmin(trajectory, predictions);
+  // assert(dmin >= 0);
+  // if (dmin < PARAM_DIST_SAFETY) {
+  //   cost_safety = PARAM_DIST_SAFETY - dmin;
+  // } else {
+  //   cost_safety = 0;
+  // }
   cost = cost + weight_safety * cost_safety;
 
   // 3) LEGALITY cost
@@ -241,10 +272,6 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   //cost_efficiency = PARAM_MAX_SPEED - predictions_lane_speed[target_lane];
   cost_efficiency = PARAM_FOV - predictions_free_space[target_lane];
   cost = cost + weight_efficiency * cost_efficiency;
-
-  // 5) LANE cost
-  double ego_x = trajectory[0][0];
-  double ego_y = trajectory[1][0];
 
   cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_lvel=" << predictions_lane_speed[target_lane] << " cost=" << cost << endl;
 
