@@ -2,12 +2,91 @@
 #include "utility.h"
 #include "params.h"
 #include "predictions.h"
+#include "Eigen-3.3/Eigen/Dense"
 
 #include <cassert>
 #include <cmath>
 
 using namespace std;
 
+
+using Eigen::MatrixXd;
+using Eigen::Matrix2d;
+using Eigen::VectorXd;
+using Eigen::Vector2d;
+
+
+// ------------------------------------------------------------
+// checkCollision as per SAT (Separating Axis Theorem)
+// to identify collision between 2 convex rectangular objects
+// cf http://www.dyn4j.org/2010/01/sat/
+// ------------------------------------------------------------
+bool checkCollision(double x0, double y0, double theta0, double x1, double y1, double theta1) 
+{
+  Vector2d trans0; 
+  trans0 << x0, y0;
+  Vector2d trans1; 
+  trans1 << x1, y1;
+  Matrix2d rot0, rot1;
+  rot0 << cos(theta0), -sin(theta0),
+          sin(theta0),  cos(theta0);
+  rot1 << cos(theta1), -sin(theta1),
+          sin(theta1),  cos(theta1);
+  
+  double W = 2;
+  double L = 5;
+
+  MatrixXd car(2,4);
+  car << -L/2, L/2,  L/2, -L/2,
+          W/2, W/2, -W/2, -W/2; 
+
+  MatrixXd car0(2,4);
+  MatrixXd car1(2,4);
+
+  for (int i = 0; i < car.cols(); i++) {
+    car0.col(i) = rot0 * car.col(i) + trans0;
+    car1.col(i) = rot1 * car.col(i) + trans1;
+  }
+
+  // principal axis list
+  MatrixXd axis(2,4);
+  axis << cos(theta0), -sin(theta0), cos(theta1), -sin(theta1), 
+          sin(theta0),  cos(theta0), sin(theta1),  cos(theta1);
+
+  for (int i = 0; i < axis.cols(); i++) {
+    Vector2d principal_axis = axis.col(i);
+
+    // projection of car0
+    double min0 = principal_axis.dot(car0.col(0));
+    double max0 = min0;
+    for (int j = 1; j < car0.cols(); j++) {
+      double proj0 = principal_axis.dot(car0.col(j));
+      if (proj0 > max0) max0 = proj0;
+      if (proj0 < min0) min0 = proj0;
+    }
+
+    // projection of car1
+    double min1 = principal_axis.dot(car1.col(0));
+    double max1 = min1;
+    for (int j = 1; j < car1.cols(); j++) {
+      double proj1 = principal_axis.dot(car1.col(j));
+      if (proj1 > max1) max1 = proj1;
+      if (proj1 < min1) min1 = proj1;
+    }
+
+    //cout << "min0=" << min0 << " max0=" << max0 << endl;
+    //cout << "min1=" << min1 << " max1=" << max1 << endl;
+
+    bool overlap = false;
+    if (min1 >= min0 && min1 < max0) overlap = true;
+    if (max1 >= min0 && max1 < max0) overlap = true;
+    if (min0 >= min1 && min0 < max1) overlap = true;
+    if (max0 >= min1 && max0 < max1) overlap = true;
+    if (!overlap) return false;
+  }
+
+  return true;
+}
 
 // check max speed, acceleration, jerk
 bool check_max_capabilities(vector<vector<double>> &traj)
