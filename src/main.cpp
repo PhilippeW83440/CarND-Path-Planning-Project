@@ -54,7 +54,7 @@ int main() {
     map.read(map_file_);
   }
 
-  map.plot();
+  //map.plot();
 
   bool start = true;
   double ref_vel = 0.0; // mph
@@ -152,11 +152,11 @@ int main() {
             vector<double> frenet_far;
             if (prev_size > 0) // prev_size typically close to 1 sec
             {
-              //car_s = end_path_s;
-              //car_d = end_path_d;
-              frenet_far = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
-              car_s = frenet_far[0];
-              car_d = frenet_far[1];
+              car_s = end_path_s;
+              car_d = end_path_d;
+              //frenet_far = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
+              //car_s = frenet_far[0];
+              //car_d = frenet_far[1];
             }
             int car_lane = get_lane(car_d);
 
