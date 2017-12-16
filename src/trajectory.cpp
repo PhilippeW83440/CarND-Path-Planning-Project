@@ -159,12 +159,8 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
     //sf_dot = map.getSpeedToFrenet(sf_dot, si+50);
     // this is a hack. To be fixed properly
     // the ratio should be related to curvature and d
-    if (df >= 8) {
+    if (sf_dot >= 0.9 * PARAM_MAX_SPEED) {
       sf_dot *= 0.94;
-    } else if (df >= 4) {
-      sf_dot *= 0.96;
-    } else {
-      sf_dot *= 0.98;
     }
     sf = si + sf_dot * T;
   }
