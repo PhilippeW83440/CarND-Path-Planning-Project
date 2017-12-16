@@ -5,7 +5,7 @@
 
 using namespace std;
 
-vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sensor_fusion, int prev_size, int lane, double car_s, double car_d, double ref_vel)
+vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sensor_fusion, int lane, double car_s, double car_d, double ref_vel)
 {
   vector<vector<double>> possible_targets;
   bool too_close = false;
@@ -31,9 +31,6 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       if (fabs(ref_vel_ms - check_speed) <= 2)
         dist_safety = 10; // XXX TODO remove harcoded value
   
-      // if using previous points can project s value outwards in time
-      check_car_s += (double)prev_size * PARAM_DT * check_speed;
-  
       if ((check_car_s > car_s) && ((check_car_s - car_s) < dist_safety)) {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
         //ref_vel = 29.5; //mph
@@ -52,7 +49,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
     if (ref_vel_ms > closest_speed_ms) { // in m.s-1 !
       ref_vel -= PARAM_MAX_SPEED_INC_MPH; // in mph !
       if (closest_dist <= 10 && ref_vel > closest_speed_ms) {
-        ref_vel -= 2 * PARAM_MAX_SPEED_INC_MPH;
+        ref_vel -= 5 * PARAM_MAX_SPEED_INC_MPH;
       }
     }
 

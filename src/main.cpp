@@ -146,24 +146,8 @@ int main() {
             // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
             std::map<int, vector<vector<double> > > predictions = generate_predictions(sensor_fusion, car_s, car_d, PARAM_NB_POINTS /* 50 */);
 
-
-
-            // --- long time horizon (close to look onwards at 1 sec when possible) analysis for behavior planner ---
-            vector<double> frenet_far;
-            if (prev_size > 0) // prev_size typically close to 1 sec
-            {
-              car_s = end_path_s;
-              car_d = end_path_d;
-              //frenet_far = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
-              //car_s = frenet_far[0];
-              //car_d = frenet_far[1];
-            }
             int car_lane = get_lane(car_d);
-
-            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, prev_size, car_lane, 
-                                                                           car_s, car_d, ref_vel /* car_vel */);
-
-
+            vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, car_lane, car_s, car_d, ref_vel /* car_vel */);
 
             // -- short time horizon (close to 100 msec when possible; not lower bcz of simulator latency) for trajectory (re)generation ---
             prev_size = min(prev_size, PARAM_TRUNCATED_PREV_SIZE);
