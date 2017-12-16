@@ -10,7 +10,9 @@ extern std::string map_file_; // cf params.cpp
 extern std::string map_bosch_file_; // cf params.cpp
 
 // The max s value before wrapping around the track back to 0
-const double MAX_S = 6945.554;
+const double MAXIMUM_S = 6945.554;
+extern double MAX_S;
+
 // center point of the track
 const double PARAM_CENTER_X = 1000;
 const double PARAM_CENTER_Y = 2000;

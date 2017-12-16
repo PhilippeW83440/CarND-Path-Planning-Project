@@ -15,6 +15,8 @@
 namespace plt = matplotlibcpp;
 using namespace std;
 
+double MAX_S;
+
 /**
  * Initializes Vehicle
  */
@@ -23,6 +25,8 @@ void Map::read(string map_file) {
   string line;
   bool not_started = true;
   double x0, y0, dx0, dy0;
+
+  double last_s = 0;
 
   // Load up map values for waypoint's x,y,s and d normalized normal vectors
   while (getline(in_map_, line)) {
@@ -42,6 +46,7 @@ void Map::read(string map_file) {
     map_waypoints_x.push_back(x);
     map_waypoints_y.push_back(y);
     map_waypoints_s.push_back(s);
+    last_s = s;
   	map_waypoints_dx.push_back(d_x);
   	map_waypoints_dy.push_back(d_y);
 
@@ -50,14 +55,21 @@ void Map::read(string map_file) {
   }
   assert(map_waypoints_x.size() && "map not loaded, probably path include is missing");
 
+  if (PARAM_MAP_BOSCH == true)
+    MAX_S = last_s;
+  else
+    MAX_S = MAXIMUM_S;
+
   // to get a good spline approximation on last segment wrapping around
-  map_waypoints_x.push_back(x0);
-  map_waypoints_y.push_back(y0);
-  map_waypoints_s.push_back(MAX_S);
-  map_waypoints_dx.push_back(dx0);
-  map_waypoints_dy.push_back(dy0);
-  map_waypoints_normx.push_back(x0+10*dx0);
-  map_waypoints_normy.push_back(y0+10*dy0);
+  if (PARAM_MAP_BOSCH == false) {
+    map_waypoints_x.push_back(x0);
+    map_waypoints_y.push_back(y0);
+    map_waypoints_s.push_back(MAX_S);
+    map_waypoints_dx.push_back(dx0);
+    map_waypoints_dy.push_back(dy0);
+    map_waypoints_normx.push_back(x0+10*dx0);
+    map_waypoints_normy.push_back(y0+10*dy0);
+  }
 
   spline_x.set_points(map_waypoints_s, map_waypoints_x);
   spline_y.set_points(map_waypoints_s, map_waypoints_y);
@@ -65,13 +77,15 @@ void Map::read(string map_file) {
   spline_dy.set_points(map_waypoints_s, map_waypoints_dy);
 
   // remove last point so we do not have duplicates (x,y): it was just for spline continuity at wraparound
-  map_waypoints_x.pop_back();
-  map_waypoints_y.pop_back();
-  map_waypoints_s.pop_back();
-  map_waypoints_dx.pop_back();
-  map_waypoints_dy.pop_back();
-  map_waypoints_normx.pop_back();
-  map_waypoints_normy.pop_back();
+  if (PARAM_MAP_BOSCH == false) {
+    map_waypoints_x.pop_back();
+    map_waypoints_y.pop_back();
+    map_waypoints_s.pop_back();
+    map_waypoints_dx.pop_back();
+    map_waypoints_dy.pop_back();
+    map_waypoints_normx.pop_back();
+    map_waypoints_normy.pop_back();
+  }
 
   double len_ref = 0;
   double prev_x = spline_x(0);

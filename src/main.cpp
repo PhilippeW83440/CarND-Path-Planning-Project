@@ -54,7 +54,7 @@ int main() {
     map.read(map_file_);
   }
 
-  //map.plot();
+  map.plot();
 
   bool start = true;
   double ref_vel = 0.0; // mph
