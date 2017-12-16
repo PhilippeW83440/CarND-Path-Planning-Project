@@ -10,6 +10,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   vector<vector<double>> possible_targets;
   bool too_close = false;
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
+  double dist_safety = PARAM_DIST_SLOW_DOWN;
   
   // find ref_v to use based on car in front of us
   for (size_t i = 0; i < sensor_fusion.size(); i++) {
@@ -24,7 +25,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       double car_vel = mph_to_ms(ref_vel);
       double front_vel = check_speed;
       cout << "obj_idx=" << i << " CAR_VEL=" << car_vel << " FRONT_VEL=" << front_vel << endl;
-      double dist_safety = PARAM_DIST_SLOW_DOWN;
+      dist_safety = PARAM_DIST_SLOW_DOWN;
       if (fabs(car_vel - front_vel) <= 2)
         dist_safety = 10; // XXX TODO remove harcoded value
   
@@ -42,6 +43,10 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   if (too_close) {
     //ref_vel -= 2 * .224; // 5 m.s-2 under the 10 requirement
     ref_vel -= PARAM_MAX_SPEED_INC_MPH;
+
+    //if (dist_safety <= 10)
+    //  ref_vel -= 4 * PARAM_MAX_SPEED_INC_MPH;
+
     ref_vel = max(ref_vel, 0.0); // no backwards driving ... just in case
     ref_vel_inc = -1;
   } else if (ref_vel < PARAM_MAX_SPEED_MPH) {

@@ -46,7 +46,14 @@ int main() {
   uWS::Hub h;
 
   //////////////////////////////////////////////////////////////////////
-  Map map(map_file_);
+  Map map;
+
+  if (PARAM_MAP_BOSCH == true) {
+    map.read(map_bosch_file_);
+  } else {
+    map.read(map_file_);
+  }
+
   map.plot();
 
   bool start = true;

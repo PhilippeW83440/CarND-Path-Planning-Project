@@ -14,7 +14,7 @@ public:
   /**
   * Constructor
   */
-  Map(std::string map_file);
+  Map() {};
   
   /**
   * Destructor
@@ -28,6 +28,7 @@ public:
 
   void plot(void);
   double testError(double x, double y, double yaw); // (x,y) -> (s,d) -> (x,y) conversions and dump accuracy
+  void read(std::string map_file);
 
 
 private:

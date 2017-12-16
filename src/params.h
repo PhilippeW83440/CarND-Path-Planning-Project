@@ -4,20 +4,17 @@
 #include <string>
 #include "utility.h"
 
-extern std::string map_file_; // cf params.cpp
-// The max s value before wrapping around the track back to 0
-// const double MAX_S = 6945.554;
-// // center point of the track
-// const double PARAM_CENTER_X = 1000;
-// const double PARAM_CENTER_Y = 2000;
+const bool PARAM_MAP_BOSCH = true;
 
-//const double MAX_S = 5128.31;
-//const double MAX_S = 5129;
-const double MAX_S = 6000;
-//const double MAX_S = 5200;
+extern std::string map_file_; // cf params.cpp
+extern std::string map_bosch_file_; // cf params.cpp
+
+// The max s value before wrapping around the track back to 0
+const double MAX_S = 6945.554;
 // center point of the track
-const double PARAM_CENTER_X = 0;
-const double PARAM_CENTER_Y = 0;
+const double PARAM_CENTER_X = 1000;
+const double PARAM_CENTER_Y = 2000;
+
 
 const int PARAM_NB_POINTS = 50; // in the trajectory sent to simulator
 const double PARAM_DT = 0.02; // 1 point every 0.02 s

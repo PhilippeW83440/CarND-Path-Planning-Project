@@ -18,8 +18,8 @@ using namespace std;
 /**
  * Initializes Vehicle
  */
-Map::Map(string map_file) {
-  ifstream in_map_(map_file_.c_str(), ifstream::in);
+void Map::read(string map_file) {
+  ifstream in_map_(map_file.c_str(), ifstream::in);
   string line;
   bool not_started = true;
   double x0, y0, dx0, dy0;
@@ -267,16 +267,16 @@ vector<double> Map::getFrenet(double x, double y, double theta) {
 
 	//see if d value is positive or negative by comparing it to a center point
 
-#if 0
-	double center_x = PARAM_CENTER_X - maps_x[prev_wp];
-	double center_y = PARAM_CENTER_Y - maps_y[prev_wp];
-	double centerToPos = distance(center_x,center_y,x_x,x_y);
-	double centerToRef = distance(center_x,center_y,proj_x,proj_y);
+  if (PARAM_MAP_BOSCH == false) {
+	  double center_x = PARAM_CENTER_X - maps_x[prev_wp];
+	  double center_y = PARAM_CENTER_Y - maps_y[prev_wp];
+	  double centerToPos = distance(center_x,center_y,x_x,x_y);
+	  double centerToRef = distance(center_x,center_y,proj_x,proj_y);
 
-	if (centerToPos <= centerToRef) {
-		frenet_d *= -1;
-	}
-#endif
+	  if (centerToPos <= centerToRef) {
+	  	frenet_d *= -1;
+	  }
+  }
 
   double frenet_s = maps_s[prev_wp]; // XXX faster
 	frenet_s += distance(0,0,proj_x,proj_y);
