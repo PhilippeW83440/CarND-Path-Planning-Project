@@ -104,7 +104,7 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size, vector<vector<double>> &prev_path_s, vector<vector<double>> &prev_path_d)
+struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size, vector<vector<double>> &prev_path_s, vector<vector<double>> &prev_path_d)
 {
   struct trajectory_jmt traj_jmt;
 
@@ -121,7 +121,7 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
   }
 
 
-  double T = target_time; // 2 seconds si car_d center of line
+  double T = target.time; // 2 seconds si car_d center of line
 
   double si, si_dot=0, si_ddot;
   double di, di_dot, di_ddot;
@@ -137,21 +137,21 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
   double sf, sf_dot, sf_ddot;
   double df, df_dot, df_ddot;
 
-  if (target_vel <= 10) { // mph
+  if (target.velocity <= 10) { // mph
     df_ddot =  0;
     df_dot  =  0;
     df      = di;
 
     sf_ddot = 0;
-    sf_dot  = mph_to_ms(target_vel);
+    sf_dot  = mph_to_ms(target.velocity);
     sf      = si + 2 * sf_dot * T;
   } else {
     df_ddot = 0;
     df_dot  = 0;
-    df      = get_dcenter(target_lane);
+    df      = get_dcenter(target.lane);
 
     sf_ddot = 0;
-    sf_dot = mph_to_ms(target_vel);
+    sf_dot = mph_to_ms(target.velocity);
     //sf_dot = map.getSpeedToFrenet(sf_dot, si+50);
     // this is a hack. To be fixed properly
     // the ratio should be related to curvature and d
@@ -214,7 +214,7 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
 
 
 
-vector<vector<double>> generate_trajectory(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
+vector<vector<double>> generate_trajectory(Target target, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
 {
   vector<double> ptsx;
   vector<double> ptsy;
@@ -247,13 +247,13 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
     ptsy.push_back(ref_y);
   }
   
-  //vector<double> next_wp0 = map.getXY(car_s+30, get_dcenter(target_lane));
-  //vector<double> next_wp1 = map.getXY(car_s+60, get_dcenter(target_lane));
-  //vector<double> next_wp2 = map.getXY(car_s+90, get_dcenter(target_lane));
+  //vector<double> next_wp0 = map.getXY(car_s+30, get_dcenter(target.lane));
+  //vector<double> next_wp1 = map.getXY(car_s+60, get_dcenter(target.lane));
+  //vector<double> next_wp2 = map.getXY(car_s+90, get_dcenter(target.lane));
 
-  vector<double> next_wp0 = map.getXYspline(car_s+30, get_dcenter(target_lane));
-  vector<double> next_wp1 = map.getXYspline(car_s+60, get_dcenter(target_lane));
-  vector<double> next_wp2 = map.getXYspline(car_s+90, get_dcenter(target_lane));
+  vector<double> next_wp0 = map.getXYspline(car_s+30, get_dcenter(target.lane));
+  vector<double> next_wp1 = map.getXYspline(car_s+60, get_dcenter(target.lane));
+  vector<double> next_wp2 = map.getXYspline(car_s+90, get_dcenter(target.lane));
   
   
   ptsx.push_back(next_wp0[0]);
@@ -300,7 +300,7 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
   // fill up the rest of our path planner after filing it with previous points
   // here we will always output 50 points
   for (int i = 1; i <= PARAM_NB_POINTS - prev_size; i++) {
-    double N = (target_dist / (PARAM_DT * mph_to_ms(target_vel))); // divide by 2.24: mph -> m/s
+    double N = (target_dist / (PARAM_DT * mph_to_ms(target.velocity))); // divide by 2.24: mph -> m/s
     double x_point = x_add_on + target_x/N;
     double y_point = spl(x_point);
   

@@ -1,13 +1,11 @@
 #include "behavior.h"
-#include "params.h"
-#include "utility.h"
-#include <cassert>
 
 using namespace std;
 
-vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sensor_fusion, int lane, double car_s, double car_d, double ref_vel)
-{
-  vector<vector<double>> possible_targets;
+Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s, double car_d, double ref_vel) {
+  Target target;
+  target.time = 2.0;
+
   bool too_close = false;
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
   double dist_safety = PARAM_DIST_SLOW_DOWN;
@@ -63,7 +61,9 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   }
 
   // our nominal target .. same lane
-  possible_targets.push_back({(double)lane, ref_vel});
+  target.lane = lane;
+  target.velocity = ref_vel;
+  targets_.push_back(target);
 
   // Backup targets (lane and speed)
 
@@ -108,22 +108,31 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
   }
 
   // 1) backup velocities on target lane
+  target.lane = lane;
   for (size_t i = 0; i < backup_vel.size(); i++) {
-    possible_targets.push_back({(double)lane, backup_vel[i]});
+    target.velocity = backup_vel[i];
+    targets_.push_back(target);
   }
 
   // 2) target velocity on backup lanes
+  target.velocity = ref_vel;
   for (size_t i = 0; i < backup_lanes.size(); i++) {
-    possible_targets.push_back({(double)backup_lanes[i], ref_vel});
+    target.lane = backup_lanes[i];
+    targets_.push_back(target);
   }
 
   // 2) backup velocities on backup lanes
   for (size_t i = 0; i < backup_vel.size(); i++) {
+    target.velocity = backup_vel[i];
     for (size_t j = 0; j < backup_lanes.size(); j++) {
-      possible_targets.push_back({(double)backup_lanes[j], backup_vel[i]});
+      target.lane = backup_lanes[j];
+      targets_.push_back(target);
     }
   }
+}
 
+Behavior::~Behavior() {}
 
-  return possible_targets;
+vector<Target> Behavior::get_targets() {
+  return targets_;
 }

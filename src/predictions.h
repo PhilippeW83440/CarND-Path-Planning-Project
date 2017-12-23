@@ -10,6 +10,7 @@
 #include "utility.h"
 #include "params.h"
 
+// TODO remove hardcoded values
 
 class Predictions {
 public:
@@ -25,8 +26,8 @@ private:
 
   // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
   std::map< int, std::vector<Coord> > predictions_;
-  double lane_speed_[3];  // per lane
-  double lane_free_space_[3];  // per lane
+  double lane_speed_[3];
+  double lane_free_space_[3];
 };
 
 #endif // PREDICTIONS_H

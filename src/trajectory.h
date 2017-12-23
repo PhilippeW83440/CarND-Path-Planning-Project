@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "map.h"
+#include "behavior.h"
 
 
 struct trajectory_jmt {
@@ -25,8 +26,8 @@ struct trajectory_jmt JMT_init(double car_s, double car_d);
 
 // OUTPUTS:
 //    trajectory: next_x_vals, next_y_vals
-std::vector<std::vector<double>> generate_trajectory(int target_lane, double target_vel, double target_time, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
+std::vector<std::vector<double>> generate_trajectory(Target target, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
 
-struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel, double target_time, Map &map, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size, std::vector<std::vector<double>> &ref_path_s, std::vector<std::vector<double>> &ref_path_d);
+struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size, std::vector<std::vector<double>> &ref_path_s, std::vector<std::vector<double>> &ref_path_d);
 
 #endif // TRAJECTORY_H
