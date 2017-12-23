@@ -16,14 +16,20 @@ enum {
   SIZE    // 7
 };
 
+struct Coord {
+  double x;
+  double y;
+};
+
+struct Frenet {
+  double s;
+  double d;
+};
+
 typedef std::vector<double > t_coord;
 typedef std::vector<t_coord> t_traj;
 typedef std::vector<t_traj > t_trajSet;
 
-typedef struct {
-  double s;
-  double d;
-} t_frenet;
 
 // For converting back and forth between radians and degrees.
 double deg2rad(double x);

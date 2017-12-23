@@ -1,6 +1,5 @@
 #include "predictions.h"
-#include "params.h"
-#include <cassert>
+
 
 using namespace std;
 
@@ -105,9 +104,9 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
 
 // map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
 // predictions map: a dictionnary { fusion_index : horizon * (x,y) }
-std::map< int, vector<vector<double> > > generate_predictions(vector<vector<double>> &sensor_fusion, double car_s, double car_d, int horizon)
+std::map< int, vector<Coord>> generate_predictions(vector<vector<double>> &sensor_fusion, double car_s, double car_d, int horizon)
 {
-  std::map<int, vector<vector<double> > > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
+  std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
 
   // vector of indexes in sensor_fusion
   vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s, car_d); 
@@ -120,11 +119,13 @@ std::map< int, vector<vector<double> > > generate_predictions(vector<vector<doub
       double y = sensor_fusion[fusion_index][2];
       double vx = sensor_fusion[fusion_index][3];
       double vy = sensor_fusion[fusion_index][4];
-      vector<vector<double>> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
+      vector<Coord> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
       for (int j = 0; j < horizon; j++) {
-        prediction.push_back({x + vx * j*PARAM_DT, y + vy * j*PARAM_DT});
+        Coord coord;
+        coord.x = x + vx * j*PARAM_DT;
+        coord.y = y + vy * j*PARAM_DT;
+        prediction.push_back(coord);
       }
-      //predictions.push_back(prediction);
       predictions[fusion_index] = prediction;
     }
   }
