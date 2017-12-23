@@ -3,8 +3,37 @@
 
 using namespace std;
 
-double predictions_lane_speed[3];
-double predictions_free_space[3];
+
+// map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
+// predictions map: a dictionnary { fusion_index : horizon * (x,y) }
+Predictions::Predictions(vector<vector<double>> &sensor_fusion, double car_s, double car_d, int horizon)
+{
+  std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
+
+  // vector of indexes in sensor_fusion
+  vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s, car_d); 
+
+  for (int i = 0; i < closest_objects.size(); i++) {
+    int fusion_index = closest_objects[i];
+    if (fusion_index >= 0) {
+      //double fusion_id = sensor_fusion[fusion_index][0];
+      double x = sensor_fusion[fusion_index][1];
+      double y = sensor_fusion[fusion_index][2];
+      double vx = sensor_fusion[fusion_index][3];
+      double vy = sensor_fusion[fusion_index][4];
+      vector<Coord> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
+      for (int j = 0; j < horizon; j++) {
+        Coord coord;
+        coord.x = x + vx * j*PARAM_DT;
+        coord.y = y + vy * j*PARAM_DT;
+        prediction.push_back(coord);
+      }
+      predictions_[fusion_index] = prediction;
+    }
+  }
+}
+
+Predictions::~Predictions() {}
 
 //double get_sdistance(double s1, double s2)
 //{
@@ -18,7 +47,7 @@ double predictions_free_space[3];
 // => at most 6 predictions (for now on) as we have 3 lanes
 
 // sort of simple scene detection
-vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double car_s, double car_d) {
+vector<int> Predictions::find_closest_objects(vector<vector<double>> &sensor_fusion, double car_s, double car_d) {
   vector<int> front = {-1, -1, -1}; // idx of closest object per lane
   vector<int> back = {-1, -1, -1}; // idx of closest object per lane
 
@@ -77,58 +106,48 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     // !!! This should be part of the behavior planner behavior.cpp
     if (front[i] >= 0) { // a car in front of us
       if (lane != car_lane && (back_dmin[i] <= 10 || front_dmin[i] <= 10)) {
-        predictions_lane_speed[i] = 0;
-        predictions_free_space[i] = 0; // too dangerous
+        lane_speed_[i] = 0;
+        lane_free_space_[i] = 0; // too dangerous
       } else {
         double vx = sensor_fusion[front[i]][3];
         double vy = sensor_fusion[front[i]][4];
-        predictions_lane_speed[i] = sqrt(vx*vx+vy*vy);
-        predictions_free_space[i] = front_dmin[i];
+        lane_speed_[i] = sqrt(vx*vx+vy*vy);
+        lane_free_space_[i] = front_dmin[i];
       }
     } else {  // if nobody in front of us
       if (lane != car_lane && back_dmin[i] <= 10) {
-        predictions_lane_speed[i] = 0;
-        predictions_free_space[i] = 0; // too dangerous
+        lane_speed_[i] = 0;
+        lane_free_space_[i] = 0; // too dangerous
       } else {
-        predictions_lane_speed[i] = PARAM_MAX_SPEED_MPH;
-        predictions_free_space[i] = PARAM_FOV;
+        lane_speed_[i] = PARAM_MAX_SPEED_MPH;
+        lane_free_space_[i] = PARAM_FOV;
       }
     }
 
-    cout << "predictions_lane_speed[" << i << "]=" << predictions_lane_speed[i] << endl;
+    cout << "Predictions::lane_speed_[" << i << "]=" << lane_speed_[i] << endl;
   }
 
   return { front[0], back[0], front[1], back[1], front[2], back[2] };
 }
 
 
-// map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
-// predictions map: a dictionnary { fusion_index : horizon * (x,y) }
-std::map< int, vector<Coord>> generate_predictions(vector<vector<double>> &sensor_fusion, double car_s, double car_d, int horizon)
-{
-  std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
 
-  // vector of indexes in sensor_fusion
-  vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s, car_d); 
+std::map< int, vector<Coord>> Predictions::get_predictions() {
+  return predictions_;
+}
 
-  for (int i = 0; i < closest_objects.size(); i++) {
-    int fusion_index = closest_objects[i];
-    if (fusion_index >= 0) {
-      //double fusion_id = sensor_fusion[fusion_index][0];
-      double x = sensor_fusion[fusion_index][1];
-      double y = sensor_fusion[fusion_index][2];
-      double vx = sensor_fusion[fusion_index][3];
-      double vy = sensor_fusion[fusion_index][4];
-      vector<Coord> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
-      for (int j = 0; j < horizon; j++) {
-        Coord coord;
-        coord.x = x + vx * j*PARAM_DT;
-        coord.y = y + vy * j*PARAM_DT;
-        prediction.push_back(coord);
-      }
-      predictions[fusion_index] = prediction;
-    }
+double Predictions::get_lane_speed(int lane) {
+  if (lane >= 0 && lane <= 3) {
+    return lane_speed_[lane];
+  } else {
+    return 0;
   }
+}
 
-  return predictions;
+double Predictions::get_lane_free_space(int lane) {
+  if (lane >= 0 && lane <= 3) {
+    return lane_free_space_[lane];
+  } else {
+    return 0;
+  }
 }

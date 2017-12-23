@@ -142,7 +142,7 @@ int main() {
             }
 
             // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
-            std::map<int, vector<Coord> > predictions = generate_predictions(sensor_fusion, car_s, car_d, PARAM_NB_POINTS /* 50 */);
+            Predictions predictions = Predictions(sensor_fusion, car_s, car_d, PARAM_NB_POINTS /* 50 */);
 
             int car_lane = get_lane(car_d);
             vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, car_lane, car_s, car_d, ref_vel /* car_vel */);

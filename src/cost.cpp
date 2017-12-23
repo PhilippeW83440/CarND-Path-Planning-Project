@@ -215,7 +215,7 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
 }
 
 
-double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, vector<Coord> > &predictions, vector<vector<double>> &sensor_fusion, int car_lane)
+double cost_function(vector<vector<double>> &trajectory, int target_lane, double target_vel, Predictions &predict, vector<vector<double>> &sensor_fusion, int car_lane)
 {
   double cost = 0; // lower cost preferred
 
@@ -230,6 +230,8 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
   double weight_legality    = 100; // vs speed limits
   double weight_comfort     = 10; // vs jerk
   double weight_efficiency  = 1; // vs target lane, target speed and time to goal
+
+  std::map<int, vector<Coord> > predictions = predict.get_predictions();
 
   // 1) FEASIBILITY cost
   cost_feasibility += check_collision_on_trajectory(trajectory, predictions);
@@ -261,10 +263,10 @@ double cost_function(vector<vector<double>> &trajectory, int target_lane, double
 
   // sensor_fusion speed in m/s !!!
   //cost_efficiency = PARAM_MAX_SPEED - predictions_lane_speed[target_lane];
-  cost_efficiency = PARAM_FOV - predictions_free_space[target_lane];
+  cost_efficiency = PARAM_FOV - predict.get_lane_free_space(target_lane);
   cost = cost + weight_efficiency * cost_efficiency;
 
-  cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_lvel=" << predictions_lane_speed[target_lane] << " cost=" << cost << endl;
+  cout << "car_lane=" << car_lane << " target_lane=" << target_lane << " target_lvel=" << predict.get_lane_speed(target_lane) << " cost=" << cost << endl;
 
   return cost;
 }

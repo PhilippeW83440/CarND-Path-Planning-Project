@@ -16,6 +16,6 @@
 
 
 // TARGET: lane, velocity, time for maneuver
-double cost_function(std::vector<std::vector<double>> &trajectory, int target_lane, double target_vel, std::map<int, std::vector<Coord> > &predictions, std::vector<std::vector<double>> &sensor_fusion, int car_lane);
+double cost_function(std::vector<std::vector<double>> &trajectory, int target_lane, double target_vel, Predictions &predictions, std::vector<std::vector<double>> &sensor_fusion, int car_lane);
 
 #endif // COST_H
