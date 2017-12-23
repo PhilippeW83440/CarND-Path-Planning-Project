@@ -20,8 +20,7 @@ struct trajectory_jmt JMT_init(double car_s, double car_d)
   vector<vector<double>> store_path_s(PARAM_NB_POINTS, {0, 0, 0});
   vector<vector<double>> store_path_d(PARAM_NB_POINTS, {0, 0, 0});
 
-  for (int i = 0; i < PARAM_NB_POINTS; i++)
-  {
+  for (int i = 0; i < PARAM_NB_POINTS; i++) {
     store_path_s[i] = { car_s, 0, 0};
     store_path_d[i] = { car_d, 0, 0};
   }
@@ -115,12 +114,9 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
   //cout << "prev_size=" << prev_size << endl;
   //int last_point = PARAM_NB_POINTS - prev_size - 1;
   int last_point;
-  if (PARAM_TRUNCATED_PREV_SIZE < PARAM_NB_POINTS)
-  {
+  if (PARAM_TRUNCATED_PREV_SIZE < PARAM_NB_POINTS) {
     last_point = PARAM_NB_POINTS - previous_path_x.size() + prev_size - 1;
-  }
-  else
-  {
+  } else {
     last_point = PARAM_NB_POINTS - 1;
   }
 
@@ -179,8 +175,7 @@ struct trajectory_jmt generate_trajectory_jmt(int target_lane, double target_vel
   vector<double> next_x_vals;
   vector<double> next_y_vals;
   
-  for (int i = 0; i < prev_size; i++)
-  {
+  for (int i = 0; i < prev_size; i++) {
     new_path_s[i] = prev_path_s[PARAM_NB_POINTS - previous_path_x.size() + i];
     new_path_d[i] = prev_path_d[PARAM_NB_POINTS - previous_path_x.size() + i];
 
@@ -228,8 +223,7 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
   double ref_y = car_y;
   double ref_yaw = deg2rad(car_yaw);
 
-  if (prev_size < 2)
-  {
+  if (prev_size < 2) {
     double prev_car_x = car_x - cos(car_yaw);
     double prev_car_y = car_y - sin(car_yaw);
   
@@ -238,9 +232,7 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
   
     ptsy.push_back(prev_car_y);
     ptsy.push_back(car_y);
-  }
-  else
-  {
+  } else {
     ref_x = previous_path_x[prev_size-1];
     ref_y = previous_path_y[prev_size-1];
   
@@ -273,8 +265,7 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
   ptsy.push_back(next_wp2[1]);
   
   
-  for (int i = 0; i < ptsx.size(); i++)
-  {
+  for (int i = 0; i < ptsx.size(); i++) {
     // shift car reference angle to 0 degrees
     // transformation to local car's coordinates (cf MPC)
     // last point of previous path at origin and its angle at zero degree
@@ -294,8 +285,7 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
   vector<double> next_x_vals;
   vector<double> next_y_vals;
   
-  for (int i = 0; i < prev_size; i++)
-  {
+  for (int i = 0; i < prev_size; i++) {
     next_x_vals.push_back(previous_path_x[i]);
     next_y_vals.push_back(previous_path_y[i]);
   }
@@ -309,8 +299,7 @@ vector<vector<double>> generate_trajectory(int target_lane, double target_vel, d
   
   // fill up the rest of our path planner after filing it with previous points
   // here we will always output 50 points
-  for (int i = 1; i <= PARAM_NB_POINTS - prev_size; i++)
-  {
+  for (int i = 1; i <= PARAM_NB_POINTS - prev_size; i++) {
     double N = (target_dist / (PARAM_DT * mph_to_ms(target_vel))); // divide by 2.24: mph -> m/s
     double x_point = x_add_on + target_x/N;
     double y_point = spl(x_point);

@@ -109,8 +109,7 @@ int main() {
 
             // --- just for debugging purposes
             double dist_min = INF;
-            for (int i = 0; i < sensor_fusion.size(); i++)
-            {
+            for (int i = 0; i < sensor_fusion.size(); i++) {
               // sensor_fusion: pre object [ID, x, y, vx, vy, s, d]
               double obj_x = sensor_fusion[i][1];
               double obj_y = sensor_fusion[i][2];
@@ -135,8 +134,7 @@ int main() {
             car_d = frenet_car[1];
             cout << "car_frenet_s=" << car_s << " car_frenet_d=" << car_d << endl;
 
-            if (start)
-            {
+            if (start) {
               struct trajectory_jmt traj_jmt = JMT_init(car_s, car_d);
               prev_path_s = traj_jmt.path_s;
               prev_path_d = traj_jmt.path_d;
@@ -166,8 +164,7 @@ int main() {
             vector<vector<vector<double>>> prev_paths_d;
 
             int target_lane;
-            for (int i = 0; i < targets.size(); i++)
-            {
+            for (int i = 0; i < targets.size(); i++) {
               target_lane = targets[i][0];
               double target_vel = targets[i][1];
               double target_time = 2.0; // TODO should be behavior_planner job
@@ -183,9 +180,7 @@ int main() {
                 trajectory = traj_jmt.trajectory;
                 prev_paths_s.push_back(traj_jmt.path_s);
                 prev_paths_d.push_back(traj_jmt.path_d);
-              }
-              else
-              {
+              } else {
                 // generate SPLINE trajectory in x and y
                 trajectory = generate_trajectory(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
                                                      car_s, car_d, previous_path_x, previous_path_y, prev_size);
@@ -199,24 +194,20 @@ int main() {
             // --- retrieve the lowest cost trajectory ---
             double min_cost = INF;
             int min_cost_index = 0;
-            for (int i = 0; i < costs.size(); i++)
-            {
-              if (costs[i] < min_cost)
-              {
+            for (int i = 0; i < costs.size(); i++) {
+              if (costs[i] < min_cost) {
                 min_cost = costs[i];
                 min_cost_index = i;
               }
             }
             target_lane = targets[min_cost_index][0];
             ref_vel = targets[min_cost_index][1];
-            if (PARAM_TRAJECTORY_JMT)
-            {
+            if (PARAM_TRAJECTORY_JMT) {
               prev_path_s = prev_paths_s[min_cost_index];
               prev_path_d = prev_paths_d[min_cost_index];
             }
 
-            if (target_lane != car_lane)
-            {
+            if (target_lane != car_lane) {
               cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane
                    << " target_vel=" << ref_vel << " car_lane=" << car_lane << " cost="<< min_cost << ")" << endl;
             }

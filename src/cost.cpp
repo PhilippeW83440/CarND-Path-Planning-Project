@@ -196,8 +196,7 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
     assert(prediction.size() == trajectory[0].size());
     assert(prediction.size() == trajectory[1].size());
 
-    for (size_t i = 0; i < prediction.size(); i++) // up to 50 (x,y) coordinates
-    {
+    for (size_t i = 0; i < prediction.size(); i++) { // up to 50 (x,y) coordinates
       double obj_x = prediction[i].x;
       double obj_y = prediction[i].y;
       double ego_x = trajectory[0][i];

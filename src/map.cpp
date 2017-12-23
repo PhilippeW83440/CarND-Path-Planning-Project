@@ -118,8 +118,7 @@ void Map::read(string map_file) {
 
 	double frenet_s = 0.0;
   map_s.push_back(0.0);
-	for(size_t i = 1; i < map_waypoints_x.size(); i++)
-	{
+	for (size_t i = 1; i < map_waypoints_x.size(); i++) {
 		frenet_s += distance(map_waypoints_x[i], map_waypoints_y[i], map_waypoints_x[i-1], map_waypoints_y[i-1]);
     map_s.push_back(frenet_s);
 	}
@@ -127,8 +126,7 @@ void Map::read(string map_file) {
 	frenet_s = 0.0;
   new_map_s.push_back(0.0);
   // new map: 1 point every meter
-	for(size_t i = 1; i < new_map_waypoints_x.size(); i++)
-	{
+	for (size_t i = 1; i < new_map_waypoints_x.size(); i++) {
 		frenet_s += distance(new_map_waypoints_x[i], new_map_waypoints_y[i], new_map_waypoints_x[i-1], new_map_waypoints_y[i-1]);
     //new_map_s.push_back(frenet_s); // TODO test both alternatives
     new_map_s.push_back(i); // better
@@ -164,22 +162,17 @@ int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const
 
   int size = maps_x.size();
 
-  if (size <= 200)
-  {
-	  for(int i = 0; i < size; i++)
-	  {
+  if (size <= 200) {
+	  for (int i = 0; i < size; i++) {
 	  	double map_x = maps_x[i];
 	  	double map_y = maps_y[i];
 	  	double dist = distance(x,y,map_x,map_y);
-	  	if(dist < closestLen)
-	  	{
+	  	if(dist < closestLen) {
 	  		closestLen = dist;
 	  		closestWaypoint = i;
 	  	}
 	  }
-  }
-  else // Faster search with big maps: 2 hierarchical steps of search
-  {
+  } else  { // Faster search with big maps: 2 hierarchical steps of search
     // 1) Search a point relatively close to the nearest
     int jump_points = size / 181; // so that we have 1 jump_points with a 181 points map (default)
     int point = 0;
@@ -188,8 +181,7 @@ int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const
 	  	double map_x = maps_x[point];
 	  	double map_y = maps_y[point];
 	  	double dist = distance(x,y,map_x,map_y);
-	  	if(dist < closestLen)
-	  	{
+	  	if(dist < closestLen) {
 	  		closestLen = dist;
 	  		closestWaypoint = point;
 	  	}
@@ -197,24 +189,19 @@ int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const
     }
 
     // 2) Search a point which is the nearest in a refined area
-	  //for(int i = closestWaypoint - 181; i < closestWaypoint + 181; i++)
-	  for(int i = closestWaypoint - 91; i < closestWaypoint + 91; i++)
-    {
+	  //for (int i = closestWaypoint - 181; i < closestWaypoint + 181; i++)
+	  for (int i = closestWaypoint - 91; i < closestWaypoint + 91; i++) {
       int idx = i;
-      if (i < 0)
-      {
+      if (i < 0) {
         idx += size;
-      }
-      else if (i >= size)
-      {
+      } else if (i >= size) {
         idx -= size;
       }
 
 	  	double map_x = maps_x[idx];
 	  	double map_y = maps_y[idx];
 	  	double dist = distance(x,y,map_x,map_y);
-	  	if(dist < closestLen)
-	  	{
+	  	if(dist < closestLen) {
 	  		closestLen = dist;
 	  		closestWaypoint = idx;
 	  	}
@@ -240,8 +227,7 @@ int Map::NextWaypoint(double x, double y, double theta, const vector<double> &ma
 	if(angle > M_PI/4)
 	{
 		closestWaypoint++;
-    if (closestWaypoint == maps_x.size())
-    {
+    if (closestWaypoint == maps_x.size()) {
       closestWaypoint = 0; // XXX bug fix
     }
 	}
@@ -262,8 +248,7 @@ vector<double> Map::getFrenet(double x, double y, double theta) {
 
 	int prev_wp;
 	prev_wp = next_wp-1;
-	if(next_wp == 0)
-	{
+	if(next_wp == 0) {
 		prev_wp  = maps_x.size()-1;
 	}
 

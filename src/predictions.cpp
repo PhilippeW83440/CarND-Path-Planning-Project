@@ -53,12 +53,12 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
       //double dist = get_sdistance(s, car_s);
       double dist = fabs(s - car_s);
 
-      if (s >= car_s) { /* front */
+      if (s >= car_s) {  // front
         if (dist < front_dmin[lane]) {
           front[lane] = i;
           front_dmin[lane] = dist;
         }
-      } else /* back */ {
+      } else {  // back
         if (dist < back_dmin[lane]) {
           back[lane] = i;
           back_dmin[lane] = dist;
@@ -85,7 +85,7 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
         predictions_lane_speed[i] = sqrt(vx*vx+vy*vy);
         predictions_free_space[i] = front_dmin[i];
       }
-    } else { // if nobody in front of us
+    } else {  // if nobody in front of us
       if (lane != car_lane && back_dmin[i] <= 10) {
         predictions_lane_speed[i] = 0;
         predictions_free_space[i] = 0; // too dangerous
