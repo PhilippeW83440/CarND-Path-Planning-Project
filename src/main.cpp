@@ -179,8 +179,7 @@ int main() {
                 struct trajectory_jmt traj_jmt;
 
                 // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-                traj_jmt = generate_trajectory_jmt(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
-                                                     car_s, car_d, previous_path_x, previous_path_y, prev_size, prev_path_s, prev_path_d);
+                traj_jmt = generate_trajectory_jmt(target_lane, target_vel, target_time, map, previous_path_x, previous_path_y, prev_size, prev_path_s, prev_path_d);
                 trajectory = traj_jmt.trajectory;
                 prev_paths_s.push_back(traj_jmt.path_s);
                 prev_paths_d.push_back(traj_jmt.path_d);
