@@ -29,7 +29,7 @@ vector<vector<double>> behavior_planner_find_targets(vector<vector<double>> &sen
       cout << "obj_idx=" << i << " REF_VEL_MS=" << ref_vel_ms << " CHECK_SPEED=" << check_speed << endl;
       dist_safety = PARAM_DIST_SLOW_DOWN;
       if (fabs(ref_vel_ms - check_speed) <= 2)
-        dist_safety = 10; // XXX TODO remove harcoded value
+        dist_safety = 20; // XXX TODO remove harcoded value
   
       if ((check_car_s > car_s) && ((check_car_s - car_s) < dist_safety)) {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
