@@ -60,8 +60,8 @@ int main() {
   double ref_vel = 0.0; // mph
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
-  vector<vector<double>> prev_path_s;
-  vector<vector<double>> prev_path_d;
+  vector<PointC2> prev_path_s;
+  vector<PointC2> prev_path_d;
   //////////////////////////////////////////////////////////////////////
 
 
@@ -160,8 +160,8 @@ int main() {
 
             vector<double> costs;
             vector<vector<vector<double>>> trajectories;
-            vector<vector<vector<double>>> prev_paths_s;
-            vector<vector<vector<double>>> prev_paths_d;
+            vector<vector<PointC2>> prev_paths_s;
+            vector<vector<PointC2>> prev_paths_d;
 
             for (size_t i = 0; i < targets.size(); i++) {
               // vector of (traj_x, traj_y)

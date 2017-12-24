@@ -17,12 +17,12 @@ struct trajectory_jmt JMT_init(double car_s, double car_d)
 {
   struct trajectory_jmt traj_jmt;
   // 50 x {s, s_dot, s_ddot}
-  vector<vector<double>> store_path_s(PARAM_NB_POINTS, {0, 0, 0});
-  vector<vector<double>> store_path_d(PARAM_NB_POINTS, {0, 0, 0});
+  vector<PointC2> store_path_s(PARAM_NB_POINTS, PointC2(0, 0, 0));
+  vector<PointC2> store_path_d(PARAM_NB_POINTS, PointC2(0, 0, 0));
 
   for (int i = 0; i < PARAM_NB_POINTS; i++) {
-    store_path_s[i] = { car_s, 0, 0};
-    store_path_d[i] = { car_d, 0, 0};
+    store_path_s[i] = PointC2(car_s, 0, 0);
+    store_path_d[i] = PointC2(car_d, 0, 0);
   }
 
   traj_jmt.path_s = store_path_s;
@@ -104,12 +104,12 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size, vector<vector<double>> &prev_path_s, vector<vector<double>> &prev_path_d)
+struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size, vector<PointC2> &prev_path_s, vector<PointC2> &prev_path_d)
 {
   struct trajectory_jmt traj_jmt;
 
-  vector<vector<double>> new_path_s(PARAM_NB_POINTS, {0, 0, 0});
-  vector<vector<double>> new_path_d(PARAM_NB_POINTS, {0, 0, 0});
+  vector<PointC2> new_path_s(PARAM_NB_POINTS, PointC2(0,0,0));
+  vector<PointC2> new_path_d(PARAM_NB_POINTS, PointC2(0,0,0));
 
   //cout << "prev_size=" << prev_size << endl;
   //int last_point = PARAM_NB_POINTS - prev_size - 1;
@@ -120,19 +120,18 @@ struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<do
     last_point = PARAM_NB_POINTS - 1;
   }
 
-
   double T = target.time; // 2 seconds si car_d center of line
 
   double si, si_dot=0, si_ddot;
   double di, di_dot, di_ddot;
 
-  si      = prev_path_s[last_point][0];
-  si_dot  = prev_path_s[last_point][1];
-  si_ddot = prev_path_s[last_point][2];
+  si      = prev_path_s[last_point].f;
+  si_dot  = prev_path_s[last_point].f_dot;
+  si_ddot = prev_path_s[last_point].f_ddot;
 
-  di      = prev_path_d[last_point][0];
-  di_dot  = prev_path_d[last_point][1];
-  di_ddot = prev_path_d[last_point][2];
+  di      = prev_path_d[last_point].f;
+  di_dot  = prev_path_d[last_point].f_dot;
+  di_ddot = prev_path_d[last_point].f_ddot;
 
   double sf, sf_dot, sf_ddot;
   double df, df_dot, df_ddot;
@@ -194,8 +193,8 @@ struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<do
     double d_dot = polyeval_dot(poly_d, t);
     double d_ddot = polyeval_ddot(poly_d, t);
 
-    new_path_s[i] = { s, s_dot, s_ddot };
-    new_path_d[i] = { d, d_dot, d_ddot };
+    new_path_s[i] = PointC2(s, s_dot, s_ddot);
+    new_path_d[i] = PointC2(d, d_dot, d_ddot);
 
     vector<double> point_xy = map.getXYspline(s, d);
 

@@ -9,10 +9,18 @@
 #include "behavior.h"
 
 
+// Point of a C2 class function
+struct PointC2 {
+  double f;
+  double f_dot;
+  double f_ddot;
+  PointC2 (double y=0, double y_dot=0, double y_ddot=0) : f(y), f_dot(y_dot), f_ddot(y_ddot) {}
+};
+
 struct trajectory_jmt {
   std::vector<std::vector<double>> trajectory;
-  std::vector<std::vector<double>> path_s;
-  std::vector<std::vector<double>> path_d;
+  std::vector<PointC2> path_s;
+  std::vector<PointC2> path_d;
 };
 
 struct trajectory_jmt JMT_init(double car_s, double car_d);
@@ -28,6 +36,6 @@ struct trajectory_jmt JMT_init(double car_s, double car_d);
 //    trajectory: next_x_vals, next_y_vals
 std::vector<std::vector<double>> generate_trajectory(Target target, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
 
-struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size, std::vector<std::vector<double>> &ref_path_s, std::vector<std::vector<double>> &ref_path_d);
+struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size, std::vector<PointC2> &ref_path_s, std::vector<PointC2> &ref_path_d);
 
 #endif // TRAJECTORY_H
