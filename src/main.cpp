@@ -60,7 +60,7 @@ int main() {
 
   // car_speed: current speed
   // car_speed_target: speed at end of the planned trajectory
-  double car_speed_target = 0.0; // mph
+  double car_speed_target = 1.0; // mph (non 0 for XY spline traj generation to avoid issues)
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
   vector<PointC2> prev_path_s;
@@ -141,13 +141,6 @@ int main() {
 
             // -- short time horizon (close to 100 msec when possible; not lower bcz of simulator latency) for trajectory (re)generation ---
             prev_size = min(prev_size, PARAM_TRUNCATED_PREV_SIZE);
-            vector<double> frenet_close;
-            if (prev_size > 0) { // prev_size typically close to 100 msec
-              frenet_close = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
-              car_s = frenet_close[0];
-              car_d = frenet_close[1];
-            }
-            car_lane = get_lane(car_d);
 
             vector<Cost> costs;
             vector<vector<vector<double>>> trajectories;
