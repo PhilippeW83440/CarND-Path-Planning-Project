@@ -57,7 +57,10 @@ int main() {
   map.plot();
 
   bool start = true;
-  double ref_vel = 0.0; // mph
+
+  // car_speed: current speed
+  // car_speed_target: speed at end of the planned trajectory
+  double car_speed_target = 0.0; // mph
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
   vector<PointC2> prev_path_s;
@@ -65,7 +68,7 @@ int main() {
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map, &ref_vel, &start, &prev_path_s, &prev_path_d](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &car_speed_target, &start, &prev_path_s, &prev_path_d](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -94,6 +97,7 @@ int main() {
           	double car_yaw = j[1]["yaw"];
           	double car_speed = j[1]["speed"];
 
+            cout << "SPEEDOMETER: car_speed=" << car_speed << " car_speed_target=" << car_speed_target << '\n';
           	// Previous path data given to the Planner
           	vector<double> previous_path_x = j[1]["previous_path_x"];
           	vector<double> previous_path_y = j[1]["previous_path_y"];
@@ -107,19 +111,6 @@ int main() {
 
           	json msgJson;
 
-            // --- just for debugging purposes
-            double dist_min = INF;
-            for (size_t i = 0; i < sensor_fusion.size(); i++) {
-              // sensor_fusion: pre object [ID, x, y, vx, vy, s, d]
-              double obj_x = sensor_fusion[i][1];
-              double obj_y = sensor_fusion[i][2];
-              double dist = distance(car_x, car_y, obj_x, obj_y);
-              if (dist < dist_min)
-                dist_min = dist;
-            }
-            cout << "************** closest object at " << dist_min << " meters *************" << endl;
-            assert(dist_min >= 1);
-
             //////////////////////////////////////////////////////////////////////
 
 
@@ -127,7 +118,7 @@ int main() {
 
             int prev_size = previous_path_x.size();
             cout << "prev_size=" << prev_size << " car_x=" << car_x << " car_y=" << car_y << " car_s=" << 
-                    car_s << " car_d=" << car_d << " car_speed=" << car_speed << " ref_vel=" << ref_vel << endl;
+                    car_s << " car_d=" << car_d << " car_speed=" << car_speed << " car_speed_target=" << car_speed_target << endl;
 
             vector<double> frenet_car = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
             car_s = frenet_car[0];
@@ -145,7 +136,7 @@ int main() {
             Predictions predictions = Predictions(sensor_fusion, car_s, car_d, PARAM_NB_POINTS /* 50 */);
 
             int car_lane = get_lane(car_d);
-            Behavior behavior = Behavior(sensor_fusion, car_lane, car_s, car_d, ref_vel /* car_vel */);
+            Behavior behavior = Behavior(sensor_fusion, car_lane, car_s, car_d, car_speed_target);
             vector<Target> targets = behavior.get_targets();
 
             // -- short time horizon (close to 100 msec when possible; not lower bcz of simulator latency) for trajectory (re)generation ---
@@ -195,7 +186,7 @@ int main() {
               }
             }
             int target_lane = targets[min_cost_index].lane;
-            ref_vel = targets[min_cost_index].velocity;
+            car_speed_target = targets[min_cost_index].velocity;
             if (PARAM_TRAJECTORY_JMT) {
               prev_path_s = prev_paths_s[min_cost_index];
               prev_path_d = prev_paths_d[min_cost_index];
@@ -203,7 +194,7 @@ int main() {
 
             if (target_lane != car_lane) {
               cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane
-                   << " target_vel=" << ref_vel << " car_lane=" << car_lane << " cost="<< min_cost << ")" << endl;
+                   << " target_vel=" << car_speed_target << " car_lane=" << car_lane << " cost="<< min_cost << ")" << endl;
             }
 
 
