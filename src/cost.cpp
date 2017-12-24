@@ -13,7 +13,7 @@ using Eigen::Vector2d;
 // to identify collision between 2 convex rectangular objects
 // cf http://www.dyn4j.org/2010/01/sat/
 // ------------------------------------------------------------
-bool check_collision(double x0, double y0, double theta0, double x1, double y1, double theta1) 
+bool Cost::check_collision(double x0, double y0, double theta0, double x1, double y1, double theta1) 
 {
   Vector2d trans0; 
   trans0 << x0, y0;
@@ -80,7 +80,7 @@ bool check_collision(double x0, double y0, double theta0, double x1, double y1, 
   return true;
 }
 
-int check_collision_on_trajectory(vector<vector<double>> &trajectory, std::map<int, vector<Coord> > &predictions)
+int Cost::check_collision_on_trajectory(vector<vector<double>> &trajectory, std::map<int, vector<Coord> > &predictions)
 {
   std::map<int, vector<Coord> >::iterator it = predictions.begin();
   while(it != predictions.end()) {
@@ -116,7 +116,7 @@ int check_collision_on_trajectory(vector<vector<double>> &trajectory, std::map<i
 
 
 // check max speed, acceleration, jerk
-bool check_max_capabilities(vector<vector<double>> &traj)
+bool Cost::check_max_capabilities(vector<vector<double>> &traj)
 {
   double vx, ax, jx;
   double vy, ay, jy;
@@ -182,7 +182,7 @@ bool check_max_capabilities(vector<vector<double>> &traj)
 }
 
 
-double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vector<Coord> > &predictions)
+double Cost::get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vector<Coord> > &predictions)
 {
   double dmin = INF;
 
@@ -215,9 +215,9 @@ double get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vect
 }
 
 
-double cost_function(vector<vector<double>> &trajectory, Target target, Predictions &predict, vector<vector<double>> &sensor_fusion, int car_lane)
+Cost::Cost(vector<vector<double>> &trajectory, Target target, Predictions &predict, vector<vector<double>> &sensor_fusion, int car_lane)
 {
-  double cost = 0; // lower cost preferred
+  cost_ = 0; // lower cost preferred
 
   double cost_feasibility = 0; // vs collisions, vs vehicle capabilities
   double cost_safety = 0; // vs buffer distance, vs visibility
@@ -239,7 +239,7 @@ double cost_function(vector<vector<double>> &trajectory, Target target, Predicti
   //{
   //  cost_feasibility += 1;
   //}
-  cost = cost + weight_feasibility * cost_feasibility;
+  cost_ = cost_ + weight_feasibility * cost_feasibility;
 
   // 2) SAFETY cost
   // double dmin = get_predicted_dmin(trajectory, predictions);
@@ -249,13 +249,13 @@ double cost_function(vector<vector<double>> &trajectory, Target target, Predicti
   // } else {
   //   cost_safety = 0;
   // }
-  cost = cost + weight_safety * cost_safety;
+  cost_ = cost_ + weight_safety * cost_safety;
 
   // 3) LEGALITY cost
-  cost = cost + weight_legality * cost_legality;
+  cost_ = cost_ + weight_legality * cost_legality;
 
   // 4) COMFORT cost
-  cost = cost + weight_comfort * cost_comfort;
+  cost_ = cost_ + weight_comfort * cost_comfort;
 
   // 5) EFFICIENCY cost
   //cost_efficiency = PARAM_MAX_SPEED_MPH - target.velocity;
@@ -264,9 +264,14 @@ double cost_function(vector<vector<double>> &trajectory, Target target, Predicti
   // sensor_fusion speed in m/s !!!
   //cost_efficiency = PARAM_MAX_SPEED - predictions_lane_speed[target.lane];
   cost_efficiency = PARAM_FOV - predict.get_lane_free_space(target.lane);
-  cost = cost + weight_efficiency * cost_efficiency;
+  cost_ = cost_ + weight_efficiency * cost_efficiency;
 
-  cout << "car_lane=" << car_lane << " target.lane=" << target.lane << " target_lvel=" << predict.get_lane_speed(target.lane) << " cost=" << cost << endl;
+  cout << "car_lane=" << car_lane << " target.lane=" << target.lane << " target_lvel=" << predict.get_lane_speed(target.lane) << " cost=" << cost_ << endl;
+}
 
-  return cost;
+Cost::~Cost() {}
+
+double Cost::get_cost() 
+{
+  return cost_;
 }

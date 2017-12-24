@@ -16,7 +16,22 @@
 #include "behavior.h"
 
 
-// TARGET: lane, velocity, time for maneuver
-double cost_function(std::vector<std::vector<double>> &trajectory, Target target, Predictions &predictions, std::vector<std::vector<double>> &sensor_fusion, int car_lane);
+
+class Cost {
+public:
+  Cost(std::vector<std::vector<double>> &trajectory, Target target, 
+       Predictions &predictions, std::vector<std::vector<double>> &sensor_fusion, int car_lane);
+  virtual ~Cost();
+
+  double get_cost();
+
+private:
+  bool check_collision(double x0, double y0, double theta0, double x1, double y1, double theta1);
+  int  check_collision_on_trajectory(std::vector<std::vector<double>> &trajectory, std::map<int, std::vector<Coord> > &predictions);
+  bool check_max_capabilities(std::vector<std::vector<double>> &traj);
+  double get_predicted_dmin(std::vector<std::vector<double>> &trajectory, std::map<int, std::vector<Coord> > &predictions);
+
+  double cost_;
+};
 
 #endif // COST_H

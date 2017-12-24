@@ -158,7 +158,7 @@ int main() {
             }
             car_lane = get_lane(car_d);
 
-            vector<double> costs;
+            vector<Cost> costs;
             vector<vector<vector<double>>> trajectories;
             vector<vector<PointC2>> prev_paths_s;
             vector<vector<PointC2>> prev_paths_d;
@@ -180,7 +180,7 @@ int main() {
                                                  previous_path_x, previous_path_y, prev_size);
               }
 
-              double cost = cost_function(trajectory, targets[i], predictions, sensor_fusion, car_lane);
+              Cost cost = Cost(trajectory, targets[i], predictions, sensor_fusion, car_lane);
               costs.push_back(cost);
               trajectories.push_back(trajectory);
             }
@@ -189,8 +189,8 @@ int main() {
             double min_cost = INF;
             int min_cost_index = 0;
             for (size_t i = 0; i < costs.size(); i++) {
-              if (costs[i] < min_cost) {
-                min_cost = costs[i];
+              if (costs[i].get_cost() < min_cost) {
+                min_cost = costs[i].get_cost();
                 min_cost_index = i;
               }
             }
