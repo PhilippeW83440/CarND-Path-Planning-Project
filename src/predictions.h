@@ -14,7 +14,7 @@
 
 class Predictions {
 public:
-  Predictions(std::vector<std::vector<double> > &sensor_fusion, double car_s, double car_d, int horizon);
+  Predictions(std::vector<std::vector<double> > &sensor_fusion, CarData car, int horizon);
   virtual ~Predictions();
 
   std::map<int, std::vector<Coord> > get_predictions();

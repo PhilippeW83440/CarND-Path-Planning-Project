@@ -88,16 +88,19 @@ int main() {
         
         if (event == "telemetry") {
           // j[1] is the data JSON object
+
+                CarData car;
           
         	// Main car's localization Data
-          	double car_x = j[1]["x"];
-          	double car_y = j[1]["y"];
-          	double car_s = j[1]["s"];
-          	double car_d = j[1]["d"];
-          	double car_yaw = j[1]["yaw"];
-          	double car_speed = j[1]["speed"];
+          	car.x = j[1]["x"];
+          	car.y = j[1]["y"];
+          	car.s = j[1]["s"];
+          	car.d = j[1]["d"];
+          	car.yaw = j[1]["yaw"];
+          	car.speed = j[1]["speed"];
+          	car.speed_target = car_speed_target;
 
-            cout << "SPEEDOMETER: car_speed=" << car_speed << " car_speed_target=" << car_speed_target << '\n';
+            cout << "SPEEDOMETER: car.speed=" << car.speed << " car.speed_target=" << car.speed_target << '\n';
           	// Previous path data given to the Planner
           	vector<double> previous_path_x = j[1]["previous_path_x"];
           	vector<double> previous_path_y = j[1]["previous_path_y"];
@@ -113,30 +116,29 @@ int main() {
 
             //////////////////////////////////////////////////////////////////////
 
-
-            map.testError(car_x, car_y, car_yaw);
+            map.testError(car.x, car.y, car.yaw);
 
             int prev_size = previous_path_x.size();
-            cout << "prev_size=" << prev_size << " car_x=" << car_x << " car_y=" << car_y << " car_s=" << 
-                    car_s << " car_d=" << car_d << " car_speed=" << car_speed << " car_speed_target=" << car_speed_target << endl;
+            cout << "prev_size=" << prev_size << " car.x=" << car.x << " car.y=" << car.y << " car.s=" << 
+                    car.s << " car.d=" << car.d << " car.speed=" << car.speed << " car.speed_target=" << car.speed_target << endl;
 
-            vector<double> frenet_car = map.getFrenet(car_x, car_y, deg2rad(car_yaw));
-            car_s = frenet_car[0];
-            car_d = frenet_car[1];
-            cout << "car_frenet_s=" << car_s << " car_frenet_d=" << car_d << endl;
+            vector<double> frenet_car = map.getFrenet(car.x, car.y, deg2rad(car.yaw));
+            car.s = frenet_car[0];
+            car.d = frenet_car[1];
+            car.lane = get_lane(car.d);
+            cout << "car.s=" << car.s << " car.d=" << car.d << endl;
 
             if (start) {
-              struct trajectory_jmt traj_jmt = JMT_init(car_s, car_d);
+              struct trajectory_jmt traj_jmt = JMT_init(car.s, car.d);
               prev_path_s = traj_jmt.path_s;
               prev_path_d = traj_jmt.path_d;
               start = false;
             }
 
             // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
-            Predictions predictions = Predictions(sensor_fusion, car_s, car_d, PARAM_NB_POINTS /* 50 */);
+            Predictions predictions = Predictions(sensor_fusion, car, PARAM_NB_POINTS /* 50 */);
 
-            int car_lane = get_lane(car_d);
-            Behavior behavior = Behavior(sensor_fusion, car_lane, car_s, car_d, car_speed_target);
+            Behavior behavior = Behavior(sensor_fusion, car);
             vector<Target> targets = behavior.get_targets();
 
             // -- short time horizon (close to 100 msec when possible; not lower bcz of simulator latency) for trajectory (re)generation ---
@@ -160,11 +162,10 @@ int main() {
                 prev_paths_d.push_back(traj_jmt.path_d);
               } else {
                 // generate SPLINE trajectory in x and y
-                trajectory = generate_trajectory(targets[i], map, car_x, car_y, car_yaw, car_s, car_d, 
-                                                 previous_path_x, previous_path_y, prev_size);
+                trajectory = generate_trajectory(targets[i], map, car, previous_path_x, previous_path_y, prev_size);
               }
 
-              Cost cost = Cost(trajectory, targets[i], predictions, sensor_fusion, car_lane);
+              Cost cost = Cost(trajectory, targets[i], predictions, sensor_fusion, car.lane);
               costs.push_back(cost);
               trajectories.push_back(trajectory);
             }
@@ -180,14 +181,15 @@ int main() {
             }
             int target_lane = targets[min_cost_index].lane;
             car_speed_target = targets[min_cost_index].velocity;
+            car.speed_target = car_speed_target;
             if (PARAM_TRAJECTORY_JMT) {
               prev_path_s = prev_paths_s[min_cost_index];
               prev_path_d = prev_paths_d[min_cost_index];
             }
 
-            if (target_lane != car_lane) {
+            if (target_lane != car.lane) {
               cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane
-                   << " target_vel=" << car_speed_target << " car_lane=" << car_lane << " cost="<< min_cost << ")" << endl;
+                   << " target_vel=" << car.speed_target << " car.lane=" << car.lane << " cost="<< min_cost << ")" << endl;
             }
 
 

@@ -213,24 +213,24 @@ struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<do
 
 
 
-vector<vector<double>> generate_trajectory(Target target, Map &map, double car_x, double car_y, double car_yaw, double car_s, double car_d, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
+vector<vector<double>> generate_trajectory(Target target, Map &map, CarData car, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
 {
   vector<double> ptsx;
   vector<double> ptsy;
   
-  double ref_x = car_x;
-  double ref_y = car_y;
-  double ref_yaw = deg2rad(car_yaw);
+  double ref_x = car.x;
+  double ref_y = car.y;
+  double ref_yaw = deg2rad(car.yaw);
 
   if (prev_size < 2) {
-    double prev_car_x = car_x - cos(car_yaw);
-    double prev_car_y = car_y - sin(car_yaw);
+    double prev_car_x = car.x - cos(car.yaw);
+    double prev_car_y = car.y - sin(car.yaw);
   
     ptsx.push_back(prev_car_x);
-    ptsx.push_back(car_x);
+    ptsx.push_back(car.x);
   
     ptsy.push_back(prev_car_y);
-    ptsy.push_back(car_y);
+    ptsy.push_back(car.y);
   } else {
     ref_x = previous_path_x[prev_size-1];
     ref_y = previous_path_y[prev_size-1];
@@ -246,13 +246,13 @@ vector<vector<double>> generate_trajectory(Target target, Map &map, double car_x
     ptsy.push_back(ref_y);
   }
   
-  //vector<double> next_wp0 = map.getXY(car_s+30, get_dcenter(target.lane));
-  //vector<double> next_wp1 = map.getXY(car_s+60, get_dcenter(target.lane));
-  //vector<double> next_wp2 = map.getXY(car_s+90, get_dcenter(target.lane));
+  //vector<double> next_wp0 = map.getXY(car.s+30, get_dcenter(target.lane));
+  //vector<double> next_wp1 = map.getXY(car.s+60, get_dcenter(target.lane));
+  //vector<double> next_wp2 = map.getXY(car.s+90, get_dcenter(target.lane));
 
-  vector<double> next_wp0 = map.getXYspline(car_s+30, get_dcenter(target.lane));
-  vector<double> next_wp1 = map.getXYspline(car_s+60, get_dcenter(target.lane));
-  vector<double> next_wp2 = map.getXYspline(car_s+90, get_dcenter(target.lane));
+  vector<double> next_wp0 = map.getXYspline(car.s+30, get_dcenter(target.lane));
+  vector<double> next_wp1 = map.getXYspline(car.s+60, get_dcenter(target.lane));
+  vector<double> next_wp2 = map.getXYspline(car.s+90, get_dcenter(target.lane));
   
   
   ptsx.push_back(next_wp0[0]);

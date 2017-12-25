@@ -26,6 +26,18 @@ struct Frenet {
   double d;
 };
 
+
+struct CarData {
+  double x;
+  double y;
+  double s;
+  double d;
+  double yaw;
+  double speed;
+  double speed_target;
+  int    lane;
+};
+
 typedef std::vector<double > t_coord;
 typedef std::vector<t_coord> t_traj;
 typedef std::vector<t_traj > t_trajSet;

@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s, double car_d, double ref_vel) {
+Behavior::Behavior(vector<vector<double>> &sensor_fusion, CarData car) {
   Target target;
   target.time = 2.0;
 
@@ -10,7 +10,7 @@ Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
   double dist_safety = PARAM_DIST_SLOW_DOWN;
 
-  double ref_vel_ms = mph_to_ms(ref_vel);
+  double ref_vel_ms = mph_to_ms(car.speed_target);
   double closest_speed_ms = INF;
   double closest_dist = INF;
   
@@ -18,7 +18,7 @@ Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s
   for (size_t i = 0; i < sensor_fusion.size(); i++) {
     // car is in my lane
     float d = sensor_fusion[i][6];
-    if (d > get_dleft(lane) && d < get_dright(lane)) {
+    if (d > get_dleft(car.lane) && d < get_dright(car.lane)) {
       double vx = sensor_fusion[i][3];
       double vy = sensor_fusion[i][4];
       double check_speed = sqrt(vx*vx+vy*vy);
@@ -29,11 +29,11 @@ Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s
       if (fabs(ref_vel_ms - check_speed) <= 2)
         dist_safety = 20; // XXX TODO remove harcoded value
   
-      if ((check_car_s > car_s) && ((check_car_s - car_s) < dist_safety)) {
+      if ((check_car_s > car.s) && ((check_car_s - car.s) < dist_safety)) {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
         //ref_vel = 29.5; //mph
         too_close = true;
-        double dist_to_check_car_s = check_car_s - car_s;
+        double dist_to_check_car_s = check_car_s - car.s;
         if (dist_to_check_car_s < closest_dist) {
           closest_dist = dist_to_check_car_s;
           closest_speed_ms = check_speed;
@@ -45,30 +45,30 @@ Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s
   if (too_close) {
     //ref_vel -= 2 * .224; // 5 m.s-2 under the 10 requirement
     if (ref_vel_ms > closest_speed_ms) { // in m.s-1 !
-      ref_vel -= PARAM_MAX_SPEED_INC_MPH; // in mph !
-      if (closest_dist <= 10 && ref_vel > closest_speed_ms) {
-        ref_vel -= 5 * PARAM_MAX_SPEED_INC_MPH;
+      car.speed_target -= PARAM_MAX_SPEED_INC_MPH; // in mph !
+      if (closest_dist <= 10 && car.speed_target > closest_speed_ms) {
+        car.speed_target -= 5 * PARAM_MAX_SPEED_INC_MPH;
       }
     }
 
-    ref_vel = max(ref_vel, 0.0); // no backwards driving ... just in case
+    car.speed_target = max(car.speed_target, 0.0); // no backwards driving ... just in case
     ref_vel_inc = -1;
-  } else if (ref_vel < PARAM_MAX_SPEED_MPH) {
+  } else if (car.speed_target < PARAM_MAX_SPEED_MPH) {
     //ref_vel += 2 * .224;
-    ref_vel += PARAM_MAX_SPEED_INC_MPH;
-    ref_vel = min(ref_vel, PARAM_MAX_SPEED_MPH);
+    car.speed_target += PARAM_MAX_SPEED_INC_MPH;
+    car.speed_target = min(car.speed_target, PARAM_MAX_SPEED_MPH);
     ref_vel_inc = +1;
   }
 
   // our nominal target .. same lane
-  target.lane = lane;
-  target.velocity = ref_vel;
+  target.lane = car.lane;
+  target.velocity = car.speed_target;
   targets_.push_back(target);
 
   // Backup targets (lane and speed)
 
   vector<int> backup_lanes;
-  switch (lane)
+  switch (car.lane)
   {
     case 2:
       backup_lanes.push_back(1);
@@ -89,18 +89,18 @@ Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s
   switch (ref_vel_inc)
   {
     case 1:
-      backup_vel.push_back(ref_vel - PARAM_MAX_SPEED_INC_MPH);
-      backup_vel.push_back(ref_vel - 2 * PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car.speed_target - PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car.speed_target - 2 * PARAM_MAX_SPEED_INC_MPH);
       break;
     case 0: // already max speed
-      backup_vel.push_back(ref_vel - PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car.speed_target - PARAM_MAX_SPEED_INC_MPH);
       break;
     case -1:
       // emergency breaking
-      backup_vel.push_back(ref_vel - PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car.speed_target - PARAM_MAX_SPEED_INC_MPH);
 
       // emergency acceleration (dangerous here)
-      //backup_vel.push_back(ref_vel + PARAM_MAX_SPEED_INC_MPH);
+      //backup_vel.push_back(car.speed_target + PARAM_MAX_SPEED_INC_MPH);
       break;
     default:
       assert(1 == 0); // something went wrong
@@ -108,14 +108,14 @@ Behavior::Behavior(vector<vector<double>> &sensor_fusion, int lane, double car_s
   }
 
   // 1) backup velocities on target lane
-  target.lane = lane;
+  target.lane = car.lane;
   for (size_t i = 0; i < backup_vel.size(); i++) {
     target.velocity = backup_vel[i];
     targets_.push_back(target);
   }
 
   // 2) target velocity on backup lanes
-  target.velocity = ref_vel;
+  target.velocity = car.speed_target;
   for (size_t i = 0; i < backup_lanes.size(); i++) {
     target.lane = backup_lanes[i];
     targets_.push_back(target);

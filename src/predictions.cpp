@@ -6,12 +6,12 @@ using namespace std;
 
 // map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
 // predictions map: a dictionnary { fusion_index : horizon * (x,y) }
-Predictions::Predictions(vector<vector<double>> &sensor_fusion, double car_s, double car_d, int horizon)
+Predictions::Predictions(vector<vector<double>> &sensor_fusion, CarData car, int horizon)
 {
   std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
 
   // vector of indexes in sensor_fusion
-  vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s, car_d); 
+  vector<int> closest_objects = find_closest_objects(sensor_fusion, car.s, car.d); 
 
   for (int i = 0; i < closest_objects.size(); i++) {
     int fusion_index = closest_objects[i];
