@@ -40,7 +40,7 @@ const double PARAM_DIST_SAFETY = 3.5; // meters
 
 // reduce latency reaction, but account for simulator latency ...
 // assume 100 ms max simulator latency
-const int PARAM_TRUNCATED_PREV_SIZE = 5;
+const int PARAM_PREV_PATH_XY_REUSED = 5;
 
 const bool PARAM_TRAJECTORY_JMT = true;
 

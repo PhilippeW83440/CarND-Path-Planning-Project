@@ -104,9 +104,14 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, TrajectoryXY &previous_path_xy, int prev_size, TrajectorySD &prev_path_sd)
+TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath &previous_path)
 {
   TrajectoryJMT traj_jmt;
+
+  TrajectoryXY previous_path_xy = previous_path.xy;
+  int prev_size = previous_path.num_xy_reused;
+  TrajectorySD prev_path_sd = previous_path.sd;
+
   vector<double> previous_path_x = previous_path_xy.x_vals;
   vector<double> previous_path_y = previous_path_xy.y_vals;
   vector<PointC2> prev_path_s = prev_path_sd.path_s;
@@ -118,7 +123,7 @@ TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, TrajectoryXY &pre
   //cout << "prev_size=" << prev_size << endl;
   //int last_point = PARAM_NB_POINTS - prev_size - 1;
   int last_point;
-  if (PARAM_TRUNCATED_PREV_SIZE < PARAM_NB_POINTS) {
+  if (PARAM_PREV_PATH_XY_REUSED < PARAM_NB_POINTS) {
     last_point = PARAM_NB_POINTS - previous_path_x.size() + prev_size - 1;
   } else {
     last_point = PARAM_NB_POINTS - 1;
@@ -215,9 +220,11 @@ TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, TrajectoryXY &pre
 }
 
 
-
-TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, TrajectoryXY &previous_path_xy, int prev_size)
+TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, PreviousPath &previous_path)
 {
+  TrajectoryXY previous_path_xy = previous_path.xy;
+  int prev_size = previous_path.num_xy_reused;
+
   vector<double> previous_path_x = previous_path_xy.x_vals;
   vector<double> previous_path_y = previous_path_xy.y_vals;
 

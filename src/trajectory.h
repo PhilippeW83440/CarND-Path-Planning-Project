@@ -34,6 +34,13 @@ struct TrajectoryJMT {
   TrajectorySD path_sd;
 };
 
+struct PreviousPath {
+  TrajectoryXY xy;   // < PARAM_NB_POINTS (some already used by simulator)
+  TrajectorySD sd;   // exactly PARAM_NB_POINTS (not sent to simulator)
+  int num_xy_reused;  // reused from xy
+  PreviousPath (TrajectoryXY XY={}, TrajectorySD SD={}, int N=0) : xy(XY), sd(SD), num_xy_reused(N) {}
+};
+
 TrajectoryJMT JMT_init(double car_s, double car_d);
 
 // INPUTS:
@@ -45,8 +52,26 @@ TrajectoryJMT JMT_init(double car_s, double car_d);
 
 // OUTPUTS:
 //    trajectory: next_x_vals, next_y_vals
-TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, TrajectoryXY &previous_path_xy, int prev_size);
+TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, PreviousPath &previous_path);
+TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath &previous_path);
 
-TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, TrajectoryXY &previous_path_xy, int prev_size, TrajectorySD &prev_path_sd);
+#if 0
+class Trajectory {
+public:
+  Trajectory(Map map, vector<Target> targets, car, previous_path_xy, prev_path_sd, prev_size);
+  ~Trajectory();
+
+private:
+  vector<Cost> costs_;
+  vector<TrajectoryXY> trajectories_;
+  vector<TrajectorySD> prev_paths_sd_;
+
+  double min_cost_;
+  int min_cost_index_;
+
+  TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, TrajectoryXY &previous_path_xy, int prev_size);
+  TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, TrajectoryXY &previous_path_xy, int prev_size, TrajectorySD &prev_path_sd);
+};
+#endif
 
 #endif // TRAJECTORY_H

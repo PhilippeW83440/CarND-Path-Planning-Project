@@ -142,8 +142,10 @@ int main() {
             Behavior behavior = Behavior(sensor_fusion, car);
             vector<Target> targets = behavior.get_targets();
 
-            // -- short time horizon (close to 100 msec when possible; not lower bcz of simulator latency) for trajectory (re)generation ---
-            prev_size = min(prev_size, PARAM_TRUNCATED_PREV_SIZE);
+            // -- prev_size: close to 100 msec when possible -not lower bcz of simulator latency- for trajectory (re)generation ---
+            // points _before_ prev_size are kept from previous generated trajectory
+            // points _after_  prev_size will be re-generated
+            PreviousPath previous_path = PreviousPath(previous_path_xy, prev_path_sd, min(prev_size, PARAM_PREV_PATH_XY_REUSED));
 
             vector<Cost> costs;
             vector<TrajectoryXY> trajectories;
@@ -155,12 +157,12 @@ int main() {
                 TrajectoryJMT traj_jmt;
 
                 // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-                traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path_xy, prev_size, prev_path_sd);
+                traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path);
                 trajectory = traj_jmt.trajectory;
                 prev_paths_sd.push_back(traj_jmt.path_sd);
               } else {
                 // generate SPLINE trajectory in x and y
-                trajectory = generate_trajectory(targets[i], map, car, previous_path_xy, prev_size);
+                trajectory = generate_trajectory(targets[i], map, car, previous_path);
               }
 
               Cost cost = Cost(trajectory, targets[i], predictions, car.lane);
