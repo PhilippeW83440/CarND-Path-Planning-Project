@@ -63,12 +63,11 @@ int main() {
   double car_speed_target = 1.0; // mph (non 0 for XY spline traj generation to avoid issues)
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
-  vector<PointC2> prev_path_s;
-  vector<PointC2> prev_path_d;
+  TrajectorySD prev_path_sd;
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map, &car_speed_target, &start, &prev_path_s, &prev_path_d](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &car_speed_target, &start, &prev_path_sd](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -129,9 +128,8 @@ int main() {
             cout << "car.s=" << car.s << " car.d=" << car.d << endl;
 
             if (start) {
-              struct trajectory_jmt traj_jmt = JMT_init(car.s, car.d);
-              prev_path_s = traj_jmt.path_s;
-              prev_path_d = traj_jmt.path_d;
+              TrajectoryJMT traj_jmt = JMT_init(car.s, car.d);
+              prev_path_sd = traj_jmt.path_sd;
               start = false;
             }
 
@@ -146,20 +144,17 @@ int main() {
 
             vector<Cost> costs;
             vector<TrajectoryXY> trajectories;
-            vector<vector<PointC2>> prev_paths_s;
-            vector<vector<PointC2>> prev_paths_d;
+            vector<TrajectorySD> prev_paths_sd;
 
             for (size_t i = 0; i < targets.size(); i++) {
-              // vector of (traj_x, traj_y)
               TrajectoryXY trajectory;
               if (PARAM_TRAJECTORY_JMT) {
-                struct trajectory_jmt traj_jmt;
+                TrajectoryJMT traj_jmt;
 
                 // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-                traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path_x, previous_path_y, prev_size, prev_path_s, prev_path_d);
+                traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path_x, previous_path_y, prev_size, prev_path_sd);
                 trajectory = traj_jmt.trajectory;
-                prev_paths_s.push_back(traj_jmt.path_s);
-                prev_paths_d.push_back(traj_jmt.path_d);
+                prev_paths_sd.push_back(traj_jmt.path_sd);
               } else {
                 // generate SPLINE trajectory in x and y
                 trajectory = generate_trajectory(targets[i], map, car, previous_path_x, previous_path_y, prev_size);
@@ -183,8 +178,7 @@ int main() {
             car_speed_target = targets[min_cost_index].velocity;
             car.speed_target = car_speed_target;
             if (PARAM_TRAJECTORY_JMT) {
-              prev_path_s = prev_paths_s[min_cost_index];
-              prev_path_d = prev_paths_d[min_cost_index];
+              prev_path_sd = prev_paths_sd[min_cost_index];
             }
 
             if (target_lane != car.lane) {

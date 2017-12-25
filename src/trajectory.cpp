@@ -13,9 +13,9 @@ using Eigen::VectorXd;
 
 
 
-struct trajectory_jmt JMT_init(double car_s, double car_d)
+TrajectoryJMT JMT_init(double car_s, double car_d)
 {
-  struct trajectory_jmt traj_jmt;
+  TrajectoryJMT traj_jmt;
   // 50 x {s, s_dot, s_ddot}
   vector<PointC2> store_path_s(PARAM_NB_POINTS, PointC2(0, 0, 0));
   vector<PointC2> store_path_d(PARAM_NB_POINTS, PointC2(0, 0, 0));
@@ -25,8 +25,8 @@ struct trajectory_jmt JMT_init(double car_s, double car_d)
     store_path_d[i] = PointC2(car_d, 0, 0);
   }
 
-  traj_jmt.path_s = store_path_s;
-  traj_jmt.path_d = store_path_d;
+  traj_jmt.path_sd.path_s = store_path_s;
+  traj_jmt.path_sd.path_d = store_path_d;
 
   return traj_jmt;
 }
@@ -104,9 +104,11 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size, vector<PointC2> &prev_path_s, vector<PointC2> &prev_path_d)
+TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size, TrajectorySD &prev_path_sd)
 {
-  struct trajectory_jmt traj_jmt;
+  TrajectoryJMT traj_jmt;
+  vector<PointC2> prev_path_s = prev_path_sd.path_s;
+  vector<PointC2> prev_path_d = prev_path_sd.path_d;
 
   vector<PointC2> new_path_s(PARAM_NB_POINTS, PointC2(0,0,0));
   vector<PointC2> new_path_d(PARAM_NB_POINTS, PointC2(0,0,0));
@@ -204,10 +206,8 @@ struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<do
     t += PARAM_DT;
   }
 
-  //traj_jmt.trajectory = { next_x_vals, next_y_vals};
   traj_jmt.trajectory = TrajectoryXY(next_x_vals, next_y_vals);
-  traj_jmt.path_s = new_path_s;
-  traj_jmt.path_d = new_path_d;
+  traj_jmt.path_sd = TrajectorySD(new_path_s, new_path_d);
 
   return traj_jmt;
 }

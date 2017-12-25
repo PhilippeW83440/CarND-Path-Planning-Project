@@ -23,13 +23,18 @@ struct TrajectoryXY {
   TrajectoryXY (std::vector<double> X={}, std::vector<double> Y={}) : x_vals(X), y_vals(Y) {}
 };
 
-struct trajectory_jmt {
-  TrajectoryXY trajectory;
+struct TrajectorySD {
   std::vector<PointC2> path_s;
   std::vector<PointC2> path_d;
+  TrajectorySD (std::vector<PointC2> S={}, std::vector<PointC2> D={}) : path_s(S), path_d(D) {}
 };
 
-struct trajectory_jmt JMT_init(double car_s, double car_d);
+struct TrajectoryJMT {
+  TrajectoryXY trajectory;
+  TrajectorySD path_sd;
+};
+
+TrajectoryJMT JMT_init(double car_s, double car_d);
 
 // INPUTS:
 //    target       : lane, ref_vel
@@ -42,6 +47,6 @@ struct trajectory_jmt JMT_init(double car_s, double car_d);
 //    trajectory: next_x_vals, next_y_vals
 TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size);
 
-struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size, std::vector<PointC2> &ref_path_s, std::vector<PointC2> &ref_path_d);
+TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, std::vector<double> &previous_path_x, std::vector<double> &previous_path_y, int prev_size, TrajectorySD &prev_path_sd);
 
 #endif // TRAJECTORY_H
