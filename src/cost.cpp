@@ -215,7 +215,7 @@ double Cost::get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int
 }
 
 
-Cost::Cost(vector<vector<double>> &trajectory, Target target, Predictions &predict, vector<vector<double>> &sensor_fusion, int car_lane)
+Cost::Cost(vector<vector<double>> &trajectory, Target target, Predictions &predict, int car_lane)
 {
   cost_ = 0; // lower cost preferred
 

@@ -165,7 +165,7 @@ int main() {
                 trajectory = generate_trajectory(targets[i], map, car, previous_path_x, previous_path_y, prev_size);
               }
 
-              Cost cost = Cost(trajectory, targets[i], predictions, sensor_fusion, car.lane);
+              Cost cost = Cost(trajectory, targets[i], predictions, car.lane);
               costs.push_back(cost);
               trajectories.push_back(trajectory);
             }

@@ -19,8 +19,7 @@
 
 class Cost {
 public:
-  Cost(std::vector<std::vector<double>> &trajectory, Target target, 
-       Predictions &predictions, std::vector<std::vector<double>> &sensor_fusion, int car_lane);
+  Cost(std::vector<std::vector<double>> &trajectory, Target target, Predictions &predictions, int car_lane);
   virtual ~Cost();
 
   double get_cost();
