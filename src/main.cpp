@@ -88,7 +88,8 @@ int main() {
         if (event == "telemetry") {
           // j[1] is the data JSON object
 
-                CarData car;
+            CarData car;
+            TrajectoryXY previous_path_xy;
           
         	// Main car's localization Data
           	car.x = j[1]["x"];
@@ -103,6 +104,8 @@ int main() {
           	// Previous path data given to the Planner
           	vector<double> previous_path_x = j[1]["previous_path_x"];
           	vector<double> previous_path_y = j[1]["previous_path_y"];
+          	previous_path_xy.x_vals = previous_path_x;
+          	previous_path_xy.y_vals = previous_path_y;
 
           	// Previous path's end s and d values 
           	double end_path_s = j[1]["end_path_s"];
@@ -117,7 +120,7 @@ int main() {
 
             map.testError(car.x, car.y, car.yaw);
 
-            int prev_size = previous_path_x.size();
+            int prev_size = previous_path_xy.x_vals.size();
             cout << "prev_size=" << prev_size << " car.x=" << car.x << " car.y=" << car.y << " car.s=" << 
                     car.s << " car.d=" << car.d << " car.speed=" << car.speed << " car.speed_target=" << car.speed_target << endl;
 
@@ -152,12 +155,12 @@ int main() {
                 TrajectoryJMT traj_jmt;
 
                 // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-                traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path_x, previous_path_y, prev_size, prev_path_sd);
+                traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path_xy, prev_size, prev_path_sd);
                 trajectory = traj_jmt.trajectory;
                 prev_paths_sd.push_back(traj_jmt.path_sd);
               } else {
                 // generate SPLINE trajectory in x and y
-                trajectory = generate_trajectory(targets[i], map, car, previous_path_x, previous_path_y, prev_size);
+                trajectory = generate_trajectory(targets[i], map, car, previous_path_xy, prev_size);
               }
 
               Cost cost = Cost(trajectory, targets[i], predictions, car.lane);
