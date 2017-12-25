@@ -80,15 +80,15 @@ bool Cost::check_collision(double x0, double y0, double theta0, double x1, doubl
   return true;
 }
 
-int Cost::check_collision_on_trajectory(vector<vector<double>> &trajectory, std::map<int, vector<Coord> > &predictions)
+int Cost::check_collision_on_trajectory(TrajectoryXY &trajectory, std::map<int, vector<Coord> > &predictions)
 {
   std::map<int, vector<Coord> >::iterator it = predictions.begin();
   while(it != predictions.end()) {
     int fusion_index = it->first;
     vector<Coord> prediction = it->second;
 
-    assert(prediction.size() == trajectory[0].size());
-    assert(prediction.size() == trajectory[1].size());
+    assert(prediction.size() == trajectory.x_vals.size());
+    assert(prediction.size() == trajectory.y_vals.size());
 
     for (int i = 0; i < PARAM_MAX_COLLISION_STEP; i++) { // up to 50 (x,y) coordinates
       double obj_x = prediction[i].x;
@@ -97,10 +97,10 @@ int Cost::check_collision_on_trajectory(vector<vector<double>> &trajectory, std:
       double obj_y_next = prediction[i+1].y;
       double obj_heading = atan2(obj_y_next - obj_y, obj_x_next - obj_x);
 
-      double ego_x = trajectory[0][i];
-      double ego_y = trajectory[1][i];
-      double ego_x_next = trajectory[0][i+1];
-      double ego_y_next = trajectory[1][i+1];
+      double ego_x = trajectory.x_vals[i];
+      double ego_y = trajectory.y_vals[i];
+      double ego_x_next = trajectory.x_vals[i+1];
+      double ego_y_next = trajectory.y_vals[i+1];
       double ego_heading = atan2(ego_y_next - ego_y, ego_x_next - ego_x);
 
       if (check_collision(obj_x, obj_y, obj_heading, ego_x, ego_y, ego_heading)) {
@@ -182,7 +182,7 @@ bool Cost::check_max_capabilities(vector<vector<double>> &traj)
 }
 
 
-double Cost::get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int, vector<Coord> > &predictions)
+double Cost::get_predicted_dmin(TrajectoryXY &trajectory, std::map<int, vector<Coord> > &predictions)
 {
   double dmin = INF;
 
@@ -193,14 +193,14 @@ double Cost::get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int
     //cout << "fusion_index=" << fusion_index << endl;
     vector<Coord> prediction = it->second;
 
-    assert(prediction.size() == trajectory[0].size());
-    assert(prediction.size() == trajectory[1].size());
+    assert(prediction.size() == trajectory.x_vals.size());
+    assert(prediction.size() == trajectory.y_vals.size());
 
     for (size_t i = 0; i < prediction.size(); i++) { // up to 50 (x,y) coordinates
       double obj_x = prediction[i].x;
       double obj_y = prediction[i].y;
-      double ego_x = trajectory[0][i];
-      double ego_y = trajectory[1][i];
+      double ego_x = trajectory.x_vals[i];
+      double ego_y = trajectory.y_vals[i];
 
       double dist = distance(ego_x, ego_y, obj_x, obj_y);
       if (dist < dmin) {
@@ -215,7 +215,7 @@ double Cost::get_predicted_dmin(vector<vector<double>> &trajectory, std::map<int
 }
 
 
-Cost::Cost(vector<vector<double>> &trajectory, Target target, Predictions &predict, int car_lane)
+Cost::Cost(TrajectoryXY &trajectory, Target target, Predictions &predict, int car_lane)
 {
   cost_ = 0; // lower cost preferred
 

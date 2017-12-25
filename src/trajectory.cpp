@@ -204,7 +204,8 @@ struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<do
     t += PARAM_DT;
   }
 
-  traj_jmt.trajectory = { next_x_vals, next_y_vals};
+  //traj_jmt.trajectory = { next_x_vals, next_y_vals};
+  traj_jmt.trajectory = TrajectoryXY(next_x_vals, next_y_vals);
   traj_jmt.path_s = new_path_s;
   traj_jmt.path_d = new_path_d;
 
@@ -213,7 +214,7 @@ struct trajectory_jmt generate_trajectory_jmt(Target target, Map &map, vector<do
 
 
 
-vector<vector<double>> generate_trajectory(Target target, Map &map, CarData car, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
+TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, vector<double> &previous_path_x, vector<double> &previous_path_y, int prev_size)
 {
   vector<double> ptsx;
   vector<double> ptsy;
@@ -319,5 +320,6 @@ vector<vector<double>> generate_trajectory(Target target, Map &map, CarData car,
     next_y_vals.push_back(y_point);
   }
 
-  return { next_x_vals, next_y_vals };
+  //return { next_x_vals, next_y_vals };
+  return TrajectoryXY(next_x_vals, next_y_vals);
 }

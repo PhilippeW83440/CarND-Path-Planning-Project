@@ -145,13 +145,13 @@ int main() {
             prev_size = min(prev_size, PARAM_TRUNCATED_PREV_SIZE);
 
             vector<Cost> costs;
-            vector<vector<vector<double>>> trajectories;
+            vector<TrajectoryXY> trajectories;
             vector<vector<PointC2>> prev_paths_s;
             vector<vector<PointC2>> prev_paths_d;
 
             for (size_t i = 0; i < targets.size(); i++) {
               // vector of (traj_x, traj_y)
-              vector<vector<double>> trajectory;
+              TrajectoryXY trajectory;
               if (PARAM_TRAJECTORY_JMT) {
                 struct trajectory_jmt traj_jmt;
 
@@ -197,8 +197,8 @@ int main() {
 
 
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
-          	msgJson["next_x"] = trajectories[min_cost_index][0]; //next_x_vals;
-          	msgJson["next_y"] = trajectories[min_cost_index][1]; //next_y_vals;
+          	msgJson["next_x"] = trajectories[min_cost_index].x_vals; //next_x_vals;
+          	msgJson["next_y"] = trajectories[min_cost_index].y_vals; //next_y_vals;
 
           	auto msg = "42[\"control\","+ msgJson.dump()+"]";
 
