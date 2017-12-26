@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Behavior::Behavior(vector<vector<double>> &sensor_fusion, CarData car) {
+Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car) {
   Target target;
   target.time = 2.0;
 

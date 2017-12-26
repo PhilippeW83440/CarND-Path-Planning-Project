@@ -14,7 +14,7 @@
 
 class Predictions {
 public:
-  Predictions(std::vector<std::vector<double> > &sensor_fusion, CarData car, int horizon);
+  Predictions(std::vector<std::vector<double> > const &sensor_fusion, CarData const &car, int horizon);
   virtual ~Predictions();
 
   std::map<int, std::vector<Coord> > get_predictions();
@@ -22,7 +22,7 @@ public:
   double get_lane_free_space(int lane);
 
 private:
-  std::vector<int> find_closest_objects(std::vector<std::vector<double>> &sensor_fusion, double car_s, double car_d);
+  std::vector<int> find_closest_objects(std::vector<std::vector<double>> const &sensor_fusion, double car_s, double car_d);
 
   // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
   std::map< int, std::vector<Coord> > predictions_;

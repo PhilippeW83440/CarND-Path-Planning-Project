@@ -52,8 +52,8 @@ TrajectoryJMT JMT_init(double car_s, double car_d);
 
 // OUTPUTS:
 //    trajectory: next_x_vals, next_y_vals
-TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, PreviousPath &previous_path);
-TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath &previous_path);
+TrajectoryXY generate_trajectory(Target target, Map &map, CarData const &car, PreviousPath const &previous_path);
+TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath const &previous_path);
 
 #if 0
 class Trajectory {

@@ -80,7 +80,7 @@ bool Cost::check_collision(double x0, double y0, double theta0, double x1, doubl
   return true;
 }
 
-int Cost::check_collision_on_trajectory(TrajectoryXY &trajectory, std::map<int, vector<Coord> > &predictions)
+int Cost::check_collision_on_trajectory(TrajectoryXY const &trajectory, std::map<int, vector<Coord> > &predictions)
 {
   std::map<int, vector<Coord> >::iterator it = predictions.begin();
   while(it != predictions.end()) {
@@ -182,7 +182,7 @@ bool Cost::check_max_capabilities(vector<vector<double>> &traj)
 }
 
 
-double Cost::get_predicted_dmin(TrajectoryXY &trajectory, std::map<int, vector<Coord> > &predictions)
+double Cost::get_predicted_dmin(TrajectoryXY const &trajectory, std::map<int, vector<Coord> > &predictions)
 {
   double dmin = INF;
 
@@ -215,7 +215,7 @@ double Cost::get_predicted_dmin(TrajectoryXY &trajectory, std::map<int, vector<C
 }
 
 
-Cost::Cost(TrajectoryXY &trajectory, Target target, Predictions &predict, int car_lane)
+Cost::Cost(TrajectoryXY const &trajectory, Target target, Predictions &predict, int car_lane)
 {
   cost_ = 0; // lower cost preferred
 

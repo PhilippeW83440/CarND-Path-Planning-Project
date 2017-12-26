@@ -18,7 +18,7 @@ struct Target {
 
 class Behavior {
 public:
-  Behavior(std::vector<std::vector<double>> &sensor_fusion, CarData car);
+  Behavior(std::vector<std::vector<double>> const &sensor_fusion, CarData car);
   virtual ~Behavior();
   std::vector<Target> get_targets();
 

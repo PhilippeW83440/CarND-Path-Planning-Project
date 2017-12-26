@@ -104,7 +104,7 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath &previous_path)
+TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath const &previous_path)
 {
   TrajectoryJMT traj_jmt;
 
@@ -220,7 +220,7 @@ TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath &pre
 }
 
 
-TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, PreviousPath &previous_path)
+TrajectoryXY generate_trajectory(Target target, Map &map, CarData const &car, PreviousPath const &previous_path)
 {
   TrajectoryXY previous_path_xy = previous_path.xy;
   int prev_size = previous_path.num_xy_reused;
