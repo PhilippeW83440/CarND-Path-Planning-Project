@@ -136,55 +136,34 @@ int main() {
               start = false;
             }
 
+            // -- prev_size: close to 100 msec when possible -not lower bcz of simulator latency- for trajectory (re)generation ---
+            // points _before_ prev_size are kept from previous generated trajectory
+            // points _after_  prev_size will be re-generated
+            PreviousPath previous_path = PreviousPath(previous_path_xy, prev_path_sd, min(prev_size, PARAM_PREV_PATH_XY_REUSED));
+
+            // --------------------------------------------------------------------------
             // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
             Predictions predictions = Predictions(sensor_fusion, car, PARAM_NB_POINTS /* 50 */);
 
             Behavior behavior = Behavior(sensor_fusion, car);
             vector<Target> targets = behavior.get_targets();
 
-            // -- prev_size: close to 100 msec when possible -not lower bcz of simulator latency- for trajectory (re)generation ---
-            // points _before_ prev_size are kept from previous generated trajectory
-            // points _after_  prev_size will be re-generated
-            PreviousPath previous_path = PreviousPath(previous_path_xy, prev_path_sd, min(prev_size, PARAM_PREV_PATH_XY_REUSED));
+            Trajectory trajectory = Trajectory(targets, map, car, previous_path, predictions);
+            // --------------------------------------------------------------------------
 
-            vector<Cost> costs;
-            vector<TrajectoryXY> trajectories;
-            vector<TrajectorySD> prev_paths_sd;
+            double min_cost = trajectory.getMinCost();
+            int min_cost_index = trajectory.getMinCostIndex();
+            vector<double> next_x_vals = trajectory.getMinCostTrajectoryXY().x_vals;
+            vector<double> next_y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
 
-            for (size_t i = 0; i < targets.size(); i++) {
-              TrajectoryXY trajectory;
-              if (PARAM_TRAJECTORY_JMT) {
-                TrajectoryJMT traj_jmt;
-
-                // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-                traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path);
-                trajectory = traj_jmt.trajectory;
-                prev_paths_sd.push_back(traj_jmt.path_sd);
-              } else {
-                // generate SPLINE trajectory in x and y
-                trajectory = generate_trajectory(targets[i], map, car, previous_path);
-              }
-
-              Cost cost = Cost(trajectory, targets[i], predictions, car.lane);
-              costs.push_back(cost);
-              trajectories.push_back(trajectory);
+            if (PARAM_TRAJECTORY_JMT) {
+              //prev_path_sd = trajectories_sd[min_cost_index];
+              prev_path_sd = trajectory.getMinCostTrajectorySD();
             }
 
-            // --- retrieve the lowest cost trajectory ---
-            double min_cost = INF;
-            int min_cost_index = 0;
-            for (size_t i = 0; i < costs.size(); i++) {
-              if (costs[i].get_cost() < min_cost) {
-                min_cost = costs[i].get_cost();
-                min_cost_index = i;
-              }
-            }
             int target_lane = targets[min_cost_index].lane;
             car_speed_target = targets[min_cost_index].velocity;
             car.speed_target = car_speed_target;
-            if (PARAM_TRAJECTORY_JMT) {
-              prev_path_sd = prev_paths_sd[min_cost_index];
-            }
 
             if (target_lane != car.lane) {
               cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane
@@ -192,12 +171,9 @@ int main() {
             }
 
 
-            //////////////////////////////////////////////////////////////////////
-
-
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
-          	msgJson["next_x"] = trajectories[min_cost_index].x_vals; //next_x_vals;
-          	msgJson["next_y"] = trajectories[min_cost_index].y_vals; //next_y_vals;
+          	msgJson["next_x"] = next_x_vals; //trajectories[min_cost_index].x_vals; //next_x_vals;
+          	msgJson["next_y"] = next_y_vals; //trajectories[min_cost_index].y_vals; //next_y_vals;
 
           	auto msg = "42[\"control\","+ msgJson.dump()+"]";
 

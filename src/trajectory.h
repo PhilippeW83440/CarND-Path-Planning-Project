@@ -7,6 +7,14 @@
 
 #include "map.h"
 #include "behavior.h"
+#include "spline.h"
+#include "utility.h"
+#include "map.h"
+#include "cost.h"
+#include "params.h"
+#include "predictions.h"
+
+#include "Eigen-3.3/Eigen/Dense"
 
 
 // Point of a C2 class function
@@ -34,6 +42,7 @@ struct TrajectoryJMT {
   TrajectorySD path_sd;
 };
 
+
 struct PreviousPath {
   TrajectoryXY xy;   // < PARAM_NB_POINTS (some already used by simulator)
   TrajectorySD sd;   // exactly PARAM_NB_POINTS (not sent to simulator)
@@ -43,35 +52,31 @@ struct PreviousPath {
 
 TrajectoryJMT JMT_init(double car_s, double car_d);
 
-// INPUTS:
-//    target       : lane, ref_vel
-//    map          : map_waypoints_s, map_waypoints_x, map_waypoints_y
-//    car          : car_x, car_y, car_yaw, car_s, car_d
-//    previous_path: previous_path_x, previous_path_y
 
-
-// OUTPUTS:
-//    trajectory: next_x_vals, next_y_vals
-TrajectoryXY generate_trajectory(Target target, Map &map, CarData const &car, PreviousPath const &previous_path);
-TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath const &previous_path);
-
-#if 0
 class Trajectory {
 public:
-  Trajectory(Map map, vector<Target> targets, car, previous_path_xy, prev_path_sd, prev_size);
-  ~Trajectory();
+  Trajectory(std::vector<Target> targets, Map &map, CarData &car, PreviousPath &previous_path, Predictions &predictions);
+  ~Trajectory() {};
+
+  double getMinCost() { return min_cost_; };
+  double getMinCostIndex() { return min_cost_index_; } ;
+  TrajectoryXY getMinCostTrajectoryXY() { return trajectories_[min_cost_index_]; };
+  TrajectorySD getMinCostTrajectorySD() { return trajectories_sd_[min_cost_index_]; };
 
 private:
-  vector<Cost> costs_;
-  vector<TrajectoryXY> trajectories_;
-  vector<TrajectorySD> prev_paths_sd_;
-
+  std::vector<struct Cost> costs_;
+  std::vector<TrajectoryXY> trajectories_;
+  std::vector<TrajectorySD> trajectories_sd_;
   double min_cost_;
   int min_cost_index_;
 
-  TrajectoryXY generate_trajectory(Target target, Map &map, CarData car, TrajectoryXY &previous_path_xy, int prev_size);
-  TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, TrajectoryXY &previous_path_xy, int prev_size, TrajectorySD &prev_path_sd);
+  std::vector<double> JMT(std::vector< double> start, std::vector <double> end, double T);
+  double polyeval(std::vector<double> c, double t);
+  double polyeval_dot(std::vector<double> c, double t);
+  double polyeval_ddot(std::vector<double> c, double t);
+
+  TrajectoryXY generate_trajectory     (Target target, Map &map, CarData const &car, PreviousPath const &previous_path);
+  TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath const &previous_path);
 };
-#endif
 
 #endif // TRAJECTORY_H

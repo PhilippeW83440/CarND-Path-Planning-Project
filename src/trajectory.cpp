@@ -1,10 +1,5 @@
 #include "trajectory.h"
-#include "spline.h"
-#include "utility.h"
-#include "map.h"
-#include "params.h"
 
-#include "Eigen-3.3/Eigen/Dense"
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -30,9 +25,43 @@ TrajectoryJMT JMT_init(double car_s, double car_d)
 
   return traj_jmt;
 }
+
+
+Trajectory::Trajectory(std::vector<Target> targets, Map &map, CarData &car, PreviousPath &previous_path, Predictions &predictions)
+{
+  for (size_t i = 0; i < targets.size(); i++) {
+    TrajectoryXY trajectory;
+    if (PARAM_TRAJECTORY_JMT) {
+      TrajectoryJMT traj_jmt;
+  
+      // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
+      traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path);
+      trajectory = traj_jmt.trajectory;
+      trajectories_sd_.push_back(traj_jmt.path_sd);
+    } else {
+      // generate SPLINE trajectory in x and y
+      trajectory = generate_trajectory(targets[i], map, car, previous_path);
+    }
+  
+    Cost cost = Cost(trajectory, targets[i], predictions, car.lane);
+    costs_.push_back(cost);
+    trajectories_.push_back(trajectory);
+  }
+  
+  // --- retrieve the lowest cost trajectory ---
+  min_cost_ = INF;
+  min_cost_index_ = 0;
+  for (size_t i = 0; i < costs_.size(); i++) {
+    if (costs_[i].get_cost() < min_cost_) {
+      min_cost_ = costs_[i].get_cost();
+      min_cost_index_ = i;
+    }
+  }
+
+}
   
 
-vector<double> JMT(vector< double> start, vector <double> end, double T)
+vector<double> Trajectory::JMT(vector< double> start, vector <double> end, double T)
 {
     /*
     Calculate the Jerk Minimizing Trajectory that connects the initial state
@@ -76,7 +105,7 @@ vector<double> JMT(vector< double> start, vector <double> end, double T)
 }
 
 // c: coefficients of polynom
-double polyeval(vector<double> c, double t) {
+double Trajectory::polyeval(vector<double> c, double t) {
   double res = 0.0;
   for (size_t i = 0; i < c.size(); i++) {
     res += c[i] * pow(t, i);
@@ -85,7 +114,7 @@ double polyeval(vector<double> c, double t) {
 }
 
 // 1st derivative of a polynom
-double polyeval_dot(vector<double> c, double t) {
+double Trajectory::polyeval_dot(vector<double> c, double t) {
   double res = 0.0;
   for (size_t i = 1; i < c.size(); ++i) {
     res += i * c[i] * pow(t, i-1);
@@ -94,7 +123,7 @@ double polyeval_dot(vector<double> c, double t) {
 }
 
 // 2nd derivative of a polynom
-double polyeval_ddot(vector<double> c, double t) {
+double Trajectory::polyeval_ddot(vector<double> c, double t) {
   double res = 0.0;
   for (size_t i = 2; i < c.size(); ++i) {
     res += i * (i-1) * c[i] * pow(t, i-2);
@@ -104,7 +133,7 @@ double polyeval_ddot(vector<double> c, double t) {
 
 
 
-TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath const &previous_path)
+TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, PreviousPath const &previous_path)
 {
   TrajectoryJMT traj_jmt;
 
@@ -220,7 +249,7 @@ TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath cons
 }
 
 
-TrajectoryXY generate_trajectory(Target target, Map &map, CarData const &car, PreviousPath const &previous_path)
+TrajectoryXY Trajectory::generate_trajectory(Target target, Map &map, CarData const &car, PreviousPath const &previous_path)
 {
   TrajectoryXY previous_path_xy = previous_path.xy;
   int prev_size = previous_path.num_xy_reused;
