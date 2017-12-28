@@ -36,6 +36,7 @@ Trajectory::Trajectory(std::vector<Target> targets, Map &map, CarData &car, Prev
   
       // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
       traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path);
+      //traj_jmt = generate_trajectory_sd(targets[i], map, car, previous_path);
       trajectory = traj_jmt.trajectory;
       trajectories_sd_.push_back(traj_jmt.path_sd);
     } else {
@@ -252,7 +253,7 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
 // trajectory generated in (s, d) Frenet coordinates 
 // - with constant accel/decel (no JMT here) in between 2 s waypoints
 // - without d changes (we stay in the same lane)
-TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, PreviousPath const &previous_path)
+TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, CarData const &car, PreviousPath const &previous_path)
 {
   TrajectoryJMT traj_jmt;
 
@@ -268,37 +269,41 @@ TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, Previo
   vector<PointC2> new_path_s(PARAM_NB_POINTS, PointC2(0,0,0));
   vector<PointC2> new_path_d(PARAM_NB_POINTS, PointC2(0,0,0));
 
-  //target.velocity <= 10) { // mph
+  //target.velocity <= 10) // mph
   //get_dcenter(target.lane);
 
   vector<double> next_x_vals;
   vector<double> next_y_vals;
-  
-  for (int i = 0; i < prev_size; i++) {
-    new_path_s[i] = prev_path_s[PARAM_NB_POINTS - previous_path_x.size() + i];
-    new_path_d[i] = prev_path_d[PARAM_NB_POINTS - previous_path_x.size() + i];
 
-    next_x_vals.push_back(previous_path_x[i]);
-    next_y_vals.push_back(previous_path_y[i]);
+  double s, s_dot, s_ddot;
+  double d, d_dot, d_ddot;
+  if (prev_size > 0) {
+    for (int i = 0; i < prev_size; i++) {
+      new_path_s[i] = prev_path_s[PARAM_NB_POINTS - previous_path_x.size() + i];
+      new_path_d[i] = prev_path_d[PARAM_NB_POINTS - previous_path_x.size() + i];
+
+      next_x_vals.push_back(previous_path_x[i]);
+      next_y_vals.push_back(previous_path_y[i]);
+    }
+
+    // initial conditions for new (s,d) trajectory
+    s = new_path_s[prev_size-1].f;
+    s_dot = new_path_s[prev_size-1].f_dot;
+    d = new_path_d[prev_size-1].f, d_dot = 0, d_ddot = 0;
+  } else {
+    s = car.s, s_dot = car.speed;
+    d = car.d, d_dot = 0, d_ddot = 0;
   }
 
-  // initial conditions for new (s,d) trajectory
-  double si_ddot = target.accel;  //-PARAM_MAX_ACCEL;
-  double si = new_path_s[prev_size-1].f;
-  double di = new_path_d[prev_size-1].f;
+  s_ddot = target.accel;  //-PARAM_MAX_ACCEL;
 
   //double t = 0.0; continuity point reused
   double t = PARAM_DT;
   for (int i = prev_size; i < PARAM_NB_POINTS; i++) {
 
-    double s_ddot = si_ddot;
-    double s_dot = new_path_s[i-1].f_dot + s_ddot * PARAM_DT; 
-    s_dot = min(max(s_dot, PARAM_MAX_SPEED), 0.0);
-    double s = new_path_s[i-1].f + s_dot * PARAM_DT;
-
-    double d = di;
-    double d_dot = 0;
-    double d_ddot = 0;
+    s_dot += s_ddot * PARAM_DT; 
+    s_dot = max(min(s_dot, PARAM_MAX_SPEED), 0.0);
+    s += s_dot * PARAM_DT;
 
     new_path_s[i] = PointC2(s, s_dot, s_ddot);
     new_path_d[i] = PointC2(d, d_dot, d_ddot);
