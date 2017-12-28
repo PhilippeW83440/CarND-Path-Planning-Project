@@ -249,6 +249,75 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
 }
 
 
+// trajectory generated in (s, d) Frenet coordinates 
+// - with constant accel/decel (no JMT here) in between 2 s waypoints
+// - without d changes (we stay in the same lane)
+TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, PreviousPath const &previous_path)
+{
+  TrajectoryJMT traj_jmt;
+
+  TrajectoryXY previous_path_xy = previous_path.xy;
+  int prev_size = previous_path.num_xy_reused;
+  TrajectorySD prev_path_sd = previous_path.sd;
+
+  vector<double> previous_path_x = previous_path_xy.x_vals;
+  vector<double> previous_path_y = previous_path_xy.y_vals;
+  vector<PointC2> prev_path_s = prev_path_sd.path_s;
+  vector<PointC2> prev_path_d = prev_path_sd.path_d;
+
+  vector<PointC2> new_path_s(PARAM_NB_POINTS, PointC2(0,0,0));
+  vector<PointC2> new_path_d(PARAM_NB_POINTS, PointC2(0,0,0));
+
+  //target.velocity <= 10) { // mph
+  //get_dcenter(target.lane);
+
+  vector<double> next_x_vals;
+  vector<double> next_y_vals;
+  
+  for (int i = 0; i < prev_size; i++) {
+    new_path_s[i] = prev_path_s[PARAM_NB_POINTS - previous_path_x.size() + i];
+    new_path_d[i] = prev_path_d[PARAM_NB_POINTS - previous_path_x.size() + i];
+
+    next_x_vals.push_back(previous_path_x[i]);
+    next_y_vals.push_back(previous_path_y[i]);
+  }
+
+  // initial conditions for new (s,d) trajectory
+  double si_ddot = target.accel;  //-PARAM_MAX_ACCEL;
+  double si = new_path_s[prev_size-1].f;
+  double di = new_path_d[prev_size-1].f;
+
+  //double t = 0.0; continuity point reused
+  double t = PARAM_DT;
+  for (int i = prev_size; i < PARAM_NB_POINTS; i++) {
+
+    double s_ddot = si_ddot;
+    double s_dot = new_path_s[i-1].f_dot + s_ddot * PARAM_DT; 
+    s_dot = min(max(s_dot, PARAM_MAX_SPEED), 0.0);
+    double s = new_path_s[i-1].f + s_dot * PARAM_DT;
+
+    double d = di;
+    double d_dot = 0;
+    double d_ddot = 0;
+
+    new_path_s[i] = PointC2(s, s_dot, s_ddot);
+    new_path_d[i] = PointC2(d, d_dot, d_ddot);
+
+    vector<double> point_xy = map.getXYspline(s, d);
+
+    next_x_vals.push_back(point_xy[0]);
+    next_y_vals.push_back(point_xy[1]);
+
+    t += PARAM_DT;
+  }
+
+  traj_jmt.trajectory = TrajectoryXY(next_x_vals, next_y_vals);
+  traj_jmt.path_sd = TrajectorySD(new_path_s, new_path_d);
+
+  return traj_jmt;
+}
+
+
 TrajectoryXY Trajectory::generate_trajectory(Target target, Map &map, CarData const &car, PreviousPath const &previous_path)
 {
   TrajectoryXY previous_path_xy = previous_path.xy;

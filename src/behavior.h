@@ -11,8 +11,9 @@
 
 struct Target {
   double lane;
-  double velocity;
+  double velocity; // for JMT trajectories
   double time;  // for manoeuver
+  double accel; // XXX for emergency trajectories
 };
 
 
