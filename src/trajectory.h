@@ -64,7 +64,7 @@ public:
   TrajectorySD getMinCostTrajectorySD() { return trajectories_sd_[min_cost_index_]; };
 
 private:
-  std::vector<struct Cost> costs_;
+  std::vector<class Cost> costs_;
   std::vector<TrajectoryXY> trajectories_;
   std::vector<TrajectorySD> trajectories_sd_;
   double min_cost_;
