@@ -64,78 +64,48 @@ In the code excerpt below we do the following:
   
 
 ```cpp
+     // --------------------------------------------------------------------------
      // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
-     // 6 cars: closest front and back per lane (with 3 lanes)
-     map<int, vector<vector<double>>> predictions = generate_predictions(sensor_fusion, car_s, car_d, horizon);
+     Predictions predictions = Predictions(sensor_fusion, car, PARAM_NB_POINTS /* 50 */);
 
-     // --- long time horizon (close to look onwards at 1 sec when possible) analysis for behavior planner ---
-     vector<double> frenet_far;
-     if (prev_size > 0) // prev_size typically close to 1 sec
-     {
-          frenet_far = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
-          car_s = frenet_far[0];
-          car_d = frenet_far[1];
-     }
-     int car_lane = get_lane(car_d);
+     Behavior behavior = Behavior(sensor_fusion, car);
+     vector<Target> targets = behavior.get_targets();
+     
+     Trajectory trajectory = Trajectory(targets, map, car, previous_path, predictions);
+```
 
-     vector<vector<double>> targets = behavior_planner_find_targets(sensor_fusion, prev_size, 
-                                                                    car_lane, car_s, car_d, car_vel );
-
-     // -- short time horizon for trajectory (re)generation ---
-     prev_size = min(prev_size, param_truncated_prev_size);
-     vector<double> frenet_close;
-     if (prev_size > 0) // prev_size typically close to 100 msec
-     {
-          frenet_close = map.getFrenet(previous_path_x[prev_size-1], previous_path_y[prev_size-1], deg2rad(car_yaw));
-          car_s = frenet_close[0];
-          car_d = frenet_close[1];
-     }
-     car_lane = get_lane(car_d);
-
-     vector<double> costs;
-     vector<vector<vector<double>>> trajectories;
-     vector<vector<vector<double>>> prev_paths_s;
-     vector<vector<vector<double>>> prev_paths_d;
-
-     int target_lane;
-     for (int i = 0; i < targets.size(); i++)
-     {
-          target_lane = targets[i][0];
-          double target_vel = targets[i][1];
-          double target_time = 2.0; // TODO should be behavior_planner job
-
-          vector<vector<double>> trajectory; // vector of (traj_x, traj_y)
-
-          struct trajectory_jmt traj_jmt;
-          // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-          traj_jmt = generate_trajectory_jmt(target_lane, target_vel, target_time, map, car_x, car_y, car_yaw, 
-                      car_s, car_d, previous_path_x, previous_path_y, prev_size, prev_path_s, prev_path_d);
-                      
-          trajectory = traj_jmt.trajectory;
-          prev_paths_s.push_back(traj_jmt.path_s);
-          prev_paths_d.push_back(traj_jmt.path_d);
-
-          double cost = cost_function(trajectory, target_lane, target_vel, predictions, sensor_fusion, car_lane);
-          costs.push_back(cost);
-          trajectories.push_back(trajectory);
-     }
-
-     // --- retrieve the lowest cost trajectory ---
-     double min_cost = 1e10;
-     int min_cost_index = 0;
-     for (int i = 0; i < costs.size(); i++)
-     {
-          if (costs[i] < min_cost)
-          {
-               min_cost = costs[i];
-               min_cost_index = i;
-          }
-     }
-     target_lane = targets[min_cost_index][0];
-     target_vel = targets[min_cost_index][1];
-     prev_path_s = prev_paths_s[min_cost_index];
-     prev_path_d = prev_paths_d[min_cost_index];
-
+```cpp
+Trajectory::Trajectory(vector<Target> targets, Map &map, CarData &car, PreviousPath &previous_path, Predictions &predictions)
+{
+  for (size_t i = 0; i < targets.size(); i++) {
+    TrajectoryXY trajectory;
+    if (PARAM_TRAJECTORY_JMT) {
+      TrajectoryJMT traj_jmt;
+  
+      // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
+      traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path);
+      trajectory = traj_jmt.trajectory;
+      trajectories_sd_.push_back(traj_jmt.path_sd);
+    } else {
+      // generate SPLINE trajectory in x and y
+      trajectory = generate_trajectory(targets[i], map, car, previous_path);
+    }
+  
+    Cost cost = Cost(trajectory, targets[i], predictions, car.lane);
+    costs_.push_back(cost);
+    trajectories_.push_back(trajectory);
+  }
+  
+  // --- retrieve the lowest cost trajectory ---
+  min_cost_ = INF;
+  min_cost_index_ = 0;
+  for (size_t i = 0; i < costs_.size(); i++) {
+    if (costs_[i].get_cost() < min_cost_) {
+      min_cost_ = costs_[i].get_cost();
+      min_cost_index_ = i;
+    }
+  }
+}
 ```
 
 ### Coordinate transforms
