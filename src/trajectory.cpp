@@ -269,9 +269,6 @@ TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, CarDat
   vector<PointC2> new_path_s(PARAM_NB_POINTS, PointC2(0,0,0));
   vector<PointC2> new_path_d(PARAM_NB_POINTS, PointC2(0,0,0));
 
-  //target.velocity <= 10) // mph
-  //get_dcenter(target.lane);
-
   vector<double> next_x_vals;
   vector<double> next_y_vals;
 
@@ -299,11 +296,18 @@ TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, CarDat
 
   //double t = 0.0; continuity point reused
   double t = PARAM_DT;
+  double prev_s_dot = s_dot;
   for (int i = prev_size; i < PARAM_NB_POINTS; i++) {
 
     s_dot += s_ddot * PARAM_DT; 
-    s_dot = max(min(s_dot, PARAM_MAX_SPEED), 0.0);
+    if ((target.accel > 0 && prev_s_dot <= target.velocity && s_dot > target.velocity) ||
+        (target.accel < 0 && prev_s_dot >= target.velocity && s_dot < target.velocity)) {
+      s_dot = target.velocity;
+    }
+    s_dot = max(min(s_dot, 0.9 * PARAM_MAX_SPEED), 0.0);
     s += s_dot * PARAM_DT;
+
+    prev_s_dot = s_dot;
 
     new_path_s[i] = PointC2(s, s_dot, s_ddot);
     new_path_d[i] = PointC2(d, d_dot, d_ddot);

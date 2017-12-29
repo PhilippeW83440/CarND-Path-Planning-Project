@@ -63,7 +63,22 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car) {
   // our nominal target .. same lane
   target.lane = car.lane;
   target.velocity = car.speed_target;
+
+#if 0
+  // XXX TEMP just for testing
+  target.velocity = closest_speed_ms;
+  target.accel = 0.9 * PARAM_MAX_ACCEL;
+  double car_speed_ms = mph_to_ms(car.speed);
+  if (closest_speed_ms < car_speed_ms)
+    target.accel *= -1.0;
+  cout << "!!!!! target: velocity=" << target.velocity << " accel=" << target.accel << '\n';
+#endif
+
   targets_.push_back(target);
+
+#if 0
+  return; // XXX TEMP just for testing
+#endif
 
   // Backup targets (lane and speed)
 
