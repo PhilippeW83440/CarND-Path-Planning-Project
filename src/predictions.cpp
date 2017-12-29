@@ -1,13 +1,44 @@
 #include "predictions.h"
-#include "params.h"
-#include <cassert>
+
 
 using namespace std;
 
+
+// map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
+// predictions map: a dictionnary { fusion_index : horizon * (x,y) }
+Predictions::Predictions(vector<vector<double>> const &sensor_fusion, CarData const &car, int horizon)
+{
+  std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
+
+  // vector of indexes in sensor_fusion
+  vector<int> closest_objects = find_closest_objects(sensor_fusion, car.s, car.d); 
+
+  for (int i = 0; i < closest_objects.size(); i++) {
+    int fusion_index = closest_objects[i];
+    if (fusion_index >= 0) {
+      //double fusion_id = sensor_fusion[fusion_index][0];
+      double x = sensor_fusion[fusion_index][1];
+      double y = sensor_fusion[fusion_index][2];
+      double vx = sensor_fusion[fusion_index][3];
+      double vy = sensor_fusion[fusion_index][4];
+      vector<Coord> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
+      for (int j = 0; j < horizon; j++) {
+        Coord coord;
+        coord.x = x + vx * j*PARAM_DT;
+        coord.y = y + vy * j*PARAM_DT;
+        prediction.push_back(coord);
+      }
+      predictions_[fusion_index] = prediction;
+    }
+  }
+}
+
+Predictions::~Predictions() {}
+
 //double get_sdistance(double s1, double s2)
 //{
-//  // account for s wraparound at max_s
-//  double sdistance = min( fabs(s1 - s2), min(fabs((s1+max_s) - s2), fabs(s1 - (s2+max_s))) );
+//  // account for s wraparound at MAX_S
+//  double sdistance = min( fabs(s1 - s2), min(fabs((s1+MAX_S) - s2), fabs(s1 - (s2+MAX_S))) );
 //  return sdistance;
 //}
 
@@ -16,57 +47,48 @@ using namespace std;
 // => at most 6 predictions (for now on) as we have 3 lanes
 
 // sort of simple scene detection
-vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double car_s)
-{
+vector<int> Predictions::find_closest_objects(vector<vector<double>> const &sensor_fusion, double car_s, double car_d) {
   vector<int> front = {-1, -1, -1}; // idx of closest object per lane
   vector<int> back = {-1, -1, -1}; // idx of closest object per lane
 
-  vector<double> front_dmin = {1e10, 1e10, 1e10}; // per lane
-  vector<double> back_dmin = {1e10, 1e10, 1e10}; // per lane
+  vector<double> front_dmin = {INF, INF, INF}; // per lane
+  vector<double> back_dmin = {INF, INF, INF}; // per lane
 
   // Handle FOV and s wraparound
-  double sfov_min = car_s - param_fov;
-  double sfov_max = car_s + param_fov;
+  double sfov_min = car_s - PARAM_FOV;
+  double sfov_max = car_s + PARAM_FOV;
   double sfov_shit = 0;
-  if (sfov_min < 0)
-  {
+  if (sfov_min < 0) { // Handle s wrapping
     sfov_shit = -sfov_min;
-  }
-  else if (sfov_max > max_s)
-  {
-    sfov_shit = max_s - sfov_max;
+  } else if (sfov_max > MAX_S) {
+    sfov_shit = MAX_S - sfov_max;
   }
   sfov_min += sfov_shit;
   sfov_max += sfov_shit;
-  assert(sfov_min >= 0 && sfov_min <= max_s);
-  assert(sfov_max >= 0 && sfov_max <= max_s);
+  assert(sfov_min >= 0 && sfov_min <= MAX_S);
+  assert(sfov_max >= 0 && sfov_max <= MAX_S);
 
   car_s += sfov_shit;
 
-  for (int i = 0; i < sensor_fusion.size(); i++)
-  {
+  for (size_t i = 0; i < sensor_fusion.size(); i++) {
     double s = sensor_fusion[i][5] + sfov_shit;
-    if (s >= sfov_min && s <= sfov_max) // object in FOV
-    {
+    if (s >= sfov_min && s <= sfov_max) { // object in FOV
       double d = sensor_fusion[i][6];
       int lane = get_lane(d);
+      if (lane < 0 || lane > 2)
+          continue; // some garbage values in sensor_fusion from time to time
 
       // s wraparound already handled via FOV shift
       //double dist = get_sdistance(s, car_s);
       double dist = fabs(s - car_s);
 
-      if (s >= car_s) /* front */
-      {
-        if (dist < front_dmin[lane])
-        {
+      if (s >= car_s) {  // front
+        if (dist < front_dmin[lane]) {
           front[lane] = i;
           front_dmin[lane] = dist;
         }
-      }
-      else /* back */
-      {
-        if (dist < back_dmin[lane])
-        {
+      } else {  // back
+        if (dist < back_dmin[lane]) {
           back[lane] = i;
           back_dmin[lane] = dist;
         }
@@ -74,45 +96,58 @@ vector<int> find_closest_objects(vector<vector<double>> &sensor_fusion, double c
     }
   }
 
-  for (int i = 0; i < front.size(); i++)
-  {
+  int car_lane = get_lane(car_d);
+  for (size_t i = 0; i < front.size(); i++) {
     cout << "lane " << i << ": ";
     cout << "front " << front[i] << " at " << front_dmin[i] << " s_meters ; ";
     cout << "back " << back[i] << " at " << back_dmin[i] << " s_meters" << endl;
+
+    int lane = i;
+    // !!! This should be part of the behavior planner behavior.cpp
+    if (front[i] >= 0) { // a car in front of us
+      if (lane != car_lane && (back_dmin[i] <= 10 || front_dmin[i] <= 10)) {
+        lane_speed_[i] = 0;
+        lane_free_space_[i] = 0; // too dangerous
+      } else {
+        double vx = sensor_fusion[front[i]][3];
+        double vy = sensor_fusion[front[i]][4];
+        lane_speed_[i] = sqrt(vx*vx+vy*vy);
+        lane_free_space_[i] = front_dmin[i];
+      }
+    } else {  // if nobody in front of us
+      if (lane != car_lane && back_dmin[i] <= 10) {
+        lane_speed_[i] = 0;
+        lane_free_space_[i] = 0; // too dangerous
+      } else {
+        lane_speed_[i] = PARAM_MAX_SPEED_MPH;
+        lane_free_space_[i] = PARAM_FOV;
+      }
+    }
+
+    cout << "Predictions::lane_speed_[" << i << "]=" << lane_speed_[i] << endl;
   }
 
   return { front[0], back[0], front[1], back[1], front[2], back[2] };
 }
 
 
-// map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
-// predictions map: a dictionnary { fusion_index : horizon * (x,y) }
-std::map< int, vector<vector<double> > > generate_predictions(vector<vector<double>> &sensor_fusion, double car_s, double car_d, int horizon)
-{
-  std::map<int, vector<vector<double> > > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
 
-  // vector of indexes in sensor_fusion
-  vector<int> closest_objects = find_closest_objects(sensor_fusion, car_s); 
+std::map< int, vector<Coord>> Predictions::get_predictions() {
+  return predictions_;
+}
 
-  for (int i = 0; i < closest_objects.size(); i++)
-  {
-    int fusion_index = closest_objects[i];
-    if (fusion_index >= 0)
-    {
-      //double fusion_id = sensor_fusion[fusion_index][0];
-      double x = sensor_fusion[fusion_index][1];
-      double y = sensor_fusion[fusion_index][2];
-      double vx = sensor_fusion[fusion_index][3];
-      double vy = sensor_fusion[fusion_index][4];
-      vector<vector<double>> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
-      for (int j = 0; j < horizon; j++)
-      {
-        prediction.push_back({x + vx * j*param_dt, y + vy * j*param_dt});
-      }
-      //predictions.push_back(prediction);
-      predictions[fusion_index] = prediction;
-    }
+double Predictions::get_lane_speed(int lane) {
+  if (lane >= 0 && lane <= 3) {
+    return lane_speed_[lane];
+  } else {
+    return 0;
   }
+}
 
-  return predictions;
+double Predictions::get_lane_free_space(int lane) {
+  if (lane >= 0 && lane <= 3) {
+    return lane_free_space_[lane];
+  } else {
+    return 0;
+  }
 }
