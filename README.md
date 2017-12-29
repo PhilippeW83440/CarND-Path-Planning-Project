@@ -1,5 +1,7 @@
 # CarND-Path-Planning-Project
-Self-Driving Car Engineer Nanodegree Program
+Self-Driving Car Engineer Nanodegree Program  
+Simulator and track used by default: https://github.com/udacity/Bosch-Challenge/releases/tag/v2.0  
+(cf params.cpp to use different tracks with the same Unity3D based simulator)  
 
 [//]: # (Image References)
 [image1]: ./img/behavior.png
