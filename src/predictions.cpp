@@ -136,7 +136,7 @@ std::map< int, vector<Coord>> Predictions::get_predictions() {
   return predictions_;
 }
 
-double Predictions::get_lane_speed(int lane) {
+double Predictions::get_lane_speed(int lane) const {
   if (lane >= 0 && lane <= 3) {
     return lane_speed_[lane];
   } else {
@@ -144,7 +144,7 @@ double Predictions::get_lane_speed(int lane) {
   }
 }
 
-double Predictions::get_lane_free_space(int lane) {
+double Predictions::get_lane_free_space(int lane) const {
   if (lane >= 0 && lane <= 3) {
     return lane_free_space_[lane];
   } else {

@@ -18,8 +18,8 @@ public:
   virtual ~Predictions();
 
   std::map<int, std::vector<Coord> > get_predictions();
-  double get_lane_speed(int lane);
-  double get_lane_free_space(int lane);
+  double get_lane_speed(int lane) const;
+  double get_lane_free_space(int lane) const;
 
 private:
   std::vector<int> find_closest_objects(std::vector<std::vector<double>> const &sensor_fusion, double car_s, double car_d);

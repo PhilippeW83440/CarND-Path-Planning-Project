@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car) {
+Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Predictions const &predictions) {
   Target target;
   target.time = 2.0;
 
@@ -146,6 +146,13 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car) {
       targets_.push_back(target);
     }
   }
+
+  // Last target/candidate: emergency trajectory (just in case we have no better choice)
+  target.lane = car.lane;
+  target.velocity = predictions.get_lane_speed(car.lane);
+  target.time = 0.0; // ASAP ... (identified as emergency target)
+  target.accel = -0.85 * PARAM_MAX_ACCEL;
+  // XXX to be enabled targets_.push_back(target);
 }
 
 Behavior::~Behavior() {}

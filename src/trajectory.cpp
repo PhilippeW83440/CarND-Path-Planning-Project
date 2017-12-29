@@ -35,8 +35,11 @@ Trajectory::Trajectory(std::vector<Target> targets, Map &map, CarData &car, Prev
       TrajectoryJMT traj_jmt;
   
       // generate JMT trajectory in s and d: converted then to (x,y) for trajectory output
-      traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path);
-      //traj_jmt = generate_trajectory_sd(targets[i], map, car, previous_path);
+        if (targets[i].time == 0)  // EMERGENCY ...
+          traj_jmt = generate_trajectory_sd(targets[i], map, car, previous_path);
+        else  // JMT ...
+          traj_jmt = generate_trajectory_jmt(targets[i], map, previous_path);
+
       trajectory = traj_jmt.trajectory;
       trajectories_sd_.push_back(traj_jmt.path_sd);
     } else {
@@ -58,7 +61,6 @@ Trajectory::Trajectory(std::vector<Target> targets, Map &map, CarData &car, Prev
       min_cost_index_ = i;
     }
   }
-
 }
   
 
@@ -299,6 +301,7 @@ TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, CarDat
   double prev_s_dot = s_dot;
   for (int i = prev_size; i < PARAM_NB_POINTS; i++) {
 
+    // increase/decrease speed till target velocity is reached
     s_dot += s_ddot * PARAM_DT; 
     if ((target.accel > 0 && prev_s_dot <= target.velocity && s_dot > target.velocity) ||
         (target.accel < 0 && prev_s_dot >= target.velocity && s_dot < target.velocity)) {

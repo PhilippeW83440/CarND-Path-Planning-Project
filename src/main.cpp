@@ -145,7 +145,7 @@ int main() {
             // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
             Predictions predictions = Predictions(sensor_fusion, car, PARAM_NB_POINTS /* 50 */);
 
-            Behavior behavior = Behavior(sensor_fusion, car);
+            Behavior behavior = Behavior(sensor_fusion, car, predictions);
             vector<Target> targets = behavior.get_targets();
 
             Trajectory trajectory = Trajectory(targets, map, car, previous_path, predictions);
