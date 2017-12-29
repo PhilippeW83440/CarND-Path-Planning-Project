@@ -75,8 +75,7 @@ In the code excerpt below we do the following:
 ```
 
 ```cpp
-Trajectory::Trajectory(vector<Target> targets, Map &map, CarData &car, PreviousPath &previous_path, Predictions &predictions)
-{
+Trajectory::Trajectory(vector<Target> targets, Map &map, CarData &car, PreviousPath &previous_path, Predictions &predictions) {
   for (size_t i = 0; i < targets.size(); i++) {
     TrajectoryXY trajectory;
     if (PARAM_TRAJECTORY_JMT) {
