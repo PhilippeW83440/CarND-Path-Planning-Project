@@ -49,4 +49,11 @@ const double PARAM_CAR_SAFETY_W = 3; // meters
 const double PARAM_CAR_SAFETY_L = 6; // meters
 const int PARAM_MAX_COLLISION_STEP = 25;
 
+// cf cost.cpp: weighted cost function from most critical to less critical one
+const int PARAM_COST_FEASIBILITY = 10000; // vs collisions, vs vehicle capabilities
+const int PARAM_COST_SAFETY      = 1000; // vs buffer distance, vs visibility or curvature
+const int PARAM_COST_LEGALITY    = 100; // vs speed limits
+const int PARAM_COST_COMFORT     = 10; // vs jerk
+const int PARAM_COST_EFFICIENCY  = 1; // vs target lane, target speed and time to goal
+
 #endif // PARAMS_H

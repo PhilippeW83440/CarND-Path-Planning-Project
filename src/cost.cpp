@@ -225,12 +225,6 @@ Cost::Cost(TrajectoryXY const &trajectory, Target target, Predictions &predict, 
   double cost_comfort = 0; // vs jerk
   double cost_efficiency = 0; // vs desired lane and time to goal
 
-  double weight_feasibility = 10000; // vs collisions, vs vehicle capabilities
-  double weight_safety      = 1000; // vs buffer distance, vs visibility or curvature
-  double weight_legality    = 100; // vs speed limits
-  double weight_comfort     = 10; // vs jerk
-  double weight_efficiency  = 1; // vs target lane, target speed and time to goal
-
   std::map<int, vector<Coord> > predictions = predict.get_predictions();
 
   // 1) FEASIBILITY cost
@@ -239,7 +233,7 @@ Cost::Cost(TrajectoryXY const &trajectory, Target target, Predictions &predict, 
   //{
   //  cost_feasibility += 1;
   //}
-  cost_ = cost_ + weight_feasibility * cost_feasibility;
+  cost_ = cost_ + PARAM_COST_FEASIBILITY * cost_feasibility;
 
   // 2) SAFETY cost
   // double dmin = get_predicted_dmin(trajectory, predictions);
@@ -249,13 +243,13 @@ Cost::Cost(TrajectoryXY const &trajectory, Target target, Predictions &predict, 
   // } else {
   //   cost_safety = 0;
   // }
-  cost_ = cost_ + weight_safety * cost_safety;
+  cost_ = cost_ + PARAM_COST_SAFETY * cost_safety;
 
   // 3) LEGALITY cost
-  cost_ = cost_ + weight_legality * cost_legality;
+  cost_ = cost_ + PARAM_COST_LEGALITY * cost_legality;
 
   // 4) COMFORT cost
-  cost_ = cost_ + weight_comfort * cost_comfort;
+  cost_ = cost_ + PARAM_COST_COMFORT * cost_comfort;
 
   // 5) EFFICIENCY cost
   //cost_efficiency = PARAM_MAX_SPEED_MPH - target.velocity;
@@ -264,7 +258,7 @@ Cost::Cost(TrajectoryXY const &trajectory, Target target, Predictions &predict, 
   // sensor_fusion speed in m/s !!!
   //cost_efficiency = PARAM_MAX_SPEED - predictions_lane_speed[target.lane];
   cost_efficiency = PARAM_FOV - predict.get_lane_free_space(target.lane);
-  cost_ = cost_ + weight_efficiency * cost_efficiency;
+  cost_ = cost_ + PARAM_COST_EFFICIENCY * cost_efficiency;
 
   cout << "car_lane=" << car_lane << " target.lane=" << target.lane << " target_lvel=" << predict.get_lane_speed(target.lane) << " cost=" << cost_ << endl;
 }
