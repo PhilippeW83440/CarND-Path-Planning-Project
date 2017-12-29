@@ -11,7 +11,7 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car) {
   double dist_safety = PARAM_DIST_SLOW_DOWN;
 
   double ref_vel_ms = mph_to_ms(car.speed_target);
-  double closest_speed_ms = INF;
+  double closest_speed_ms = PARAM_MAX_SPEED;
   double closest_dist = INF;
   
   // find ref_v to use based on car in front of us
@@ -66,18 +66,20 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car) {
 
 #if 0
   // XXX TEMP just for testing
+  // -----------------------------------------------
   target.velocity = closest_speed_ms;
-  target.accel = 0.9 * PARAM_MAX_ACCEL;
+  target.accel = 0.85 * PARAM_MAX_ACCEL;
   double car_speed_ms = mph_to_ms(car.speed);
-  if (closest_speed_ms < car_speed_ms)
+  if (closest_speed_ms < car_speed_ms && closest_dist <= 20)
     target.accel *= -1.0;
   cout << "!!!!! target: velocity=" << target.velocity << " accel=" << target.accel << '\n';
+  // -----------------------------------------------
 #endif
 
   targets_.push_back(target);
 
 #if 0
-  return; // XXX TEMP just for testing
+  target.velocity = car.speed_target; // XXX TEMP just for testing
 #endif
 
   // Backup targets (lane and speed)

@@ -14,6 +14,7 @@ struct Target {
   double velocity; // for JMT trajectories
   double time;  // for manoeuver
   double accel; // XXX for emergency trajectories
+  Target(double l=0, double v=0, double t=0, double a=0) : lane(l), velocity(v), time(t), accel(a) {}
 };
 
 
