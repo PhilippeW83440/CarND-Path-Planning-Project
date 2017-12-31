@@ -6,11 +6,17 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
   Target target;
   target.time = 2.0;
 
+  double car_speed_target = car.speed_target;
+
+  // reasoning point by point (not end_point by end_point)
+  if (car.emergency)
+    car_speed_target = car.speed;
+
   bool too_close = false;
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
   double dist_safety = PARAM_DIST_SLOW_DOWN;
 
-  double ref_vel_ms = mph_to_ms(car.speed_target);
+  double ref_vel_ms = mph_to_ms(car_speed_target);
   double closest_speed_ms = PARAM_MAX_SPEED;
   double closest_dist = INF;
   
@@ -27,7 +33,7 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
       cout << "obj_idx=" << i << " REF_VEL_MS=" << ref_vel_ms << " CHECK_SPEED=" << check_speed << endl;
       dist_safety = PARAM_DIST_SLOW_DOWN;
       if (fabs(ref_vel_ms - check_speed) <= 2)
-        dist_safety = 20; // XXX TODO remove harcoded value
+        dist_safety = 12; // XXX TODO remove harcoded value
   
       if ((check_car_s > car.s) && ((check_car_s - car.s) < dist_safety)) {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
@@ -45,42 +51,44 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
   if (too_close) {
     //ref_vel -= 2 * .224; // 5 m.s-2 under the 10 requirement
     if (ref_vel_ms > closest_speed_ms) { // in m.s-1 !
-      car.speed_target -= PARAM_MAX_SPEED_INC_MPH; // in mph !
-      if (closest_dist <= 10 && car.speed_target > closest_speed_ms) {
-        car.speed_target -= 5 * PARAM_MAX_SPEED_INC_MPH;
+      car_speed_target -= PARAM_MAX_SPEED_INC_MPH; // in mph !
+      if (closest_dist <= 10 && car_speed_target > closest_speed_ms) {
+        car_speed_target -= 5 * PARAM_MAX_SPEED_INC_MPH;
       }
     }
 
-    car.speed_target = max(car.speed_target, 0.0); // no backwards driving ... just in case
+    car_speed_target = max(car_speed_target, 0.0); // no backwards driving ... just in case
     ref_vel_inc = -1;
-  } else if (car.speed_target < PARAM_MAX_SPEED_MPH) {
+  } else if (car_speed_target < PARAM_MAX_SPEED_MPH) {
     //ref_vel += 2 * .224;
-    car.speed_target += PARAM_MAX_SPEED_INC_MPH;
-    car.speed_target = min(car.speed_target, PARAM_MAX_SPEED_MPH);
+    car_speed_target += PARAM_MAX_SPEED_INC_MPH;
+    car_speed_target = min(car_speed_target, PARAM_MAX_SPEED_MPH);
     ref_vel_inc = +1;
   }
 
   // our nominal target .. same lane
   target.lane = car.lane;
-  target.velocity = car.speed_target;
+  target.velocity = car_speed_target;
 
-#if 0
   // XXX TEMP just for testing
   // -----------------------------------------------
-  target.velocity = closest_speed_ms;
-  target.accel = 0.85 * PARAM_MAX_ACCEL;
-  double car_speed_ms = mph_to_ms(car.speed);
-  if (closest_speed_ms < car_speed_ms && closest_dist <= 20)
-    target.accel *= -1.0;
-  cout << "!!!!! target: velocity=" << target.velocity << " accel=" << target.accel << '\n';
+  if (fabs(car.d - get_dcenter(car.lane)) <= 0.05) {
+    target.time = 0.0; // ASAP ... (identified as emergency target)
+    target.velocity = closest_speed_ms;
+    target.accel = 0.85 * PARAM_MAX_ACCEL;
+    double car_speed_ms = mph_to_ms(car.speed);
+    if (closest_speed_ms < car_speed_ms && closest_dist <= 20)
+      target.accel *= -1.0;
+  }
+  //cout << "!!!!! target: velocity=" << target.velocity << " accel=" << target.accel << '\n';
   // -----------------------------------------------
-#endif
 
   targets_.push_back(target);
 
-#if 0
-  target.velocity = car.speed_target; // XXX TEMP just for testing
-#endif
+  // XXX temp just for testing purposes
+  target.velocity = car_speed_target; // XXX TEMP just for testing
+  target.time = 2.0;
+  // XXX temp just for testing purposes
 
   // Backup targets (lane and speed)
 
@@ -106,18 +114,18 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
   switch (ref_vel_inc)
   {
     case 1:
-      backup_vel.push_back(car.speed_target - PARAM_MAX_SPEED_INC_MPH);
-      backup_vel.push_back(car.speed_target - 2 * PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car_speed_target - PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car_speed_target - 2 * PARAM_MAX_SPEED_INC_MPH);
       break;
     case 0: // already max speed
-      backup_vel.push_back(car.speed_target - PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car_speed_target - PARAM_MAX_SPEED_INC_MPH);
       break;
     case -1:
       // emergency breaking
-      backup_vel.push_back(car.speed_target - PARAM_MAX_SPEED_INC_MPH);
+      backup_vel.push_back(car_speed_target - PARAM_MAX_SPEED_INC_MPH);
 
       // emergency acceleration (dangerous here)
-      //backup_vel.push_back(car.speed_target + PARAM_MAX_SPEED_INC_MPH);
+      //backup_vel.push_back(car_speed_target + PARAM_MAX_SPEED_INC_MPH);
       break;
     default:
       assert(1 == 0); // something went wrong
@@ -132,7 +140,7 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
   }
 
   // 2) target velocity on backup lanes
-  target.velocity = car.speed_target;
+  target.velocity = car_speed_target;
   for (size_t i = 0; i < backup_lanes.size(); i++) {
     target.lane = backup_lanes[i];
     targets_.push_back(target);
