@@ -54,20 +54,21 @@ int main() {
     map.read(map_file_);
   }
 
-  map.plot();
+  //map.plot();
 
   bool start = true;
 
   // car_speed: current speed
   // car_speed_target: speed at end of the planned trajectory
-  double car_speed_target = 1.0; // mph (non 0 for XY spline traj generation to avoid issues)
+  // double car_speed_target = 1.0; // mph (non 0 for XY spline traj generation to avoid issues)
+  CarData car = CarData(0., 0., 0., 0., 0.,  0., 1.0, 0.);
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
   TrajectorySD prev_path_sd;
   //////////////////////////////////////////////////////////////////////
 
 
-  h.onMessage([&map, &car_speed_target, &start, &prev_path_sd](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &car, &start, &prev_path_sd](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -88,7 +89,6 @@ int main() {
         if (event == "telemetry") {
           // j[1] is the data JSON object
 
-            CarData car;
             TrajectoryXY previous_path_xy;
           
         	// Main car's localization Data
@@ -98,7 +98,6 @@ int main() {
           	car.d = j[1]["d"];
           	car.yaw = j[1]["yaw"];
           	car.speed = j[1]["speed"];
-          	car.speed_target = car_speed_target;
 
             cout << "SPEEDOMETER: car.speed=" << car.speed << " car.speed_target=" << car.speed_target << '\n';
           	// Previous path data given to the Planner
@@ -157,13 +156,11 @@ int main() {
             vector<double> next_y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
 
             if (PARAM_TRAJECTORY_JMT) {
-              //prev_path_sd = trajectories_sd[min_cost_index];
               prev_path_sd = trajectory.getMinCostTrajectorySD();
             }
 
             int target_lane = targets[min_cost_index].lane;
-            car_speed_target = targets[min_cost_index].velocity;
-            car.speed_target = car_speed_target;
+            car.speed_target = targets[min_cost_index].velocity;
 
             if (target_lane != car.lane) {
               cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane

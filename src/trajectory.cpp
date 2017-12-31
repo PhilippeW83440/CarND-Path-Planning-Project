@@ -61,6 +61,16 @@ Trajectory::Trajectory(std::vector<Target> targets, Map &map, CarData &car, Prev
       min_cost_index_ = i;
     }
   }
+
+  // enforce emergency traj: last one (in case of unavoidable collision we prefer lower speed anyways)
+  if (min_cost_ >= PARAM_COST_FEASIBILITY) {
+    min_cost_index_ = costs_.size() - 1;
+    min_cost_ = costs_[min_cost_index_].get_cost();
+  }
+
+  if (min_cost_index_ == costs_.size() - 1) {
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! EMERGENCY TRAJ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+  }
 }
   
 
@@ -184,6 +194,11 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
 
     sf_ddot = 0;
     sf_dot  = mph_to_ms(target.velocity);
+
+    // XXX
+    sf_dot = min(sf_dot, si_dot + 10 * PARAM_MAX_SPEED_INC);
+    sf_dot = max(sf_dot, si_dot - 10 * PARAM_MAX_SPEED_INC);
+
     sf      = si + 2 * sf_dot * T;
   } else {
     df_ddot = 0;
@@ -198,6 +213,11 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
     if (sf_dot >= 0.9 * PARAM_MAX_SPEED) {
       sf_dot *= 0.94;
     }
+
+    // XXX
+    sf_dot = min(sf_dot, si_dot + 10 * PARAM_MAX_SPEED_INC);
+    sf_dot = max(sf_dot, si_dot - 10 * PARAM_MAX_SPEED_INC);
+
     sf = si + sf_dot * T;
   }
 
