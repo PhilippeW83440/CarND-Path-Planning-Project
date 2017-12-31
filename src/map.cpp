@@ -209,7 +209,7 @@ int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const
   }
 
   // TODO XX TEMP
-  cout << "closestWaypoint=" << closestWaypoint << endl;
+  //cout << "closestWaypoint=" << closestWaypoint << endl;
 	return closestWaypoint;
 }
 
@@ -233,7 +233,7 @@ int Map::NextWaypoint(double x, double y, double theta, const vector<double> &ma
 	}
 
   // XXX debug
-  cout << "corrected closestWaypoint=" << closestWaypoint << endl;
+  //cout << "corrected closestWaypoint=" << closestWaypoint << endl;
 	return closestWaypoint;
 }
 

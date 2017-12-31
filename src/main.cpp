@@ -61,7 +61,7 @@ int main() {
   // car_speed: current speed
   // car_speed_target: speed at end of the planned trajectory
   // double car_speed_target = 1.0; // mph (non 0 for XY spline traj generation to avoid issues)
-  CarData car = CarData(0., 0., 0., 0., 0.,  0., 1.0, 0.);
+  CarData car = CarData(0., 0., 0., 0., 0.,  0., 1.0, 0., false);
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
   TrajectorySD prev_path_sd;

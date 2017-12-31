@@ -68,7 +68,13 @@ Trajectory::Trajectory(std::vector<Target> targets, Map &map, CarData &car, Prev
     min_cost_ = costs_[min_cost_index_].get_cost();
   }
 
-  if (min_cost_index_ == costs_.size() - 1) {
+  if (targets[min_cost_index_].time == 0) {
+    car.emergency = true;
+  } else {
+    car.emergency = false;
+  }
+
+  if (car.emergency) {
     cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! EMERGENCY TRAJ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
   }
 }

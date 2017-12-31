@@ -36,9 +36,10 @@ struct CarData {
   double speed;
   double speed_target;
   int    lane;
+  bool   emergency;
   CarData (double X=0, double Y=0, double S=0, double D=0, double YAW=0, 
-           double V=0, double VF=0, double L=0) : x(X), y(Y), s(S), yaw(YAW), 
-           speed(V), speed_target(VF), lane(L) {}
+           double V=0, double VF=0, double L=0, bool E=false) : x(X), y(Y), s(S), yaw(YAW), 
+           speed(V), speed_target(VF), lane(L), emergency(E) {}
 };
 
 typedef std::vector<double > t_coord;
