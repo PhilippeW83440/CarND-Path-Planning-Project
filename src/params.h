@@ -56,4 +56,6 @@ const int PARAM_COST_LEGALITY    = 100; // vs speed limits
 const int PARAM_COST_COMFORT     = 10; // vs jerk
 const int PARAM_COST_EFFICIENCY  = 1; // vs target lane, target speed and time to goal
 
+const int PARAM_NB_LANES = 3;
+
 #endif // PARAMS_H
