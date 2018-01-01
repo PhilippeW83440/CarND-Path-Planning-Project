@@ -74,7 +74,7 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
     target.velocity = closest_speed_ms;
     target.accel = 0.7 * PARAM_MAX_ACCEL;
     double car_speed_ms = mph_to_ms(car.speed);
-    if (closest_speed_ms < car_speed_ms && closest_dist <= 20)
+    if (closest_speed_ms < car_speed_ms && closest_dist <= safety_distance)
       target.accel *= -1.0;
   }
   //cout << "!!!!! target: velocity=" << target.velocity << " accel=" << target.accel << '\n';
