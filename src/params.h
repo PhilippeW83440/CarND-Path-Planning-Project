@@ -34,8 +34,6 @@ const double PARAM_FOV = 70.0; // Field Of View
 const double PARAM_MAX_SPEED_INC = PARAM_MAX_ACCEL * PARAM_DT; // m.s-1 per 0.02 sec
 const double PARAM_MAX_SPEED_INC_MPH = ms_to_mph(PARAM_MAX_SPEED_INC);
 
-const double PARAM_DIST_SLOW_DOWN = 30; // when a car is 30 m ahead of us => adjust speed if needed
-
 const double PARAM_DIST_SAFETY = 3.5; // meters
 
 // reduce latency reaction, but account for simulator latency ...

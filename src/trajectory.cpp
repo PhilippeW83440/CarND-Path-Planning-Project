@@ -75,7 +75,7 @@ Trajectory::Trajectory(std::vector<Target> targets, Map &map, CarData &car, Prev
   }
 
   if (car.emergency) {
-    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! EMERGENCY TRAJ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
+    cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! trajectory_sd !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n";
   }
 }
   

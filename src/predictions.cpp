@@ -3,12 +3,56 @@
 
 using namespace std;
 
+
+// map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
+// predictions map: a dictionnary { fusion_index : horizon * (x,y) }
+Predictions::Predictions(vector<vector<double>> const &sensor_fusion, CarData const &car, int horizon)
+{
+  std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
+
+
+  // vector of indexes in sensor_fusion
+  vector<int> closest_objects = find_closest_objects(sensor_fusion, car.s, car.d); 
+
+  for (int i = 0; i < closest_objects.size(); i++) {
+    int fusion_index = closest_objects[i];
+    if (fusion_index >= 0) {
+      //double fusion_id = sensor_fusion[fusion_index][0];
+      double x = sensor_fusion[fusion_index][1];
+      double y = sensor_fusion[fusion_index][2];
+      double vx = sensor_fusion[fusion_index][3];
+      double vy = sensor_fusion[fusion_index][4];
+      vector<Coord> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
+      for (int j = 0; j < horizon; j++) {
+        Coord coord;
+        coord.x = x + vx * j*PARAM_DT;
+        coord.y = y + vy * j*PARAM_DT;
+        prediction.push_back(coord);
+      }
+      predictions_[fusion_index] = prediction;
+    }
+  }
+
+  set_safety_distance(sensor_fusion, car);
+}
+
+Predictions::~Predictions() {}
+
+
+//double get_sdistance(double s1, double s2)
+//{
+//  // account for s wraparound at MAX_S
+//  double sdistance = min( fabs(s1 - s2), min(fabs((s1+MAX_S) - s2), fabs(s1 - (s2+MAX_S))) );
+//  return sdistance;
+//}
+
+
 void Predictions::set_safety_distance(vector<vector<double>> const &sensor_fusion, CarData const &car)
 {
   // velocity of ego vehicle
-  vel_ego_ = car.speed;
+  vel_ego_ = mph_to_ms(car.speed);
   // slightly conservative as it will relate to safety distance
-  decel_ego_ = - 0.8 * PARAM_MAX_ACCEL;
+  decel_ego_ = 0.8 * PARAM_MAX_ACCEL;
 
   // velocity of front vehicle
   double vx, vy;
@@ -39,54 +83,19 @@ void Predictions::set_safety_distance(vector<vector<double>> const &sensor_fusio
   if (vel_ego_ > vel_front_) {
     time_to_collision_ = dist_front_ / (vel_ego_ - vel_front_);
     time_to_decelerate_ = (vel_ego_ - vel_front_) / decel_ego_;
-    safety_distance_ = vel_ego_ * time_to_decelerate_ + 2 * PARAM_CAR_SAFETY_L;
+    safety_distance_ = vel_ego_ * time_to_decelerate_ + 1.5 * PARAM_CAR_SAFETY_L;
   } else {
     time_to_collision_ = INF;
     time_to_decelerate_ = 0;
-    safety_distance_ = 2 * PARAM_CAR_SAFETY_L; 
+    safety_distance_ = 1.5 * PARAM_CAR_SAFETY_L; 
   }
 
   paranoid_safety_distance_ = vel_ego_ * time_to_stop_ + 2 * PARAM_CAR_SAFETY_L;
+
+  cout << "SAFETY: D=" << dist_front_ << " dV=" << vel_ego_ - vel_front_ << " TTC=" << time_to_collision_ 
+       << " TTD=" << time_to_decelerate_ << " SD=" << safety_distance_ << " PSD=" << paranoid_safety_distance_ << '\n';
 }
 
-// map of at most 6 predictions: with 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon
-// predictions map: a dictionnary { fusion_index : horizon * (x,y) }
-Predictions::Predictions(vector<vector<double>> const &sensor_fusion, CarData const &car, int horizon)
-{
-  std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
-
-
-  // vector of indexes in sensor_fusion
-  vector<int> closest_objects = find_closest_objects(sensor_fusion, car.s, car.d); 
-
-  for (int i = 0; i < closest_objects.size(); i++) {
-    int fusion_index = closest_objects[i];
-    if (fusion_index >= 0) {
-      //double fusion_id = sensor_fusion[fusion_index][0];
-      double x = sensor_fusion[fusion_index][1];
-      double y = sensor_fusion[fusion_index][2];
-      double vx = sensor_fusion[fusion_index][3];
-      double vy = sensor_fusion[fusion_index][4];
-      vector<Coord> prediction; // vector of at most 6 predicitons of "n_horizon" (x,y) coordinates
-      for (int j = 0; j < horizon; j++) {
-        Coord coord;
-        coord.x = x + vx * j*PARAM_DT;
-        coord.y = y + vy * j*PARAM_DT;
-        prediction.push_back(coord);
-      }
-      predictions_[fusion_index] = prediction;
-    }
-  }
-}
-
-Predictions::~Predictions() {}
-
-//double get_sdistance(double s1, double s2)
-//{
-//  // account for s wraparound at MAX_S
-//  double sdistance = min( fabs(s1 - s2), min(fabs((s1+MAX_S) - s2), fabs(s1 - (s2+MAX_S))) );
-//  return sdistance;
-//}
 
 // we generate predictions for closet car per lane in front of us
 // we generate predictions for closet car per lane behind us

@@ -5,8 +5,9 @@ using namespace std;
 Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Predictions const &predictions) {
   Target target;
   target.time = 2.0;
-
   double car_speed_target = car.speed_target;
+
+  double safety_distance = predictions.get_safety_distance();
 
   // reasoning point by point (not end_point by end_point)
   if (car.emergency)
@@ -14,7 +15,6 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
 
   bool too_close = false;
   int ref_vel_inc = 0; // -1 for max deceleration, 0 for constant speed, +1 for max acceleration
-  double dist_safety = PARAM_DIST_SLOW_DOWN;
 
   double ref_vel_ms = mph_to_ms(car_speed_target);
   double closest_speed_ms = PARAM_MAX_SPEED;
@@ -31,11 +31,8 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
       double check_car_s = sensor_fusion[i][5];
 
       cout << "obj_idx=" << i << " REF_VEL_MS=" << ref_vel_ms << " CHECK_SPEED=" << check_speed << endl;
-      dist_safety = PARAM_DIST_SLOW_DOWN;
-      if (fabs(ref_vel_ms - check_speed) <= 2)
-        dist_safety = 12; // XXX TODO remove harcoded value
   
-      if ((check_car_s > car.s) && ((check_car_s - car.s) < dist_safety)) {
+      if ((check_car_s > car.s) && ((check_car_s - car.s) < safety_distance)) {
         // do some logic here: lower reference velocity so we dont crash into the car infront of us
         //ref_vel = 29.5; //mph
         too_close = true;
@@ -72,10 +69,10 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
 
   // XXX TEMP just for testing
   // -----------------------------------------------
-  if (fabs(car.d - get_dcenter(car.lane)) <= 0.05) {
+  if (fabs(car.d - get_dcenter(car.lane)) <= 0.01) {
     target.time = 0.0; // ASAP ... (identified as emergency target)
     target.velocity = closest_speed_ms;
-    target.accel = 0.85 * PARAM_MAX_ACCEL;
+    target.accel = 0.7 * PARAM_MAX_ACCEL;
     double car_speed_ms = mph_to_ms(car.speed);
     if (closest_speed_ms < car_speed_ms && closest_dist <= 20)
       target.accel *= -1.0;
