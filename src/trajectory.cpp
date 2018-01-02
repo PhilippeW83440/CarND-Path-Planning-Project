@@ -213,14 +213,11 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
 
     sf_ddot = 0;
     sf_dot = mph_to_ms(target.velocity);
-    //sf_dot = map.getSpeedToFrenet(sf_dot, si+50);
-    // this is a hack. To be fixed properly
-    // the ratio should be related to curvature and d
-    if (sf_dot >= 0.9 * PARAM_MAX_SPEED) {
-      sf_dot *= 0.94;
-    }
+    // we use JMT for lane changes only
+    // no need to try to reach amx speed during lane changes
+    sf_dot = min(sf_dot, 0.9 * PARAM_MAX_SPEED);
 
-    // XXX
+    // XXX just in case ...
     sf_dot = min(sf_dot, si_dot + 10 * PARAM_MAX_SPEED_INC);
     sf_dot = max(sf_dot, si_dot - 10 * PARAM_MAX_SPEED_INC);
 
