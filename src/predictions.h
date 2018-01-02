@@ -25,8 +25,10 @@ public:
 
 
 private:
-  void set_safety_distance(std::vector<std::vector<double>> const &sensor_fusion, CarData const &car);
-  std::vector<int> find_closest_objects(std::vector<std::vector<double>> const &sensor_fusion, double car_s, double car_d);
+  void set_safety_distances(std::vector<std::vector<double>> const &sensor_fusion, CarData const &car);
+  void set_lane_info(std::vector<std::vector<double>> const &sensor_fusion, CarData const &car);
+  std::vector<int> find_closest_objects(std::vector<std::vector<double>> const &sensor_fusion, CarData const &car);
+  double get_safety_distance(double vel_back, double vel_front, double time_latency);
 
   // TODO use vector init depending on PARAM_NB_LANES
   std::vector<int> front_= {-1, -1, -1};  // idx of closest object per lane
@@ -36,6 +38,12 @@ private:
   std::vector<double> front_dmin_ = {INF, INF, INF};  // dist min per lane
   std::vector<double> back_dmin_ = {INF, INF, INF};   // dist min per lane
 
+  std::vector<double> front_velocity_ = {PARAM_MAX_SPEED, PARAM_MAX_SPEED, PARAM_MAX_SPEED};
+  std::vector<double> front_safety_distance_ = {PARAM_SD_LC, PARAM_SD_LC, PARAM_SD_LC};
+
+  std::vector<double> back_velocity_ = {PARAM_MAX_SPEED, PARAM_MAX_SPEED, PARAM_MAX_SPEED};
+  std::vector<double> back_safety_distance_ = {PARAM_SD_LC, PARAM_SD_LC, PARAM_SD_LC};
+
   // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
   std::map< int, std::vector<Coord> > predictions_;
   double lane_speed_[PARAM_NB_LANES];
@@ -43,19 +51,18 @@ private:
 
   // safety distance computation related
   double vel_ego_;
-  double decel_ego_;
+  double decel_;
 
   double dist_front_;
-  double dist_back_;
   double vel_front_;
-  double vel_back_;
   double time_to_collision_;  // vs front vehicle
   double time_to_stop_;  // time from vel_ego_ to 0
   double time_to_decelerate_;  // time from vel_ego_ to vel_front_
 
   // will be used by behavior planner
-  double safety_distance_;
-  double paranoid_safety_distance_;
+  double safety_distance_ = PARAM_SD;
+  double paranoid_safety_distance_ = PARAM_SD;
+
 };
 
 #endif // PREDICTIONS_H

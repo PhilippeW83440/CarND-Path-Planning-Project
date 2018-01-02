@@ -56,4 +56,9 @@ const int PARAM_COST_EFFICIENCY  = 1; // vs target lane, target speed and time t
 
 const int PARAM_NB_LANES = 3;
 
+// default Safety Distance for Lane Change: will be re-evaluated dynamically
+const double PARAM_SD_LC = 10.0;
+// default Safety Distance: will be re-evaluated dynamically
+const double PARAM_SD = 30.0;
+
 #endif // PARAMS_H
