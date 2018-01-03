@@ -71,7 +71,7 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
   // -----------------------------------------------
   if (fabs(car.d - get_dcenter(car.lane)) <= 0.01) {
     target.time = 0.0; // ASAP ... (identified as emergency target)
-    target.velocity = closest_speed_ms;
+    target.velocity = ms_to_mph(closest_speed_ms);
     target.accel = 0.7 * PARAM_MAX_ACCEL;
     double car_speed_ms = mph_to_ms(car.speed);
     if (closest_speed_ms < car_speed_ms && closest_dist <= safety_distance)

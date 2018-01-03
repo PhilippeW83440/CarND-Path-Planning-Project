@@ -297,6 +297,8 @@ TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, CarDat
   vector<double> next_x_vals;
   vector<double> next_y_vals;
 
+  double target_velocity_ms = mph_to_ms(target.velocity);
+
   double s, s_dot, s_ddot;
   double d, d_dot, d_ddot;
   if (prev_size > 0) {
@@ -326,9 +328,9 @@ TrajectoryJMT Trajectory::generate_trajectory_sd(Target target, Map &map, CarDat
 
     // increase/decrease speed till target velocity is reached
     s_dot += s_ddot * PARAM_DT; 
-    if ((target.accel > 0 && prev_s_dot <= target.velocity && s_dot > target.velocity) ||
-        (target.accel < 0 && prev_s_dot >= target.velocity && s_dot < target.velocity)) {
-      s_dot = target.velocity;
+    if ((target.accel > 0 && prev_s_dot <= target_velocity_ms && s_dot > target_velocity_ms) ||
+        (target.accel < 0 && prev_s_dot >= target_velocity_ms && s_dot < target_velocity_ms)) {
+      s_dot = target_velocity_ms;
     }
     s_dot = max(min(s_dot, 0.9 * PARAM_MAX_SPEED), 0.0);
     s += s_dot * PARAM_DT;
