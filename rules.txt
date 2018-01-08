@@ -1,0 +1,3 @@
+Coding rules: https://github.com/Microsoft/AirSim/blob/master/docs/coding_guidelines.md
+Commit rules: https://udacity.github.io/git-styleguide/
+
