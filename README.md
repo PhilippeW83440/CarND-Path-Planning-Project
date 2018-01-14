@@ -28,9 +28,9 @@ Simulator and track used by default: https://github.com/udacity/Bosch-Challenge/
 In an Autonomous Driving pipeline we deal sequentially with the following modules:
 * **perception:** sensors in charge of detecting objects
 * **fusion:** sensor fusion providing a consolidated view of detected objects
-* **localization (optionnally):** 
-* **path planning:** in charge of planning the vehicule trajectory up to a specific goal
-* **comand and control:** taking as inputs the planned path it will control the actuators of the vehicle 
+* **localization (optionally):** 
+* **path planning:** in charge of planning the vehicle trajectory up to a specific goal
+* **command and control:** taking as inputs the planned path it will control the actuators of the vehicle 
 
 The path planning module is using as inputs:
 * the sensor fusion outputs
@@ -40,9 +40,9 @@ It then provides as output a set of waypoints to follow.
 
 The Path Planning module is typically decomposed into the following set of sub-modules:
 * **predictions:** will predict the trajectories of the surrounding detected objects
-* **behavior planner:** will define a set of candidate high level targets for the vehicle to follow (lane changes, slow down ...)
-* **trajectories generation:** for every possible high level targets, a percise path to follow will be computed  
-* **trajectories cost ranking:** for each trajectory a cost will be derived (depending on feasibility, safety, legality, comfort and efficiency) and the trajectory with the lowest cost will be chosen  
+* **behavior planner:** will define a set of candidate high-level targets for the vehicle to follow (lane changes, slow down ...)
+* **trajectories generation:** for every possible high level target, a precise path to follow will be computed  
+* **trajectories cost ranking:** for each trajectory, a cost will be derived (depending on feasibility, safety, legality, comfort, and efficiency) and the trajectory with the lowest cost will be chosen  
 
 The driving policy is typically defined by these cost functions. It can be tuned to have a very conservative driving experience (which is the case in the below implementation: keep a rather big safety distance with the vehicule in front of you, do lane changes only when there is lots of free space on the target lane...) or it can be tuned to target a more speedy driving experience (making lots of lane changes as soon as possible to drive as fast as possible...)
 
@@ -58,7 +58,7 @@ The main reference for the below implementation is the following paper:
 </p>
 
 In the code excerpt below we do the following:
-* **generate predictions:** based on sensor fusion information, we locate for every lane the closest car in front and behind the ego vehicule. This provides a sort of basic scene detection or summary. For these objects we extrapolate the trajectories up to a specific horizon (typically 1 second)  
+* **generate predictions:** based on sensor fusion information, we locate for every lane the closest car in front and behind the ego vehicle. This provides a sort of basic scene detection or summary. For these objects, we extrapolate the trajectories up to a specific horizon (typically 1 second)  
 * **the behavior planner defines candidate targets**: a set of candidate {target_lane, target_speed, target_time for maneuver }
 * **for every candidate targets a trajectory is computed**
 * **for every candidate trajectories a cost is computed**
@@ -113,15 +113,15 @@ Trajectory::Trajectory(vector<Target> targets, Map &map, CarData &car, PreviousP
 
 cf map.cpp  
 
-Most of the work and reflection is done in the Frenet space where the longitudinal s(t) and lateral d(t) trajectories of the vehicle are tracked with respect to a reference curve wich is provided by a map (or a reference curve; e.g. middle of the road; provided at runtime in case there would be no map based localization module).
+Most of the work and reflection is done in the Frenet space where the longitudinal s(t) and lateral d(t) trajectories of the vehicle are tracked with respect to a reference curve which is provided by a map (or a reference curve; e.g. middle of the road; provided at runtime in case there would be no map-based localization module).
 
-The reference curve is depicted below: it is the center line of a circular track of close to 7 kilometers. The s and d information enable to locate a point relatively to this reference curve.  
+The reference curve is depicted below: it is the center line of a circular track of close to 7 kilometers. The s and d information enable to locate a point relative to this reference curve.  
   
-In terms of thinking, lane change or not, forward progress of the vehicule, ... it is much more convenient to think in terms of Frenet (s, d) coordinates rather than in Cartesian (x, y) coordinates.  
+In terms of thinking, lane change or not, forward progress of the vehicle, ... it is much more convenient to think in terms of Frenet (s, d) coordinates rather than in Cartesian (x, y) coordinates.  
   
 So a key point in the implementation is being able to do accurate (x, y) -> (s, d) -> (x, y) transformations.   
-It is even more important if you plan to generate trajectories in the Frenet space like described in the paper from Moritz Werling.  
-Unfortunatelly the starter code provided initially for these conversions was not accurate enough to generate trajectories in the Frenet space: checking by converting back and forth to (x, y) coordinates, we get sometimes errors bigger than 10 meters. So I spent some time to improve these coordinate transforms.  
+It is even more important if you plan to generate trajectories in the Frenet space as described in the paper from Moritz Werling.  
+Unfortunately, the starter code provided initially for these conversions was not accurate enough to generate trajectories in the Frenet space: checking by converting back and forth to (x, y) coordinates, we get sometimes errors bigger than 10 meters. So I spent some time to improve these coordinate transforms.  
 
 <p align="center">
      <img src="./img/track.png" alt="pipeline" width="50%" height="50%">
