@@ -3,6 +3,23 @@ Self-Driving Car Engineer Nanodegree Program
 Simulator and track used by default: https://github.com/udacity/Bosch-Challenge/releases/tag/v2.0  
 (cf params.cpp to use different tracks with the same Unity3D based simulator)  
 
+Coding rules:  
+https://github.com/Microsoft/AirSim/blob/master/docs/coding_guidelines.md  
+https://google.github.io/styleguide/cppguide.html  
+  
+Latest additions:  
+* Safety Distances:   
+   https://www.engadget.com/2017/10/17/intel-mobileye-autonomous-vehicle-safety/  
+   https://arxiv.org/pdf/1708.06374.pdf  
+   Current lane + lane changes  
+  
+* Trajectory generation: emergency trajectory in Frenet  
+  Generate trajectory point by point (with max accel/decel) in Frenet coordinates  
+
+* Collision detections:  
+  Use SAT (Separating Axis Theorem) method cf http://www.dyn4j.org/2010/01/sat/
+
+
 [//]: # (Image References)
 [image1]: ./img/behavior.png
 [image2]: ./img/driving.png
