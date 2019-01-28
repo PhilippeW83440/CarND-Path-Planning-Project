@@ -1,8 +1,3 @@
-
-**Warning:**   
-Regression introduced after commit on Dec 29, 2017 bcf293f69a7ee66ddc6de4c9cbb710632fbfaf9d  
-To be fixed - tracked down: max speed/acceleration violation
-
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program  
 Simulator and track used by default: https://github.com/udacity/Bosch-Challenge/releases/tag/v2.0  
