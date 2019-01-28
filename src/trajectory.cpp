@@ -201,10 +201,6 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
     sf_ddot = 0;
     sf_dot  = mph_to_ms(target.velocity);
 
-    // XXX
-    sf_dot = min(sf_dot, si_dot + 10 * PARAM_MAX_SPEED_INC);
-    sf_dot = max(sf_dot, si_dot - 10 * PARAM_MAX_SPEED_INC);
-
     sf      = si + 2 * sf_dot * T;
   } else {
     df_ddot = 0;
@@ -216,10 +212,6 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
     // we use JMT for lane changes only
     // no need to try to reach amx speed during lane changes
     sf_dot = min(sf_dot, 0.9 * PARAM_MAX_SPEED);
-
-    // XXX just in case ...
-    sf_dot = min(sf_dot, si_dot + 10 * PARAM_MAX_SPEED_INC);
-    sf_dot = max(sf_dot, si_dot - 10 * PARAM_MAX_SPEED_INC);
 
     sf = si + sf_dot * T;
   }
