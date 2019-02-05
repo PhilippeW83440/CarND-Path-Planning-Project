@@ -23,7 +23,7 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
   // find ref_v to use based on car in front of us
   for (size_t i = 0; i < sensor_fusion.size(); i++) {
     // car is in my lane
-    float d = sensor_fusion[i][6];
+    double d = sensor_fusion[i][6];
     if (d > get_dleft(car.lane) && d < get_dright(car.lane)) {
       double vx = sensor_fusion[i][3];
       double vy = sensor_fusion[i][4];
@@ -54,12 +54,12 @@ Behavior::Behavior(vector<vector<double>> const &sensor_fusion, CarData car, Pre
       }
     }
 
-    car_speed_target = max(car_speed_target, 0.0); // no backwards driving ... just in case
+    car_speed_target = std::max(car_speed_target, 0.0); // no backwards driving ... just in case
     ref_vel_inc = -1;
   } else if (car_speed_target < PARAM_MAX_SPEED_MPH) {
     //ref_vel += 2 * .224;
     car_speed_target += PARAM_MAX_SPEED_INC_MPH;
-    car_speed_target = min(car_speed_target, PARAM_MAX_SPEED_MPH);
+    car_speed_target = std::min(car_speed_target, PARAM_MAX_SPEED_MPH);
     ref_vel_inc = +1;
   }
 

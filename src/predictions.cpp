@@ -10,11 +10,22 @@ Predictions::Predictions(vector<vector<double>> const &sensor_fusion, CarData co
 {
   std::map<int, vector<Coord> > predictions; // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
 
+  front_.push_back(-1); front_.push_back(-1); front_.push_back(-1);
+  back_.push_back(-1);  back_.push_back(-1);  back_.push_back(-1);
+
+  front_dmin_.push_back(INF); front_dmin_.push_back(INF); front_dmin_.push_back(INF);
+  back_dmin_.push_back(INF);  back_dmin_.push_back(INF);  back_dmin_.push_back(INF);
+
+  front_velocity_.push_back(PARAM_MAX_SPEED); front_velocity_.push_back(PARAM_MAX_SPEED); front_velocity_.push_back(PARAM_MAX_SPEED);
+  front_safety_distance_.push_back(PARAM_SD_LC); front_safety_distance_.push_back(PARAM_SD_LC); front_safety_distance_.push_back(PARAM_SD_LC);
+
+  back_velocity_.push_back(PARAM_MAX_SPEED); back_velocity_.push_back(PARAM_MAX_SPEED); back_velocity_.push_back(PARAM_MAX_SPEED);
+  back_safety_distance_.push_back(PARAM_SD_LC); back_safety_distance_.push_back(PARAM_SD_LC); back_safety_distance_.push_back(PARAM_SD_LC);
 
   // vector of indexes in sensor_fusion
   vector<int> closest_objects = find_closest_objects(sensor_fusion, car); 
 
-  for (int i = 0; i < closest_objects.size(); i++) {
+  for (size_t i = 0; i < closest_objects.size(); i++) {
     int fusion_index = closest_objects[i];
     if (fusion_index >= 0) {
       //double fusion_id = sensor_fusion[fusion_index][0];
@@ -51,7 +62,7 @@ Predictions::~Predictions() {}
 double get_sensor_fusion_vel(vector<vector<double>> const &sensor_fusion, int idx, double default_vel)
 {
   double vx, vy, vel;
-  if (idx >= 0 && idx < sensor_fusion.size()) {
+  if (idx >= 0 && idx < (int)sensor_fusion.size()) {
     vx = sensor_fusion[idx][3];
     vy = sensor_fusion[idx][4];
     vel = sqrt(vx*vx+vy*vy);
@@ -70,7 +81,7 @@ double Predictions::get_safety_distance(double vel_back, double vel_front, doubl
       double time_to_decelerate = (vel_back - vel_front) / decel_ + time_latency;
       safety_distance = vel_back * time_to_decelerate + 1.5 * PARAM_CAR_SAFETY_L;
   }
-  safety_distance = max(safety_distance, PARAM_SD_LC);  // conservative
+  safety_distance = fmax(safety_distance, PARAM_SD_LC);  // conservative
   return safety_distance;
 }
 

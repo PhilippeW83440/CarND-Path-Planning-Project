@@ -31,18 +31,18 @@ private:
   double get_safety_distance(double vel_back, double vel_front, double time_latency);
 
   // TODO use vector init depending on PARAM_NB_LANES
-  std::vector<int> front_= {-1, -1, -1};  // idx of closest object per lane
-  std::vector<int> back_ = {-1, -1, -1};   // idx of closest object per lane
+  std::vector<int> front_; // idx of closest object per lane
+  std::vector<int> back_; // idx of closest object per lane
 
   // TODO use FOV instead of INF
-  std::vector<double> front_dmin_ = {INF, INF, INF};  // dist min per lane
-  std::vector<double> back_dmin_ = {INF, INF, INF};   // dist min per lane
+  std::vector<double> front_dmin_; // dist min per lane
+  std::vector<double> back_dmin_;  // dist min per lane
 
-  std::vector<double> front_velocity_ = {PARAM_MAX_SPEED, PARAM_MAX_SPEED, PARAM_MAX_SPEED};
-  std::vector<double> front_safety_distance_ = {PARAM_SD_LC, PARAM_SD_LC, PARAM_SD_LC};
+  std::vector<double> front_velocity_;
+  std::vector<double> front_safety_distance_;
 
-  std::vector<double> back_velocity_ = {PARAM_MAX_SPEED, PARAM_MAX_SPEED, PARAM_MAX_SPEED};
-  std::vector<double> back_safety_distance_ = {PARAM_SD_LC, PARAM_SD_LC, PARAM_SD_LC};
+  std::vector<double> back_velocity_;
+  std::vector<double> back_safety_distance_;
 
   // map of at most 6 predicitons of "n_horizon" (x,y) coordinates
   std::map< int, std::vector<Coord> > predictions_;

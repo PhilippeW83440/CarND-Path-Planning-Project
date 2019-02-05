@@ -38,7 +38,7 @@ struct CarData {
   int    lane;
   bool   emergency;
   CarData (double X=0, double Y=0, double S=0, double D=0, double YAW=0, 
-           double V=0, double VF=0, double L=0, bool E=false) : x(X), y(Y), s(S), yaw(YAW), 
+           double V=0, double VF=0, int L=0, bool E=false) : x(X), y(Y), s(S), yaw(YAW), 
            speed(V), speed_target(VF), lane(L), emergency(E) {}
 };
 
@@ -64,5 +64,7 @@ int get_lane(double d);
 
 double distance(double x1, double y1, double x2, double y2);
 
+// SCANeR-specific
+#define M_PI 3.14159
 
 #endif // UTILITY_H
