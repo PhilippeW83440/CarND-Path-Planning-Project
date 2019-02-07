@@ -5,17 +5,18 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
+#include <algorithm>
 
 #include "params.h"
 #include "utility.h"
 #include "predictions.h"
 
 struct Target {
-  double lane;
+  int lane;
   double velocity; // for JMT trajectories
   double time;  // for manoeuver
   double accel; // XXX for emergency trajectories
-  Target(double l=0, double v=0, double t=0, double a=0) : lane(l), velocity(v), time(t), accel(a) {}
+  Target(int l=0, double v=0, double t=0, double a=0) : lane(l), velocity(v), time(t), accel(a) {}
 };
 
 

@@ -1,13 +1,17 @@
 #include <fstream>
 #include <math.h>
-#include <uWS/uWS.h>
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
+#ifndef _WIN32 // another option is to set-up preprocessing flag directly into VS2013
+#include <uWS/uWS.h>
 #include "json.hpp"
+#else
+//#include <winsock2.h>
+#endif
 
 //#include "utility.h"
 #include "map.h"
@@ -23,8 +27,9 @@
 using namespace std;
 
 // for convenience
+#ifndef _WIN32
 using json = nlohmann::json;
-
+#endif
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -43,7 +48,9 @@ string hasData(string s) {
 
 
 int main() {
+#ifndef _WIN32
   uWS::Hub h;
+#endif
 
   //////////////////////////////////////////////////////////////////////
   Map map;
@@ -61,13 +68,14 @@ int main() {
   // car_speed: current speed
   // car_speed_target: speed at end of the planned trajectory
   // double car_speed_target = 1.0; // mph (non 0 for XY spline traj generation to avoid issues)
-  CarData car = CarData(0., 0., 0., 0., 0.,  0., 1.0, 0., false);
+  CarData car = CarData(0.0/*x*/, 0.0/*y*/, 0.0/*s*/, 0.0/*d*/, 0.0/*yaw*/, 0.0/*v*/, 1.0/*vf*/, 0/*L*/, false/*emergency*/);
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
   TrajectorySD prev_path_sd;
+  TrajectoryXY previous_path_xy;
   //////////////////////////////////////////////////////////////////////
 
-
+#ifndef _WIN32
   h.onMessage([&map, &car, &start, &prev_path_sd](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -75,120 +83,148 @@ int main() {
     // The 2 signifies a websocket event
     //auto sdata = string(data).substr(0, length);
     //cout << sdata << endl;
-
-
     if (length && length > 2 && data[0] == '4' && data[1] == '2') {
-
-      auto s = hasData(data);
+       auto s = hasData(data);
 
       if (s != "") {
         auto j = json::parse(s);
-        
+
         string event = j[0].get<string>();
-        
-        if (event == "telemetry") {
+
+        if (event == "telemetry") {          
           // j[1] is the data JSON object
+          // Main car's localization Data
+          car.x = j[1]["x"];
+          car.y = j[1]["y"];
+          car.s = j[1]["s"];
+          car.d = j[1]["d"];
+          car.yaw = j[1]["yaw"];
+          car.speed = j[1]["speed"];
 
-            TrajectoryXY previous_path_xy;
-          
-        	// Main car's localization Data
-          	car.x = j[1]["x"];
-          	car.y = j[1]["y"];
-          	car.s = j[1]["s"];
-          	car.d = j[1]["d"];
-          	car.yaw = j[1]["yaw"];
-          	car.speed = j[1]["speed"];
+          cout << "SPEEDOMETER: car.speed=" << car.speed << " car.speed_target=" << car.speed_target << '\n';
+          // Previous path data given to the Planner
+          vector<double> previous_path_x = j[1]["previous_path_x"];
+          vector<double> previous_path_y = j[1]["previous_path_y"];
+          previous_path_xy.x_vals = previous_path_x;
+          previous_path_xy.y_vals = previous_path_y;
 
-            cout << "SPEEDOMETER: car.speed=" << car.speed << " car.speed_target=" << car.speed_target << '\n';
-          	// Previous path data given to the Planner
-          	vector<double> previous_path_x = j[1]["previous_path_x"];
-          	vector<double> previous_path_y = j[1]["previous_path_y"];
-          	previous_path_xy.x_vals = previous_path_x;
-          	previous_path_xy.y_vals = previous_path_y;
+          // Previous path's end s and d values 
+          double end_path_s = j[1]["end_path_s"];
+          double end_path_d = j[1]["end_path_d"];
 
-          	// Previous path's end s and d values 
-          	double end_path_s = j[1]["end_path_s"];
-          	double end_path_d = j[1]["end_path_d"];
+          // Sensor Fusion Data, a list of all other cars on the same side of the road.
+          vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
+#else
+  {
+    {
+      if (true) {
+        {
+          // Use SCANeR compliant communication
+          car.x = 0.0; // dummy
+          car.y = 0.0;
+          car.s = 0.0;
+          car.d = 0.0;
+          car.yaw = 0.0;
+          car.speed = 0.0;
 
-          	// Sensor Fusion Data, a list of all other cars on the same side of the road.
-            vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
+          // Previous path data given to the Planner
+          vector<double> previous_path_x = { 0.0, 0.0, 0.0, 0.0 };
+          vector<double> previous_path_y = { 0.0, 0.0, 0.0, 0.0 };
+          previous_path_xy.x_vals = previous_path_x;
+          previous_path_xy.y_vals = previous_path_y;
 
-          	json msgJson;
+          // Previous path's end s and d values 
+          double end_path_s = 0.0;
+          double end_path_d = 0.0;
 
-            //////////////////////////////////////////////////////////////////////
+          // Sensor Fusion Data, a list of all other cars on the same side of the road.
+          vector<vector<double>> sensor_fusion = { { 0.0, 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0, 0.0 } };
+#endif
+          map.testError(car.x, car.y, car.yaw);
 
-            map.testError(car.x, car.y, car.yaw);
+          int prev_size = previous_path_xy.x_vals.size();
+          cout << "prev_size=" << prev_size << " car.x=" << car.x << " car.y=" << car.y << " car.s=" << 
+                  car.s << " car.d=" << car.d << " car.speed=" << car.speed << " car.speed_target=" << car.speed_target << endl;
 
-            int prev_size = previous_path_xy.x_vals.size();
-            cout << "prev_size=" << prev_size << " car.x=" << car.x << " car.y=" << car.y << " car.s=" << 
-                    car.s << " car.d=" << car.d << " car.speed=" << car.speed << " car.speed_target=" << car.speed_target << endl;
+          vector<double> frenet_car = map.getFrenet(car.x, car.y, deg2rad(car.yaw));
+          car.s = frenet_car[0];
+          car.d = frenet_car[1];
+          car.lane = get_lane(car.d);
+          cout << "car.s=" << car.s << " car.d=" << car.d << endl;
 
-            vector<double> frenet_car = map.getFrenet(car.x, car.y, deg2rad(car.yaw));
-            car.s = frenet_car[0];
-            car.d = frenet_car[1];
-            car.lane = get_lane(car.d);
-            cout << "car.s=" << car.s << " car.d=" << car.d << endl;
+          if (start) {
+            TrajectoryJMT traj_jmt = JMT_init(car.s, car.d);
+            prev_path_sd = traj_jmt.path_sd;
+            start = false;
+          }
 
-            if (start) {
-              TrajectoryJMT traj_jmt = JMT_init(car.s, car.d);
-              prev_path_sd = traj_jmt.path_sd;
-              start = false;
-            }
+          // -- prev_size: close to 100 msec when possible -not lower bcz of simulator latency- for trajectory (re)generation ---
+          // points _before_ prev_size are kept from previous generated trajectory
+          // points _after_  prev_size will be re-generated
+          PreviousPath previous_path = PreviousPath(previous_path_xy, prev_path_sd, min(prev_size, PARAM_PREV_PATH_XY_REUSED));
 
-            // -- prev_size: close to 100 msec when possible -not lower bcz of simulator latency- for trajectory (re)generation ---
-            // points _before_ prev_size are kept from previous generated trajectory
-            // points _after_  prev_size will be re-generated
-            PreviousPath previous_path = PreviousPath(previous_path_xy, prev_path_sd, min(prev_size, PARAM_PREV_PATH_XY_REUSED));
+          // --------------------------------------------------------------------------
+          // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
+          Predictions predictions = Predictions(sensor_fusion, car, PARAM_NB_POINTS /* 50 */);
 
-            // --------------------------------------------------------------------------
-            // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
-            Predictions predictions = Predictions(sensor_fusion, car, PARAM_NB_POINTS /* 50 */);
+          Behavior behavior = Behavior(sensor_fusion, car, predictions);
+          vector<Target> targets = behavior.get_targets();
 
-            Behavior behavior = Behavior(sensor_fusion, car, predictions);
-            vector<Target> targets = behavior.get_targets();
+          Trajectory trajectory = Trajectory(targets, map, car, previous_path, predictions);
+          // --------------------------------------------------------------------------
 
-            Trajectory trajectory = Trajectory(targets, map, car, previous_path, predictions);
-            // --------------------------------------------------------------------------
+          double min_cost = trajectory.getMinCost();
+          int min_cost_index = trajectory.getMinCostIndex();
+          vector<double> next_x_vals = trajectory.getMinCostTrajectoryXY().x_vals;
+          vector<double> next_y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
 
-            double min_cost = trajectory.getMinCost();
-            int min_cost_index = trajectory.getMinCostIndex();
-            vector<double> next_x_vals = trajectory.getMinCostTrajectoryXY().x_vals;
-            vector<double> next_y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
+          if (PARAM_TRAJECTORY_JMT) {
+            prev_path_sd = trajectory.getMinCostTrajectorySD();
+          }
 
-            if (PARAM_TRAJECTORY_JMT) {
-              prev_path_sd = trajectory.getMinCostTrajectorySD();
-            }
+          int target_lane = targets[min_cost_index].lane;
+          car.speed_target = targets[min_cost_index].velocity;
 
-            int target_lane = targets[min_cost_index].lane;
-            car.speed_target = targets[min_cost_index].velocity;
+          if (target_lane != car.lane) {
+            cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane
+                  << " target_vel=" << car.speed_target << " car.lane=" << car.lane << " cost="<< min_cost << ")" << endl;
+          }
 
-            if (target_lane != car.lane) {
-              cout << "====================> CHANGE LANE: lowest cost for target " << min_cost_index << " = (target_lane=" << target_lane
-                   << " target_vel=" << car.speed_target << " car.lane=" << car.lane << " cost="<< min_cost << ")" << endl;
-            }
+#ifndef WIN32
+          // Communicate to Unity
+          json msgJson;
+          // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
+          msgJson["next_x"] = next_x_vals; //trajectories[min_cost_index].x_vals; //next_x_vals;
+          msgJson["next_y"] = next_y_vals; //trajectories[min_cost_index].y_vals; //next_y_vals;
 
+          auto msg = "42[\"control\","+ msgJson.dump()+"]";
 
-          	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
-          	msgJson["next_x"] = next_x_vals; //trajectories[min_cost_index].x_vals; //next_x_vals;
-          	msgJson["next_y"] = next_y_vals; //trajectories[min_cost_index].y_vals; //next_y_vals;
-
-          	auto msg = "42[\"control\","+ msgJson.dump()+"]";
-
-          	//this_thread::sleep_for(chrono::milliseconds(1000));
-          	ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-          
+          //this_thread::sleep_for(chrono::milliseconds(1000));
+          ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#else
+          // Communicate to SCANeR
+#endif
         }
       } else {
+#ifndef WIN32
         // Manual driving
         std::string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#else
+      // Communicate to SCANeR
+#endif
       }
     }
+#ifndef WIN32
   });
+#else
+  }
+#endif
 
   // We don't need this since we're not using HTTP but if it's removed the
   // program
   // doesn't compile :-(
+#ifndef WIN32
   h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
                      size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";
@@ -218,4 +254,5 @@ int main() {
     return -1;
   }
   h.run();
+#endif
 }

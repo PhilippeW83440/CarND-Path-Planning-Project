@@ -59,7 +59,7 @@ public:
   ~Trajectory() {};
 
   double getMinCost() { return min_cost_; };
-  double getMinCostIndex() { return min_cost_index_; } ;
+  int getMinCostIndex() { return min_cost_index_; } ;
   TrajectoryXY getMinCostTrajectoryXY() { return trajectories_[min_cost_index_]; };
   TrajectorySD getMinCostTrajectorySD() { return trajectories_sd_[min_cost_index_]; };
 

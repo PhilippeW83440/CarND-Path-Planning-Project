@@ -404,7 +404,7 @@ TrajectoryXY Trajectory::generate_trajectory(Target target, Map &map, CarData co
   ptsy.push_back(next_wp2[1]);
   
   
-  for (int i = 0; i < ptsx.size(); i++) {
+  for (size_t i = 0; i < ptsx.size(); i++) {
     // shift car reference angle to 0 degrees
     // transformation to local car's coordinates (cf MPC)
     // last point of previous path at origin and its angle at zero degree

@@ -149,10 +149,10 @@ bool Cost::check_max_capabilities(vector<vector<double>> &traj)
 
     // rounding to 2 decimals (cm precision) to ensure numerical stability
     jx = (x - 3*x_1 + 3*x_2 - x_3);
-    jx = roundf(jx * 100) / 100;
+    jx = roundl(jx * 100.0) / 100.0;
     jx = jx / (PARAM_DT * PARAM_DT * PARAM_DT);
     jy = (y - 3*y_1 + 3*y_2 - y_3);
-    jy = roundf(jy * 100) / 100;
+    jy = roundl(jy * 100) / 100;
     jy = jy / (PARAM_DT * PARAM_DT * PARAM_DT);
 
     vel = sqrt(vx*vx + vy*vy);
@@ -172,7 +172,7 @@ bool Cost::check_max_capabilities(vector<vector<double>> &traj)
 
   jerk_per_second = total_jerk / (PARAM_NB_POINTS * PARAM_DT);
 
-  if (roundf(max_vel) > PARAM_MAX_SPEED || roundf(max_acc) > PARAM_MAX_ACCEL || jerk_per_second > PARAM_MAX_JERK) {
+  if (roundl(max_vel) > PARAM_MAX_SPEED || roundl(max_acc) > PARAM_MAX_ACCEL || jerk_per_second > PARAM_MAX_JERK) {
     cout << "max_vel=" << max_vel << " max_acc=" << max_acc << " jerk_per_second=" << jerk_per_second  << endl;
     //assert(1 == 0);
     return true;

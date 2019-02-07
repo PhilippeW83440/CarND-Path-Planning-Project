@@ -7,12 +7,16 @@
 #include <math.h>
 
 #include "map.h"
+#ifndef WIN32
 #include "matplotlibcpp.h"
+#endif
 
 #include <time.h>
 
 
+#ifndef WIN32
 namespace plt = matplotlibcpp;
+#endif
 using namespace std;
 
 double MAX_S;
@@ -142,6 +146,7 @@ void Map::read(string map_file) {
 Map::~Map() {}
 
 
+#ifndef WIN32
 void Map::plot(void) {
   plt::title("Map");
   plt::plot(map_waypoints_x, map_waypoints_y, "r*");
@@ -154,6 +159,7 @@ void Map::plot(void) {
   plt::plot(car_x, car_y, "gx");
   plt::show();
 }
+#endif
 
 int Map::ClosestWaypoint(double x, double y, const vector<double> &maps_x, const vector<double> &maps_y) {
 
@@ -353,8 +359,8 @@ double Map::testError(double car_x, double car_y, double car_yaw) {
   clock_t start = clock();
   vector<double> frenet = getFrenet(car_x, car_y, deg2rad(car_yaw));
 
-  int frenet_s = frenet[0];
-  int frenet_d = frenet[1];
+  double frenet_s = frenet[0];
+  double frenet_d = frenet[1];
 
   vector<double> car_xy = getXYspline(frenet_s, frenet_d);
 
