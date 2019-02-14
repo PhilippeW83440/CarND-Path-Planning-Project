@@ -2,7 +2,6 @@
 #define MODULEDRIVER_H
 
 // SCANeR specific
-
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -30,27 +29,6 @@
 
 using namespace std;
 
-struct scanerdata {
-  // ego
-  int fn;
-  double x;
-  double y;
-  double linearSpeed;
-  double heading;
-  double x_speed;
-  double y_speed;
-  double x_acc;
-  double y_acc;
-
-  // previous path
-  double previous_path_x[50];
-  double previous_path_y[50];
-
-  // sensor fusion
-  double sensorFusion[15][7];
-};
-typedef struct scanerdata scanerdata;
-
 struct DataScaner {
   map <string, double> mapEgoInfo;
   map <string, vector<double>> mapPreviousPath;
@@ -61,6 +39,6 @@ void Init(int argc, char* argv[]); //
 DataScaner From_SCANeR_Info(long frameNumber);
 void SetNewPath_PP(double x_ego, double y_ego, double x, double y);
 void To_SCANeR_Info(long frameNumber);
-void initializeScanerData(ItfFusionPlanning &myscanerdata, DataScaner &datascaner, long frameNumber, bool first_prev);
+void wrapperScaner(ItfFusionPlanning &myscanerdata, DataScaner &datascaner, long frameNumber);
 
 #endif /* MODULEDRIVER_H */

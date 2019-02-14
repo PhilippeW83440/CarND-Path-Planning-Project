@@ -59,9 +59,12 @@ int main(int argc, char* argv[]) {
   APIProcessState status = PS_DAEMON;
 
   DataScaner datascaner; //  Structure to keep output given by SCANeR compatible with dataObj.init()
-  ItfFusionPlanning myscanerdata; // Driving Policy internal
 
-  bool first_prev = true;
+  // Driving Policy internals
+  ItfFusionPlanning fusion;
+  ItfNavigationPlanning nav;
+  ItfPlanningCtrl ctrl;
+
   bool first_fn = true;
   long int first_valid_fn = -1; // Invalid at initialization
 
@@ -72,8 +75,8 @@ int main(int argc, char* argv[]) {
 #endif
 
   //////////////////////////////////////////////////////////////////////
-  Map map;
 #ifndef _WIN32
+  Map map;
   if (PARAM_MAP_BOSCH == true) {
     map.read(map_bosch_file_);
   } else {
@@ -81,7 +84,7 @@ int main(int argc, char* argv[]) {
   }
   //map.plot();
 #else
-  map.read("../data/SCANeR_final_map_test.csv");
+  nav.map.read("../data/SCANeR_final_map_test.csv");
 #endif
 
   bool start = true;
@@ -148,32 +151,29 @@ int main(int argc, char* argv[]) {
       status = printProcessState(status);
       Com_updateInputs(UT_AllData); // SCANeR -> Fusion
 
-      initializeScanerData(myscanerdata, datascaner, frameNumber, first_prev);      
-      first_prev = false;
+      wrapperScaner(fusion, datascaner, frameNumber);
 
       if (true) { // to respect code symmetry with unity
-        if (myscanerdata.car.x != 0) {
+        if (fusion.car.x != 0) {
           if (first_fn) {
             cout << "Valida Data" << endl;
             first_valid_fn = frameNumber;
             first_fn = false;
           }
 
-          // Use SCANeR compliant communication
-          car.x = myscanerdata.car.x;
-          car.y = myscanerdata.car.y;
-          car.yaw = myscanerdata.car.yaw;
-          car.speed = myscanerdata.car.speed;
-          vector<double> car_frenet = map.getFrenet(car.x, car.y, deg2rad(car.yaw));
-          car.s = car_frenet[0];
-          car.d = car_frenet[1];
+          // Wrap-up IF
+          car.x = fusion.car.x;
+          car.y = fusion.car.y;
+          car.yaw = fusion.car.yaw;
+          car.speed = fusion.car.speed;
+          // car.s and car.d are not given by IF
           car.lane = get_lane(car.d);
 
           // Previous path data given to the Planner
           // No previous paths @start => prev_size = 0          
           if (!start) {
-            previous_path_xy.x_vals = myscanerdata.previous_path.xy.x_vals;
-            previous_path_xy.y_vals = myscanerdata.previous_path.xy.y_vals;
+            previous_path_xy.x_vals = fusion.previous_path.xy.x_vals;
+            previous_path_xy.y_vals = fusion.previous_path.xy.y_vals;
             // Emulate the sample consumed
             previous_path_xy.x_vals.erase(previous_path_xy.x_vals.begin());
             previous_path_xy.y_vals.erase(previous_path_xy.y_vals.begin());
@@ -184,26 +184,12 @@ int main(int argc, char* argv[]) {
           double end_path_d = 0.0;
 
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
-          /*vector<vector<double>> sensor_fusion;          
-          for (int i = 0; i< VEHICLE_NUM_MAX; ++i) {
-            if (myscanerdata.sensor_fusion[i][1] != 0) {
-              vector<double> temp;
-              temp.push_back(myscanerdata.sensor_fusion[i][0]);
-              temp.push_back(myscanerdata.sensor_fusion[i][1]);
-              temp.push_back(myscanerdata.sensor_fusion[i][2]);
-              temp.push_back(myscanerdata.sensor_fusion[i][3]);
-              temp.push_back(myscanerdata.sensor_fusion[i][4]);
-              temp.push_back(myscanerdata.sensor_fusion[i][5]);
-              temp.push_back(myscanerdata.sensor_fusion[i][6]);
-              sensor_fusion.push_back(temp);
-            }
-          }*/
-          vector<vector<double>> sensor_fusion = myscanerdata.sensor_fusion; // car_id, x, y, vx, vy(, s, d)
+          vector<vector<double>> sensor_fusion = fusion.sensor_fusion; // car_id, x, y, vx, vy(, s, d)
           // FIXME: Use ItfFusionPlanning.sensor_fusion instead of sensor_fusion
           for (int i = 0; i< sensor_fusion.size(); ++i) { // s,d is not populated by SCANeR, IF wrap-up is done here
-            vector<double> frenet_obj = map.getFrenet(sensor_fusion[i][X]/*x*/,
-                                                      sensor_fusion[i][Y]/*y*/,
-                                                      deg2rad(atan2(sensor_fusion[i][VY]/*vy*/, sensor_fusion[i][VX]/*vx*/)/*yaw*/));
+            vector<double> frenet_obj = nav.map.getFrenet(sensor_fusion[i][X]/*x*/,
+                                                          sensor_fusion[i][Y]/*y*/,
+                                                          deg2rad(atan2(sensor_fusion[i][VY]/*vy*/, sensor_fusion[i][VX]/*vx*/)/*yaw*/));
             sensor_fusion[i][S] = frenet_obj[0];
             sensor_fusion[i][D] = frenet_obj[1];
           }
@@ -212,7 +198,7 @@ int main(int argc, char* argv[]) {
           cout << "prev_size=" << prev_size << " car.x=" << car.x << " car.y=" << car.y << " car.s=" << 
                   car.s << " car.d=" << car.d << " car.speed=" << car.speed << " car.speed_target=" << car.speed_target << endl;
 
-          vector<double> frenet_car = map.getFrenet(car.x, car.y, deg2rad(car.yaw));
+          vector<double> frenet_car = nav.map.getFrenet(car.x, car.y, deg2rad(car.yaw));
           car.s = frenet_car[0];
           car.d = frenet_car[1];
           car.lane = get_lane(car.d);
@@ -236,13 +222,13 @@ int main(int argc, char* argv[]) {
           Behavior behavior = Behavior(sensor_fusion, car, predictions);
           vector<Target> targets = behavior.get_targets();
 
-          Trajectory trajectory = Trajectory(targets, map, car, previous_path, predictions);
+          Trajectory trajectory = Trajectory(targets, nav.map, car, previous_path, predictions);
           // --------------------------------------------------------------------------
 
           double min_cost = trajectory.getMinCost();
           int min_cost_index = trajectory.getMinCostIndex();
           vector<double> next_x_vals = trajectory.getMinCostTrajectoryXY().x_vals;
-          vector<double> next_y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
+          vector<double> next_y_vals = trajectory.getMinCostTrajectoryXY().y_vals;          
 
           if (PARAM_TRAJECTORY_JMT) {
             prev_path_sd = trajectory.getMinCostTrajectorySD();
@@ -268,12 +254,16 @@ int main(int argc, char* argv[]) {
           //this_thread::sleep_for(chrono::milliseconds(1000));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 #else
-          // Emulate previous_path.xy.x_vals coming from SCANeR (required with Unity)
-          myscanerdata.previous_path.xy.x_vals = next_x_vals;
-          myscanerdata.previous_path.xy.y_vals = next_y_vals;
+          // Wrap-up IF
+          ctrl.trajectory.trajectory.x_vals = trajectory.getMinCostTrajectoryXY().x_vals;
+          ctrl.trajectory.trajectory.y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
 
           // Communicate to SCANeR
-          SetNewPath_PP(myscanerdata.car.x, myscanerdata.car.y, next_x_vals[0], next_y_vals[0]); // 1 single point is consumed by ctrl          
+          SetNewPath_PP(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0]); // 1 single point is consumed by ctrl          
+          // Emulate previous_path.xy.x_vals coming from SCANeR (required with Unity)
+          fusion.previous_path.xy.x_vals = next_x_vals;
+          fusion.previous_path.xy.y_vals = next_y_vals; 
+
 #endif
         }
         To_SCANeR_Info(frameNumber++); // Ctrl -> SCANeR
