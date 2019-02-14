@@ -9,32 +9,41 @@ const bool PARAM_MAP_BOSCH = true;
 extern std::string map_file_; // cf params.cpp
 extern std::string map_bosch_file_; // cf params.cpp
 
-// The max s value before wrapping around the track back to 0
-const double MAXIMUM_S = 6945.554;
 extern double MAX_S;
 
 // center point of the track
 const double PARAM_CENTER_X = 1000;
 const double PARAM_CENTER_Y = 2000;
 
-
 const int PARAM_NB_POINTS = 50; // in the trajectory sent to simulator
+
+#ifndef _WIN32
+// The max s value before wrapping around the track back to 0
+const double MAXIMUM_S = 6945.554;
 const double PARAM_DT = 0.02; // 1 point every 0.02 s
-
 const double PARAM_LANE_WIDTH = 4.0; // meters
-
 const double PARAM_MAX_SPEED_MPH = 49;
-
 const double PARAM_MAX_SPEED = 22; // m.s-1
 const double PARAM_MAX_ACCEL = 10; // m.s-2
-const double PARAM_MAX_JERK  = 10; // m.s-3 average jerk over 1 second
-
+const double PARAM_MAX_JERK = 10; // m.s-3 average jerk over 1 second
 const double PARAM_FOV = 70.0; // Field Of View
-
 const double PARAM_MAX_SPEED_INC = PARAM_MAX_ACCEL * PARAM_DT; // m.s-1 per 0.02 sec
 const double PARAM_MAX_SPEED_INC_MPH = ms_to_mph(PARAM_MAX_SPEED_INC);
-
 const double PARAM_DIST_SAFETY = 3.5; // meters
+#else
+// The max s value before wrapping around the track back to 0
+const double MAXIMUM_S = 8888.166;
+const double PARAM_DT = 0.01; // 1 point every 0.01 s in SCANeR
+const double PARAM_LANE_WIDTH = 3.5; // meters
+const double PARAM_MAX_SPEED_MPH = 70.0;
+const double PARAM_MAX_SPEED = 31.0; // m.s-1
+const double PARAM_MAX_ACCEL = 10.0; // m.s-2
+const double PARAM_MAX_JERK = 10.0; // m.s-3 average jerk over 1 second
+const double PARAM_FOV = 70.0; // Field Of View
+const double PARAM_MAX_SPEED_INC = PARAM_MAX_ACCEL * PARAM_DT; // m.s-1 per 0.02 sec
+const double PARAM_MAX_SPEED_INC_MPH = ms_to_mph(PARAM_MAX_SPEED_INC);
+const double PARAM_DIST_SAFETY = 3.5; // meters
+#endif
 
 // reduce latency reaction, but account for simulator latency ...
 // assume 100 ms max simulator latency

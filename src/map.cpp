@@ -7,14 +7,14 @@
 #include <math.h>
 
 #include "map.h"
-#ifndef WIN32
+#ifndef _WIN32
 #include "matplotlibcpp.h"
 #endif
 
 #include <time.h>
 
 
-#ifndef WIN32
+#ifndef _WIN32
 namespace plt = matplotlibcpp;
 #endif
 using namespace std;
@@ -130,11 +130,11 @@ void Map::read(string map_file) {
 	frenet_s = 0.0;
   new_map_s.push_back(0.0);
   // new map: 1 point every meter
-	for (size_t i = 1; i < new_map_waypoints_x.size(); i++) {
+	for (int i = 1; i < (int)new_map_waypoints_x.size(); i++) {
 		frenet_s += distance(new_map_waypoints_x[i], new_map_waypoints_y[i], new_map_waypoints_x[i-1], new_map_waypoints_y[i-1]);
     //new_map_s.push_back(frenet_s); // TODO test both alternatives
     new_map_s.push_back(i); // better
-    cout << "frenet_s=" << frenet_s << " " << i << endl;
+    // cout << "frenet_s=" << frenet_s << " " << i << endl;
 	}
 
   max_error = 0.0;
@@ -146,7 +146,7 @@ void Map::read(string map_file) {
 Map::~Map() {}
 
 
-#ifndef WIN32
+#ifndef _WIN32
 void Map::plot(void) {
   plt::title("Map");
   plt::plot(map_waypoints_x, map_waypoints_y, "r*");

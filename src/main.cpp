@@ -6,14 +6,16 @@
 #include <vector>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
+//#undef _WIN32 // Simulate linux OS (hack)
 #ifndef _WIN32 // another option is to set-up preprocessing flag directly into VS2013
 #include <uWS/uWS.h>
 #include "json.hpp"
 #else
-//#include <winsock2.h>
+#include "ScanerAPI\scanerAPI_DLL_C.h"
+#include "moduleDriver.h"
+#include "utils.h"
 #endif
 
-//#include "utility.h"
 #include "map.h"
 #include "behavior.h"
 #include "trajectory.h"
@@ -31,6 +33,7 @@ using namespace std;
 using json = nlohmann::json;
 #endif
 
+#ifndef _WIN32
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -45,23 +48,41 @@ string hasData(string s) {
   }
   return "";
 }
+#endif
 
 
-int main() {
+int main(int argc, char* argv[]) {
 #ifndef _WIN32
   uWS::Hub h;
+#else
+  long frameNumber = 0;
+  APIProcessState status = PS_DAEMON;
+
+  DataScaner datascaner; //  Structure to keep output given by SCANeR compatible with dataObj.init()
+  ItfFusionPlanning myscanerdata; // Driving Policy internal
+
+  bool first_prev = true;
+  bool first_fn = true;
+  long int first_valid_fn = -1; // Invalid at initialization
+
+  bool processState; // Variable in charge of handling iterations in the main while loop
+  Init(argc, argv); // Module driver init
+  processState = status != PS_DEAD;
+  cout << "Main loop reached" << endl; // For debugging purposes
 #endif
 
   //////////////////////////////////////////////////////////////////////
   Map map;
-
+#ifndef _WIN32
   if (PARAM_MAP_BOSCH == true) {
     map.read(map_bosch_file_);
   } else {
     map.read(map_file_);
   }
-
   //map.plot();
+#else
+  map.read("../data/SCANeR_final_map_test.csv");
+#endif
 
   bool start = true;
 
@@ -76,7 +97,7 @@ int main() {
   //////////////////////////////////////////////////////////////////////
 
 #ifndef _WIN32
-  h.onMessage([&map, &car, &start, &prev_path_sd](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&map, &car, &start, &prev_path_sd, &previous_path_xy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -114,34 +135,79 @@ int main() {
 
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
           vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
+
+          map.testError(car.x, car.y, car.yaw);
 #else
-  {
-    {
-      if (true) {
-        {
+  while (processState) { // Process manager run
+    if (true) { // to respect code symmetry with unity
+      Process_Wait();
+      Process_Run();
+
+      datascaner = From_SCANeR_Info(frameNumber); // SCANeR -> Fusion
+
+      status = printProcessState(status);
+      Com_updateInputs(UT_AllData); // SCANeR -> Fusion
+
+      initializeScanerData(myscanerdata, datascaner, frameNumber, first_prev);      
+      first_prev = false;
+
+      if (true) { // to respect code symmetry with unity
+        if (myscanerdata.car.x != 0) {
+          if (first_fn) {
+            cout << "Valida Data" << endl;
+            first_valid_fn = frameNumber;
+            first_fn = false;
+          }
+
           // Use SCANeR compliant communication
-          car.x = 0.0; // dummy
-          car.y = 0.0;
-          car.s = 0.0;
-          car.d = 0.0;
-          car.yaw = 0.0;
-          car.speed = 0.0;
+          car.x = myscanerdata.car.x;
+          car.y = myscanerdata.car.y;
+          car.yaw = myscanerdata.car.yaw;
+          car.speed = myscanerdata.car.speed;
+          vector<double> car_frenet = map.getFrenet(car.x, car.y, deg2rad(car.yaw));
+          car.s = car_frenet[0];
+          car.d = car_frenet[1];
+          car.lane = get_lane(car.d);
 
           // Previous path data given to the Planner
-          vector<double> previous_path_x = { 0.0, 0.0, 0.0, 0.0 };
-          vector<double> previous_path_y = { 0.0, 0.0, 0.0, 0.0 };
-          previous_path_xy.x_vals = previous_path_x;
-          previous_path_xy.y_vals = previous_path_y;
-
+          // No previous paths @start => prev_size = 0          
+          if (!start) {
+            previous_path_xy.x_vals = myscanerdata.previous_path.xy.x_vals;
+            previous_path_xy.y_vals = myscanerdata.previous_path.xy.y_vals;
+            // Emulate the sample consumed
+            previous_path_xy.x_vals.erase(previous_path_xy.x_vals.begin());
+            previous_path_xy.y_vals.erase(previous_path_xy.y_vals.begin());
+          }
+          
           // Previous path's end s and d values 
           double end_path_s = 0.0;
           double end_path_d = 0.0;
 
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
-          vector<vector<double>> sensor_fusion = { { 0.0, 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0, 0.0 } };
+          /*vector<vector<double>> sensor_fusion;          
+          for (int i = 0; i< VEHICLE_NUM_MAX; ++i) {
+            if (myscanerdata.sensor_fusion[i][1] != 0) {
+              vector<double> temp;
+              temp.push_back(myscanerdata.sensor_fusion[i][0]);
+              temp.push_back(myscanerdata.sensor_fusion[i][1]);
+              temp.push_back(myscanerdata.sensor_fusion[i][2]);
+              temp.push_back(myscanerdata.sensor_fusion[i][3]);
+              temp.push_back(myscanerdata.sensor_fusion[i][4]);
+              temp.push_back(myscanerdata.sensor_fusion[i][5]);
+              temp.push_back(myscanerdata.sensor_fusion[i][6]);
+              sensor_fusion.push_back(temp);
+            }
+          }*/
+          vector<vector<double>> sensor_fusion = myscanerdata.sensor_fusion; // car_id, x, y, vx, vy(, s, d)
+          // FIXME: Use ItfFusionPlanning.sensor_fusion instead of sensor_fusion
+          for (int i = 0; i< sensor_fusion.size(); ++i) { // s,d is not populated by SCANeR, IF wrap-up is done here
+            vector<double> frenet_obj = map.getFrenet(sensor_fusion[i][X]/*x*/,
+                                                      sensor_fusion[i][Y]/*y*/,
+                                                      deg2rad(atan2(sensor_fusion[i][VY]/*vy*/, sensor_fusion[i][VX]/*vx*/)/*yaw*/));
+            sensor_fusion[i][S] = frenet_obj[0];
+            sensor_fusion[i][D] = frenet_obj[1];
+          }
 #endif
-          map.testError(car.x, car.y, car.yaw);
-
           int prev_size = previous_path_xy.x_vals.size();
           cout << "prev_size=" << prev_size << " car.x=" << car.x << " car.y=" << car.y << " car.s=" << 
                   car.s << " car.d=" << car.d << " car.speed=" << car.speed << " car.speed_target=" << car.speed_target << endl;
@@ -190,7 +256,7 @@ int main() {
                   << " target_vel=" << car.speed_target << " car.lane=" << car.lane << " cost="<< min_cost << ")" << endl;
           }
 
-#ifndef WIN32
+#ifndef _WIN32
           // Communicate to Unity
           json msgJson;
           // TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
@@ -202,29 +268,38 @@ int main() {
           //this_thread::sleep_for(chrono::milliseconds(1000));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 #else
+          // Emulate previous_path.xy.x_vals coming from SCANeR (required with Unity)
+          myscanerdata.previous_path.xy.x_vals = next_x_vals;
+          myscanerdata.previous_path.xy.y_vals = next_y_vals;
+
           // Communicate to SCANeR
+          SetNewPath_PP(myscanerdata.car.x, myscanerdata.car.y, next_x_vals[0], next_y_vals[0]); // 1 single point is consumed by ctrl          
 #endif
         }
+        To_SCANeR_Info(frameNumber++); // Ctrl -> SCANeR
+        Com_updateOutputs(UT_AllData);
+        processState = (status != PS_DEAD);
       } else {
-#ifndef WIN32
+#ifndef _WIN32
         // Manual driving
         std::string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 #else
       // Communicate to SCANeR
+      assert(0 && "manual driving not implemented yet");
 #endif
       }
     }
-#ifndef WIN32
+#ifndef _WIN32
   });
 #else
-  }
+  } // while (processState)
 #endif
 
   // We don't need this since we're not using HTTP but if it's removed the
   // program
   // doesn't compile :-(
-#ifndef WIN32
+#ifndef _WIN32
   h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
                      size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";

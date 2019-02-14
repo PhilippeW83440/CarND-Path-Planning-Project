@@ -22,12 +22,14 @@ double get_dright(int lane) {
 // d coord for center lane
 double get_dcenter(int lane) {
   double dcenter = (lane + 0.5) * PARAM_LANE_WIDTH;
+#ifndef _WIN32
   if (dcenter >= 10) {
     // this a workaround for a simulator issue I think (reported by others as well on udacity forums)
     // with d set to 10 from time to time a lane violation is reported by simulator
     // while everything looks fine
     dcenter = 9.8; // hack !!!
   }
+#endif
   return dcenter;
 }
 

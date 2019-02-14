@@ -1,0 +1,2 @@
+StudioKind = Module
+StudioOfflineScheduler = Scheduled

@@ -64,7 +64,10 @@ int get_lane(double d);
 
 double distance(double x1, double y1, double x2, double y2);
 
+#ifndef _WIN32
+#else
 // SCANeR-specific
 #define M_PI 3.14159
+#endif
 
 #endif // UTILITY_H
