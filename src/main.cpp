@@ -21,7 +21,7 @@
 #include "trajectory.h"
 #include "cost.h"
 #include "predictions.h"
-
+#include "interfaces.h"
 #include "params.h"
 
 #include <map>
@@ -52,23 +52,21 @@ string hasData(string s) {
 
 
 int main(int argc, char* argv[]) {
-#ifndef _WIN32
-  uWS::Hub h;
-#else
-  long frameNumber = 0;
-  APIProcessState status = PS_DAEMON;
-
-  DataScaner datascaner; //  Structure to keep output given by SCANeR compatible with dataObj.init()
-
   // Driving Policy internals
   ItfFusionPlanning fusion;
   ItfNavigationPlanning nav;
   ItfPlanningCtrl ctrl;
 
+#ifndef _WIN32
+  uWS::Hub h;
+#else
+  long frameNumber = 0;
+  APIProcessState status = PS_DAEMON;
+  DataScaner datascaner; //  Structure to keep output given by SCANeR compatible with dataObj.init()
   bool first_fn = true;
   long int first_valid_fn = -1; // Invalid at initialization
-
   bool processState; // Variable in charge of handling iterations in the main while loop
+
   initSCANeR(argc, argv); // Module driver init
   processState = status != PS_DEAD;
   cout << "Main loop reached" << endl; // For debugging purposes
@@ -76,11 +74,10 @@ int main(int argc, char* argv[]) {
 
   //////////////////////////////////////////////////////////////////////
 #ifndef _WIN32
-  Map map;
   if (PARAM_MAP_BOSCH == true) {
-    map.read(map_bosch_file_);
+    nav.map.read(map_bosch_file_);
   } else {
-    map.read(map_file_);
+    nav.map.read(map_file_);
   }
   //map.plot();
 #else
@@ -100,7 +97,7 @@ int main(int argc, char* argv[]) {
   //////////////////////////////////////////////////////////////////////
 
 #ifndef _WIN32
-  h.onMessage([&map, &car, &start, &prev_path_sd, &previous_path_xy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&nav, &car, &start, &prev_path_sd, &previous_path_xy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -139,7 +136,7 @@ int main(int argc, char* argv[]) {
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
           vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
 
-          map.testError(car.x, car.y, car.yaw);
+          nav.map.testError(car.x, car.y, car.yaw);
 #else
   while (processState) { // Process manager run
     if (true) { // to respect code symmetry with unity
@@ -260,15 +257,18 @@ int main(int argc, char* argv[]) {
 
           // Communicate to SCANeR
           ctrlScaner(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0]); // 1 single point is consumed by ctrl          
+          
           // Emulate previous_path.xy.x_vals coming from SCANeR (required with Unity)
           fusion.previous_path.xy.x_vals = next_x_vals;
-          fusion.previous_path.xy.y_vals = next_y_vals; 
-
+          fusion.previous_path.xy.y_vals = next_y_vals;
 #endif
         }
+#ifndef _WIN32
+#else
         send2Scaner(frameNumber++); // Ctrl -> SCANeR
         Com_updateOutputs(UT_AllData);
         processState = (status != PS_DEAD);
+#endif
       } else {
 #ifndef _WIN32
         // Manual driving
