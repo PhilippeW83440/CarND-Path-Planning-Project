@@ -13,7 +13,7 @@ int scenarioStarted;
 vehicleInfostruct Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
 vehicleInfostruct NextStep_vehicleInfo[VEHICLE_NUM_MAX];
 
-void Init(int argc, char* argv[]) {
+void initSCANeR(int argc, char* argv[]) {
   Process_Init(argc, argv);
   Com_registerEvent(NETWORK_IVEHICLE_VEHICLEUPDATE);
   Com_registerEvent(NETWORK_ISENSOR_ROADLANESPOINTS);
@@ -25,11 +25,11 @@ void Init(int argc, char* argv[]) {
     vehicle[i].vehicleSetSpeedObligatory = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLESETSPEEDOBLIGATORY, i);
     vehicle[i].vehicleMove = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLEMOVE, i);
   }
-  scenarioStarted = -1;
+  scenarioStarted = (int)SCENARIO::INIT;
 }
 
 // Collect data from SCANeR
-DataScaner From_SCANeR_Info(long frameNumber) {
+DataScaner receiveFromScaner(long frameNumber) {
   map <string, vector<double> > mapPreviousPath;
   map <string, vector<vector<double>>> mapSensorFusion;
   map<string, double> mapEgoInfo;
@@ -42,7 +42,7 @@ DataScaner From_SCANeR_Info(long frameNumber) {
       std::string msgId = Com_getMessageEventDataStringId(event);
 
       if (strstr(msgId.c_str(), NETWORK_IVEHICLE_VEHICLEUPDATE)) {
-        if (scenarioStarted < 0) scenarioStarted = 0;
+        if (scenarioStarted == (int)SCENARIO::INIT) scenarioStarted = (int)SCENARIO::FIRST_RECEIVE;
 
         short vehId = Com_getShortData(dEventDataInterf, "vhlId");
         Out_SCA_vehicleInfo[vehId].COGPos_x    = (double)Com_getDoubleData(dEventDataInterf, "pos[0]");
@@ -75,7 +75,7 @@ DataScaner From_SCANeR_Info(long frameNumber) {
   mapEgoInfo[  "speed"] = { 0 };
   mapEgoInfo[      "x"] = Out_SCA_vehicleInfo[0].COGPos_x;
   mapEgoInfo[      "y"] = Out_SCA_vehicleInfo[0].COGPos_y;
-  mapEgoInfo["heading"] = (Out_SCA_vehicleInfo[0].heading) * 360 / (2 * 3.1416);
+  mapEgoInfo["heading"] = (Out_SCA_vehicleInfo[0].heading) * 360 / (2 * M_PI);
   mapEgoInfo[    "yaw"] = Out_SCA_vehicleInfo[0].yawRate;
   // mapEgoInfo["z"] = Out_SCA_vehicleInfo[0].COGPos_z;  
   mapEgoInfo["x_speed"] = Out_SCA_vehicleInfo[0].speed_x;
@@ -87,26 +87,14 @@ DataScaner From_SCANeR_Info(long frameNumber) {
   // mapEgoInfo["z_acc"] = Out_SCA_vehicleInfo[0].accel_z;
 
   // Collect fusion data
-  // double fusion_temp[SIZE] = { 0 }; // car_id, x, y, vx, vy(, s, d)
-  
   vector<vector<double>> fusion_container;
-
-  // Information about the cars driven by AI in SCANeR
-  vector<double> fusion_data;
   for (int vehId = DRIVEN_VEHICLE_NUM; vehId < VEHICLE_NUM_MAX; ++vehId) {
-    if (Out_SCA_vehicleInfo[vehId].COGPos_x == 0) {
-      continue;
-    }
-    fusion_data.push_back(vehId); // car_id
-    fusion_data.push_back(Out_SCA_vehicleInfo[vehId].COGPos_x); // x
-    fusion_data.push_back(Out_SCA_vehicleInfo[vehId].COGPos_y); // y
-    fusion_data.push_back(Out_SCA_vehicleInfo[vehId].speed_x);  // vx
-    fusion_data.push_back(Out_SCA_vehicleInfo[vehId].speed_y);  // vy
-    fusion_data.push_back(0); // s
-    fusion_data.push_back(0); // d
-
-    fusion_container.push_back(fusion_data);
-    fusion_data.clear();
+    fusion_container.push_back({ (double)vehId,
+      Out_SCA_vehicleInfo[vehId].COGPos_x,
+      Out_SCA_vehicleInfo[vehId].COGPos_y,
+      Out_SCA_vehicleInfo[vehId].speed_x,
+      Out_SCA_vehicleInfo[vehId].speed_y,
+      (double)0/*s*/, (double)0/*d*/ });
   }
   mapSensorFusion.insert(make_pair("sensor_fusion", fusion_container));
 
@@ -118,8 +106,8 @@ DataScaner From_SCANeR_Info(long frameNumber) {
 }
 
 // Emulate simplistic (point to point shift + heading) ctrl law
-void SetNewPath_PP(double x_ego, double y_ego, double x, double y) {
-  if (scenarioStarted == 1) {
+void ctrlScaner(double x_ego, double y_ego, double x, double y) {
+  if (scenarioStarted == (int)SCENARIO::FIRST_SEND) {
     double dx = x - x_ego, dy = y - y_ego;
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
       Out_SCA_vehicleInfo[vehId].nextPos_x = Out_SCA_vehicleInfo[vehId].COGPos_x + dx;
@@ -132,15 +120,14 @@ void SetNewPath_PP(double x_ego, double y_ego, double x, double y) {
       //Out_SCA_vehicleInfo[vehId].nextSpeed_z = 0;      
       Out_SCA_vehicleInfo[vehId].nextLinearSpeed = 3.6*sqrt(next_vx*next_vx + next_vy*next_vy);
       Out_SCA_vehicleInfo[vehId].nextHeading = atan2(dy, dx); // valid for all 4 quadrants (+dx,+dy), (+dx,-dy), (-dx,+dy), (-dx,-dy)
-
     }
   }
 }
 
 // Send data to SCANeR (via pseudo control law)
-void To_SCANeR_Info(long frameNumber) {
-  if (scenarioStarted == 0) {
-    scenarioStarted = 1;
+void send2Scaner(long frameNumber) {
+  if (scenarioStarted == (int)SCENARIO::FIRST_RECEIVE) {
+    scenarioStarted = (int)SCENARIO::FIRST_SEND;
 
     for (int i = 0; i < DRIVEN_VEHICLE_NUM; ++i) {
       /* Initial speed of all vehicles to zero */
@@ -149,7 +136,7 @@ void To_SCANeR_Info(long frameNumber) {
       Com_setCharData(vehicle[i].vehicleSetSpeedObligatory, "state", 1);
       Com_setFloatData(vehicle[i].vehicleSetSpeedObligatory, "smoothingTime", 0);
     }
-  } else if (scenarioStarted == 1) {
+  } else if (scenarioStarted == (int)SCENARIO::FIRST_SEND) {
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
       Com_setShortData(vehicle[vehId].vehicleMove, "vhlId", vehId);
       Com_setDoubleData(vehicle[vehId].vehicleMove, "pos0", Out_SCA_vehicleInfo[vehId].nextPos_x);
@@ -157,6 +144,8 @@ void To_SCANeR_Info(long frameNumber) {
       Com_setDoubleData(vehicle[vehId].vehicleMove, "pos2", Out_SCA_vehicleInfo[vehId].nextPos_z);
       Com_setFloatData(vehicle[vehId].vehicleMove, "h", (float)Out_SCA_vehicleInfo[vehId].nextHeading);
     }
+  } else {
+    assert(1 && "SCANeR connection and scenario status unconsistent");
   }
 }
 

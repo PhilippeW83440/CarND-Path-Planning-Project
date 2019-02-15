@@ -29,6 +29,12 @@
 
 using namespace std;
 
+enum class SCENARIO {
+  INIT = -1, // Initialize process
+  FIRST_RECEIVE = 0, // 1st reading of sensors from SCANeR
+  FIRST_SEND = 1 // 1st sending of data sent to SCANeR
+}; 
+
 struct IVehicleStruct {
   DataInterface* vehicleSetSpeedObligatory;
   DataInterface* vehicleMove;
@@ -40,10 +46,10 @@ struct DataScaner {
   map <string, vector<vector<double>>> mapSensorFusion;
 };
 
-void Init(int argc, char* argv[]); // 
-DataScaner From_SCANeR_Info(long frameNumber);
-void SetNewPath_PP(double x_ego, double y_ego, double x, double y);
-void To_SCANeR_Info(long frameNumber);
+void initSCANeR(int argc, char* argv[]); // 
+DataScaner receiveFromScaner(long frameNumber);
+void ctrlScaner(double x_ego, double y_ego, double x, double y);
+void send2Scaner(long frameNumber);
 void wrapperScaner(ItfFusionPlanning &myscanerdata, DataScaner &datascaner, long frameNumber);
 
 #endif /* MODULEDRIVER_H */

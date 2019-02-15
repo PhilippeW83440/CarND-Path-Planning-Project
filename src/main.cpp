@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
   long int first_valid_fn = -1; // Invalid at initialization
 
   bool processState; // Variable in charge of handling iterations in the main while loop
-  Init(argc, argv); // Module driver init
+  initSCANeR(argc, argv); // Module driver init
   processState = status != PS_DEAD;
   cout << "Main loop reached" << endl; // For debugging purposes
 #endif
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
       Process_Wait();
       Process_Run();
 
-      datascaner = From_SCANeR_Info(frameNumber); // SCANeR -> Fusion
+      datascaner = receiveFromScaner(frameNumber); // SCANeR -> Fusion
 
       status = printProcessState(status);
       Com_updateInputs(UT_AllData); // SCANeR -> Fusion
@@ -259,14 +259,14 @@ int main(int argc, char* argv[]) {
           ctrl.trajectory.trajectory.y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
 
           // Communicate to SCANeR
-          SetNewPath_PP(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0]); // 1 single point is consumed by ctrl          
+          ctrlScaner(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0]); // 1 single point is consumed by ctrl          
           // Emulate previous_path.xy.x_vals coming from SCANeR (required with Unity)
           fusion.previous_path.xy.x_vals = next_x_vals;
           fusion.previous_path.xy.y_vals = next_y_vals; 
 
 #endif
         }
-        To_SCANeR_Info(frameNumber++); // Ctrl -> SCANeR
+        send2Scaner(frameNumber++); // Ctrl -> SCANeR
         Com_updateOutputs(UT_AllData);
         processState = (status != PS_DEAD);
       } else {
