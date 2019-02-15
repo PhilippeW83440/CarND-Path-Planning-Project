@@ -3,11 +3,6 @@
 
 using namespace std;
 
-struct IVehicleStruct {
-  DataInterface* vehicleSetSpeedObligatory;
-  DataInterface* vehicleMove;
-};
-
 /*********** GLOBAL VARIABLES ***********/
 // Variables for DataObj creation // 
 DataScaner datascaner;
@@ -35,17 +30,14 @@ void Init(int argc, char* argv[]) {
 
 // Collect data from SCANeR
 DataScaner From_SCANeR_Info(long frameNumber) {
-  Event* event;
-
-  // Get Event from SCANeR Network
-  DataFromScanner dataObj;
   map <string, vector<double> > mapPreviousPath;
   map <string, vector<vector<double>>> mapSensorFusion;
   map<string, double> mapEgoInfo;
 
-  while (event = Com_getNextEvent()) {
+  Event* event;
+  while (event = Com_getNextEvent()) { // Get Event from SCANeR
     EventType evtType = Com_getTypeEvent(event);
-    if (evtType == ET_message) {
+    if (evtType == ET_message) { // Data receive
       DataInterface* dEventDataInterf = Com_getMessageEventDataInterface(event);
       std::string msgId = Com_getMessageEventDataStringId(event);
 
@@ -53,18 +45,18 @@ DataScaner From_SCANeR_Info(long frameNumber) {
         if (scenarioStarted < 0) scenarioStarted = 0;
 
         short vehId = Com_getShortData(dEventDataInterf, "vhlId");
-        Out_SCA_vehicleInfo[vehId].COGPos_x = (double)Com_getDoubleData(dEventDataInterf, "pos[0]");
-        Out_SCA_vehicleInfo[vehId].COGPos_y = (double)Com_getDoubleData(dEventDataInterf, "pos[1]");
-        Out_SCA_vehicleInfo[vehId].COGPos_z = (double)Com_getDoubleData(dEventDataInterf, "pos[2]");
-        Out_SCA_vehicleInfo[vehId].heading = (double)Com_getDoubleData(dEventDataInterf, "pos[3]");
-        Out_SCA_vehicleInfo[vehId].speed_x = (double)Com_getFloatData(dEventDataInterf, "speed[0]");
-        Out_SCA_vehicleInfo[vehId].speed_y = (double)Com_getFloatData(dEventDataInterf, "speed[1]");
-        Out_SCA_vehicleInfo[vehId].speed_z = (double)Com_getFloatData(dEventDataInterf, "speed[2]");
+        Out_SCA_vehicleInfo[vehId].COGPos_x    = (double)Com_getDoubleData(dEventDataInterf, "pos[0]");
+        Out_SCA_vehicleInfo[vehId].COGPos_y    = (double)Com_getDoubleData(dEventDataInterf, "pos[1]");
+        Out_SCA_vehicleInfo[vehId].COGPos_z    = (double)Com_getDoubleData(dEventDataInterf, "pos[2]");
+        Out_SCA_vehicleInfo[vehId].heading     = (double)Com_getDoubleData(dEventDataInterf, "pos[3]");
+        Out_SCA_vehicleInfo[vehId].speed_x     = (double)Com_getFloatData( dEventDataInterf, "speed[0]");
+        Out_SCA_vehicleInfo[vehId].speed_y     = (double)Com_getFloatData( dEventDataInterf, "speed[1]");
+        Out_SCA_vehicleInfo[vehId].speed_z     = (double)Com_getFloatData( dEventDataInterf, "speed[2]");
         Out_SCA_vehicleInfo[vehId].linearSpeed = (double)linearSpeed(&Out_SCA_vehicleInfo[vehId]);
-        Out_SCA_vehicleInfo[vehId].yawRate = (double)Com_getFloatData(dEventDataInterf, "speed[3]");
-        Out_SCA_vehicleInfo[vehId].accel_x = (double)Com_getFloatData(dEventDataInterf, "accel[0]");
-        Out_SCA_vehicleInfo[vehId].accel_y = (double)Com_getFloatData(dEventDataInterf, "accel[1]");
-        Out_SCA_vehicleInfo[vehId].accel_z = (double)Com_getFloatData(dEventDataInterf, "accel[2]");
+        Out_SCA_vehicleInfo[vehId].yawRate     = (double)Com_getFloatData( dEventDataInterf, "speed[3]");
+        Out_SCA_vehicleInfo[vehId].accel_x     = (double)Com_getFloatData( dEventDataInterf, "accel[0]");
+        Out_SCA_vehicleInfo[vehId].accel_y     = (double)Com_getFloatData( dEventDataInterf, "accel[1]");
+        Out_SCA_vehicleInfo[vehId].accel_z     = (double)Com_getFloatData( dEventDataInterf, "accel[2]");
       }
     }
   }
@@ -125,43 +117,22 @@ DataScaner From_SCANeR_Info(long frameNumber) {
   return datascaner;
 }
 
+// Emulate simplistic (point to point shift + heading) ctrl law
 void SetNewPath_PP(double x_ego, double y_ego, double x, double y) {
   if (scenarioStarted == 1) {
-    for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; vehId++) {
-      double deltaPath_x = x - x_ego;
-      double deltaPath_y = y - y_ego;
+    double dx = x - x_ego, dy = y - y_ego;
+    for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
+      Out_SCA_vehicleInfo[vehId].nextPos_x = Out_SCA_vehicleInfo[vehId].COGPos_x + dx;
+      Out_SCA_vehicleInfo[vehId].nextPos_y = Out_SCA_vehicleInfo[vehId].COGPos_y + dy;
+      //Out_SCA_vehicleInfo[vehId].nextPos_z = Out_SCA_vehicleInfo[vehId].COGPos_z;
+      double next_vx = dx / 5.0/*in legacy 5th point was, to rm*/ * ((double)SAMPLE_TIME_MS / 1000.0);
+      double next_vy = dy / 5.0 * ((double)SAMPLE_TIME_MS / 1000.0);
+      Out_SCA_vehicleInfo[vehId].nextSpeed_x = next_vx;
+      Out_SCA_vehicleInfo[vehId].nextSpeed_y = next_vy;
+      //Out_SCA_vehicleInfo[vehId].nextSpeed_z = 0;      
+      Out_SCA_vehicleInfo[vehId].nextLinearSpeed = 3.6*sqrt(next_vx*next_vx + next_vy*next_vy);
+      Out_SCA_vehicleInfo[vehId].nextHeading = atan2(dy, dx); // valid for all 4 quadrants (+dx,+dy), (+dx,-dy), (-dx,+dy), (-dx,-dy)
 
-      // Taking care of the angle
-      double newHeading;
-      if (deltaPath_x > 0 && deltaPath_y > 0) {
-        newHeading = atan(deltaPath_y / deltaPath_x); // First quadrant -- no change 
-      }
-      if (deltaPath_x > 0 && deltaPath_y < 0) {
-        newHeading = atan(deltaPath_y / deltaPath_x); // Fourth quadrant -- no change 
-      }
-      if (deltaPath_x < 0 && deltaPath_y > 0) {
-        newHeading = 3.1416 + atan(deltaPath_y / deltaPath_x); // Second quadrant -- 180 - angle 
-      }
-      if (deltaPath_x < 0 && deltaPath_y < 0) {
-        newHeading = -3.1416 + atan(deltaPath_y / deltaPath_x);
-      }
-
-      // double newHeading = atan(deltaPath_y / deltaPath_x);
-      double deltaPosAbs = sqrt((x - x_ego)*(x - x_ego) + (y - y_ego)*(y - y_ego));
-      double offsetPos_x = deltaPosAbs * cos(newHeading);
-      double offsetPos_y = deltaPosAbs * sin(newHeading);
-
-      Out_SCA_vehicleInfo[vehId].nextPos_x = Out_SCA_vehicleInfo[vehId].COGPos_x + offsetPos_x;
-      Out_SCA_vehicleInfo[vehId].nextPos_y = Out_SCA_vehicleInfo[vehId].COGPos_y + offsetPos_y;
-      Out_SCA_vehicleInfo[vehId].nextPos_z = Out_SCA_vehicleInfo[vehId].COGPos_z;
-      Out_SCA_vehicleInfo[vehId].nextHeading = newHeading;
-
-      Out_SCA_vehicleInfo[vehId].nextSpeed_x = offsetPos_x / 5 * ((double)SAMPLE_TIME_MS / 1000);
-      Out_SCA_vehicleInfo[vehId].nextSpeed_y = offsetPos_y / 5 * ((double)SAMPLE_TIME_MS / 1000);
-      Out_SCA_vehicleInfo[vehId].nextSpeed_z = 0;
-      Out_SCA_vehicleInfo[vehId].nextLinearSpeed = sqrt(((3.6*Out_SCA_vehicleInfo[vehId].nextSpeed_x) * (3.6*Out_SCA_vehicleInfo[vehId].nextSpeed_x)) + ((3.6*Out_SCA_vehicleInfo[vehId].nextSpeed_y) * (3.6*Out_SCA_vehicleInfo[vehId].nextSpeed_y)));
-
-      Out_SCA_vehicleInfo[vehId].dummy = 0.0;
     }
   }
 }

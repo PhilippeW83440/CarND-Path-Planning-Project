@@ -29,6 +29,11 @@
 
 using namespace std;
 
+struct IVehicleStruct {
+  DataInterface* vehicleSetSpeedObligatory;
+  DataInterface* vehicleMove;
+};
+
 struct DataScaner {
   map <string, double> mapEgoInfo;
   map <string, vector<double>> mapPreviousPath;

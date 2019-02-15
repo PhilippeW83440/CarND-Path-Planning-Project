@@ -16,38 +16,38 @@ class DataFromScanner {
 
 /***** Attributes *****/
 public:
-	double				   m_fn;
+	double				 m_fn;
 	
-	double                 m_ego_x;
-	double                 m_ego_y;
-	double				   m_ego_z;
-	double				   m_ego_heading;
+	double         m_ego_x;
+	double         m_ego_y;
+	double				 m_ego_z;
+	double				 m_ego_heading;
 
-	double                 m_ego_speed_x;
-	double                 m_ego_speed_y;
-	double				   m_ego_speed_z;
-	double				   m_ego_linear_speed;
-	double                 m_ego_speed;
-	double                 m_ego_yaw;
+	double         m_ego_speed_x;
+	double         m_ego_speed_y;
+	double				 m_ego_speed_z;
+	double				 m_ego_linear_speed;
+	double         m_ego_speed;
+	double         m_ego_yaw;
 
-	double                 m_ego_acc_x;
-	double                 m_ego_acc_y;
-	double				   m_ego_acc_z;
+	double         m_ego_acc_x;
+	double         m_ego_acc_y;
+	double				 m_ego_acc_z;
 
-	double                 m_ego_s;
-	double                 m_ego_d;
+	double         m_ego_s;
+	double         m_ego_d;
 	
-	vector<double>         m_ego_path_front_x; // Still to decide if this is going to be the reference line or if we should take the left - FRONT SENSOR
-	vector<double>         m_ego_path_front_y;
+	vector<double> m_ego_path_front_x; // Still to decide if this is going to be the reference line or if we should take the left - FRONT SENSOR
+	vector<double> m_ego_path_front_y;
 
-	vector<double>         m_lane_left_x; // The coordinates are absolute with respect to EGO - LEFT LANE
-	vector<double>         m_lane_left_y;
+	vector<double> m_lane_left_x; // The coordinates are absolute with respect to EGO - LEFT LANE
+	vector<double> m_lane_left_y;
 
-	vector<double>         m_ego_path_back_x; // The coordinates are absolute with respect to EGO - BACK SENSOR
-	vector<double>         m_ego_path_back_y;
+	vector<double> m_ego_path_back_x; // The coordinates are absolute with respect to EGO - BACK SENSOR
+	vector<double> m_ego_path_back_y;
 
-	vector<double>         m_prev_path_x; // Previous path data given to the Planner
-	vector<double>         m_prev_path_y;
+	vector<double> m_prev_path_x; // Previous path data given to the Planner
+	vector<double> m_prev_path_y;
 
 	vector<vector<double>> m_sensor_fusion;
 
