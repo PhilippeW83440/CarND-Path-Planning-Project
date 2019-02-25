@@ -1,12 +1,6 @@
 #ifndef SCANERCHANNEL_H
 #define SCANERCHANNEL_H
 
-#include "moduleDriver.h"
-#include "params.h"
-
-extern vehicleInfo_t Out_SCA_vehicleInfo[];
-extern vehicleInfo_t NextStep_vehicleInfo[];
-
 struct vehicleInfo_t {
 	// Current
 	double COGPos_x;
@@ -26,6 +20,9 @@ struct vehicleInfo_t {
 	double nextSpeed_y;
 	double nextLinearSpeed;
 };
+
+extern vehicleInfo_t Out_SCA_vehicleInfo[];
+extern vehicleInfo_t NextStep_vehicleInfo[];
 
 inline double linearSpeed(vehicleInfo_t* vehicleInfo) {
   return 3.6 * sqrt((vehicleInfo->speed_x*vehicleInfo->speed_x) + (vehicleInfo->speed_y*vehicleInfo->speed_y));

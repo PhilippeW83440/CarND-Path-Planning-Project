@@ -5,11 +5,11 @@ using namespace std;
 /*********** GLOBAL VARIABLES ***********/
 // Variables for DataObj creation // 
 //DataScaner datascaner;
-IVehicleStruct vehicle[VEHICLE_NUM_MAX];
+//IVehicleStruct vehicle[VEHICLE_NUM_MAX];
 vehicleInfo_t Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
 vehicleInfo_t NextStep_vehicleInfo[VEHICLE_NUM_MAX];
 
-void initSCANeR(int argc, char* argv[], int* scenarioStarted) {
+void initSCANeR(int argc, char* argv[], int* scenarioStarted, IVehicleStruct* vehicle) {
   Process_Init(argc, argv);
   Com_registerEvent(NETWORK_IVEHICLE_VEHICLEUPDATE);
   Com_registerEvent(NETWORK_ISENSOR_ROADLANESPOINTS);
@@ -18,8 +18,8 @@ void initSCANeR(int argc, char* argv[], int* scenarioStarted) {
 
   // Initialization of structures and data interfaces
   for (int i = 0; i < DRIVEN_VEHICLE_NUM; ++i) {
-    vehicle[i].vehicleSetSpeedObligatory = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLESETSPEEDOBLIGATORY, i);
-    vehicle[i].vehicleMove = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLEMOVE, i);
+    vehicle->vehicleSetSpeedObligatory = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLESETSPEEDOBLIGATORY, i);
+    (vehicle++)->vehicleMove = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLEMOVE, i);
   }
   *scenarioStarted = (int)SCENARIO::INIT;
 }
@@ -111,13 +111,13 @@ void ctrlScaner(double x_ego, double y_ego, double x, double y, int* scenarioSta
 }
 
 // Send data to SCANeR (via pseudo control law)
-void send2Scaner(long frameNumber, int* scenarioStarted) {
+void send2Scaner(long frameNumber, int* scenarioStarted, IVehicleStruct* vehicle) {
   if (*scenarioStarted == (int)SCENARIO::FIRST_RECEIVE) {
     *scenarioStarted = (int)SCENARIO::FIRST_SEND;
 
     // Initial speed of all vehicles to zero
     for (int vehId = 0; vehId < DRIVEN_VEHICLE_NUM; ++vehId) {
-      DataInterface* vehIdSpeed = vehicle[vehId].vehicleSetSpeedObligatory;
+      DataInterface* vehIdSpeed = (vehicle++)->vehicleSetSpeedObligatory;
       Com_setShortData(vehIdSpeed, "vhlId",     vehId);
       Com_setFloatData(vehIdSpeed, "speed",         0);
       Com_setCharData(vehIdSpeed,  "state",         1);
@@ -125,7 +125,7 @@ void send2Scaner(long frameNumber, int* scenarioStarted) {
     }
   } else if (*scenarioStarted == (int)SCENARIO::FIRST_SEND) {    
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
-      DataInterface* vehIdMove = vehicle[vehId].vehicleMove;
+      DataInterface* vehIdMove = (vehicle++)->vehicleMove;
       Com_setShortData( vehIdMove, "vhlId", vehId);
       Com_setDoubleData(vehIdMove,  "pos0", Out_SCA_vehicleInfo[vehId].nextPos_x);
       Com_setDoubleData(vehIdMove,  "pos1", Out_SCA_vehicleInfo[vehId].nextPos_y);

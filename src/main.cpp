@@ -66,8 +66,9 @@ int main(int argc, char* argv[]) {
   long int first_valid_fn = -1; // Invalid at initialization
   bool processState; // Variable in charge of handling iterations in the main while loop
   int scenarioStarted;
+  IVehicleStruct vehicle;
 
-  initSCANeR(argc, argv, &scenarioStarted); // Module driver init
+  initSCANeR(argc, argv, &scenarioStarted, &vehicle); // Module driver init
   processState = status != PS_DEAD;
   cout << "Main loop reached" << endl; // For debugging purposes
 #endif
@@ -265,7 +266,7 @@ int main(int argc, char* argv[]) {
         }
 #ifndef _WIN32
 #else
-        send2Scaner(frameNumber++, &scenarioStarted); // Ctrl -> SCANeR
+        send2Scaner(frameNumber++, &scenarioStarted, &vehicle); // Ctrl -> SCANeR
         Com_updateOutputs(UT_AllData);
         processState = (status != PS_DEAD);
 #endif
