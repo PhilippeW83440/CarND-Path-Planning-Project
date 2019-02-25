@@ -38,25 +38,21 @@
     <ClInclude Include="..\src\params.h" />
     <ClInclude Include="..\src\predictions.h" />
     <ClInclude Include="..\src\resource.h" />
-    <ClInclude Include="..\src\SCANeR_Channels.h" />
+    <ClInclude Include="..\src\scanerChannels.h" />
     <ClInclude Include="..\src\spline.h" />
     <ClInclude Include="..\src\trajectory.h" />
     <ClInclude Include="..\src\utility.h" />
-    <ClInclude Include="..\src\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\behavior.cpp" />
     <ClCompile Include="..\src\cost.cpp" />
-    <ClCompile Include="..\src\DataFromScanner.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\map.cpp" />
     <ClCompile Include="..\src\moduleDriver.cpp" />
     <ClCompile Include="..\src\params.cpp" />
     <ClCompile Include="..\src\predictions.cpp" />
-    <ClCompile Include="..\src\SCANeR_Channels.cpp" />
     <ClCompile Include="..\src\trajectory.cpp" />
     <ClCompile Include="..\src\utility.cpp" />
-    <ClCompile Include="..\src\utils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D616AD69-5A02-4824-BADA-C67011D673C4}</ProjectGuid>

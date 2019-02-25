@@ -10,6 +10,7 @@ DataInterface* CabToModelCorrectiveInput;
 DataInterface* CabToSteeringCorrectiveInput;
 int scenarioStarted;
 vehicleInfo_t Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
+vehicleInfo_t NextStep_vehicleInfo[VEHICLE_NUM_MAX];
 
 void initSCANeR(int argc, char* argv[]) {
   Process_Init(argc, argv);
