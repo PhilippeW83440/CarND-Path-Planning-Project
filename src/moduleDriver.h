@@ -44,10 +44,10 @@ struct DataScaner {
   map <string, vector<vector<double>>> mapSensorFusion;
 };
 
-void initSCANeR(int argc, char* argv[]); // 
-DataScaner receiveFromScaner(long frameNumber);
-void ctrlScaner(double x_ego, double y_ego, double x, double y);
-void send2Scaner(long frameNumber);
+void initSCANeR(int argc, char* argv[], int* scenarioStarted);
+void receiveFromScaner(long frameNumber, int* scenarioStarted, DataScaner& datascaner);
+void ctrlScaner(double x_ego, double y_ego, double x, double y, int* scenarioStarted);
+void send2Scaner(long frameNumber, int* scenarioStarted);
 void wrapperScaner(ItfFusionPlanning &myscanerdata, DataScaner &datascaner, long frameNumber);
 
 #endif /* MODULEDRIVER_H */

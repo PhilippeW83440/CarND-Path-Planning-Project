@@ -4,15 +4,12 @@ using namespace std;
 
 /*********** GLOBAL VARIABLES ***********/
 // Variables for DataObj creation // 
-DataScaner datascaner;
+//DataScaner datascaner;
 IVehicleStruct vehicle[VEHICLE_NUM_MAX];
-DataInterface* CabToModelCorrectiveInput;
-DataInterface* CabToSteeringCorrectiveInput;
-int scenarioStarted;
 vehicleInfo_t Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
 vehicleInfo_t NextStep_vehicleInfo[VEHICLE_NUM_MAX];
 
-void initSCANeR(int argc, char* argv[]) {
+void initSCANeR(int argc, char* argv[], int* scenarioStarted) {
   Process_Init(argc, argv);
   Com_registerEvent(NETWORK_IVEHICLE_VEHICLEUPDATE);
   Com_registerEvent(NETWORK_ISENSOR_ROADLANESPOINTS);
@@ -24,11 +21,11 @@ void initSCANeR(int argc, char* argv[]) {
     vehicle[i].vehicleSetSpeedObligatory = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLESETSPEEDOBLIGATORY, i);
     vehicle[i].vehicleMove = Com_declareOutputData(NETWORK_IVEHICLE_VEHICLEMOVE, i);
   }
-  scenarioStarted = (int)SCENARIO::INIT;
+  *scenarioStarted = (int)SCENARIO::INIT;
 }
 
 // Collect data from SCANeR
-DataScaner receiveFromScaner(long frameNumber) {
+void receiveFromScaner(long frameNumber, int* scenarioStarted, DataScaner& datascaner) {
   map <string, vector<double> > mapPreviousPath;
   map <string, vector<vector<double>>> mapSensorFusion;
   map<string, double> mapEgoInfo;
@@ -41,7 +38,7 @@ DataScaner receiveFromScaner(long frameNumber) {
       std::string msgId = Com_getMessageEventDataStringId(event);
 
       if (strstr(msgId.c_str(), NETWORK_IVEHICLE_VEHICLEUPDATE)) {
-        if (scenarioStarted == (int)SCENARIO::INIT) scenarioStarted = (int)SCENARIO::FIRST_RECEIVE;
+        if (*scenarioStarted == (int)SCENARIO::INIT) *scenarioStarted = (int)SCENARIO::FIRST_RECEIVE;
 
         short vehId = Com_getShortData(dEventDataInterf, "vhlId");
         Out_SCA_vehicleInfo[vehId].COGPos_x    = (double)Com_getDoubleData(dEventDataInterf, "pos[0]");
@@ -94,13 +91,11 @@ DataScaner receiveFromScaner(long frameNumber) {
   datascaner.mapEgoInfo = mapEgoInfo;
   datascaner.mapPreviousPath = mapPreviousPath;
   datascaner.mapSensorFusion = mapSensorFusion;
-
-  return datascaner;
 }
 
 // Emulate simplistic (point to point shift + heading) ctrl law
-void ctrlScaner(double x_ego, double y_ego, double x, double y) {
-  if (scenarioStarted == (int)SCENARIO::FIRST_SEND) {
+void ctrlScaner(double x_ego, double y_ego, double x, double y, int* scenarioStarted) {
+  if (*scenarioStarted == (int)SCENARIO::FIRST_SEND) {
     double dx = x - x_ego, dy = y - y_ego;
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
       Out_SCA_vehicleInfo[vehId].nextPos_x = Out_SCA_vehicleInfo[vehId].COGPos_x + dx;
@@ -116,9 +111,9 @@ void ctrlScaner(double x_ego, double y_ego, double x, double y) {
 }
 
 // Send data to SCANeR (via pseudo control law)
-void send2Scaner(long frameNumber) {
-  if (scenarioStarted == (int)SCENARIO::FIRST_RECEIVE) {
-    scenarioStarted = (int)SCENARIO::FIRST_SEND;
+void send2Scaner(long frameNumber, int* scenarioStarted) {
+  if (*scenarioStarted == (int)SCENARIO::FIRST_RECEIVE) {
+    *scenarioStarted = (int)SCENARIO::FIRST_SEND;
 
     // Initial speed of all vehicles to zero
     for (int vehId = 0; vehId < DRIVEN_VEHICLE_NUM; ++vehId) {
@@ -128,7 +123,7 @@ void send2Scaner(long frameNumber) {
       Com_setCharData(vehIdSpeed,  "state",         1);
       Com_setFloatData(vehIdSpeed, "smoothingTime", 0);
     }
-  } else if (scenarioStarted == (int)SCENARIO::FIRST_SEND) {    
+  } else if (*scenarioStarted == (int)SCENARIO::FIRST_SEND) {    
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
       DataInterface* vehIdMove = vehicle[vehId].vehicleMove;
       Com_setShortData( vehIdMove, "vhlId", vehId);
