@@ -13,7 +13,6 @@
 #else
 #include "ScanerAPI\scanerAPI_DLL_C.h"
 #include "moduleDriver.h"
-#include "utils.h"
 #endif
 
 #include "map.h"

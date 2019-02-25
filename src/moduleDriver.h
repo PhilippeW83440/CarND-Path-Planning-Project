@@ -16,9 +16,7 @@
 #include "ScanerAPI\ScanerAPImessagesShm.h"
 #include "ScanerAPI\ScanerAPImessagesNetwork.h"
 
-// FIXME: below files to be merged
-#include "SCANeR_Channels.h"
-#include "DataFromScanner.h"
+#include "scanerChannels.h"
 #include "interfaces.h"
 
 #define EGO_VEHID            0 // Vehicle Id for Ego

@@ -1,5 +1,4 @@
 #include "moduleDriver.h"
-#include "utils.h"
 
 using namespace std;
 
@@ -10,8 +9,7 @@ IVehicleStruct vehicle[VEHICLE_NUM_MAX];
 DataInterface* CabToModelCorrectiveInput;
 DataInterface* CabToSteeringCorrectiveInput;
 int scenarioStarted;
-vehicleInfostruct Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
-vehicleInfostruct NextStep_vehicleInfo[VEHICLE_NUM_MAX];
+vehicleInfo_t Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
 
 void initSCANeR(int argc, char* argv[]) {
   Process_Init(argc, argv);
@@ -47,24 +45,21 @@ DataScaner receiveFromScaner(long frameNumber) {
         short vehId = Com_getShortData(dEventDataInterf, "vhlId");
         Out_SCA_vehicleInfo[vehId].COGPos_x    = (double)Com_getDoubleData(dEventDataInterf, "pos[0]");
         Out_SCA_vehicleInfo[vehId].COGPos_y    = (double)Com_getDoubleData(dEventDataInterf, "pos[1]");
-        Out_SCA_vehicleInfo[vehId].COGPos_z    = (double)Com_getDoubleData(dEventDataInterf, "pos[2]");
         Out_SCA_vehicleInfo[vehId].heading     = (double)Com_getDoubleData(dEventDataInterf, "pos[3]");
         Out_SCA_vehicleInfo[vehId].speed_x     = (double)Com_getFloatData( dEventDataInterf, "speed[0]");
         Out_SCA_vehicleInfo[vehId].speed_y     = (double)Com_getFloatData( dEventDataInterf, "speed[1]");
-        Out_SCA_vehicleInfo[vehId].speed_z     = (double)Com_getFloatData( dEventDataInterf, "speed[2]");
         Out_SCA_vehicleInfo[vehId].linearSpeed = (double)linearSpeed(&Out_SCA_vehicleInfo[vehId]);
         Out_SCA_vehicleInfo[vehId].yawRate     = (double)Com_getFloatData( dEventDataInterf, "speed[3]");
         Out_SCA_vehicleInfo[vehId].accel_x     = (double)Com_getFloatData( dEventDataInterf, "accel[0]");
         Out_SCA_vehicleInfo[vehId].accel_y     = (double)Com_getFloatData( dEventDataInterf, "accel[1]");
-        Out_SCA_vehicleInfo[vehId].accel_z     = (double)Com_getFloatData( dEventDataInterf, "accel[2]");
       }
     }
   }
 
+  // ?
   for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; vehId++) {
     Out_SCA_vehicleInfo[vehId].speed_x = Out_SCA_vehicleInfo[vehId].nextSpeed_x;
     Out_SCA_vehicleInfo[vehId].speed_y = Out_SCA_vehicleInfo[vehId].nextSpeed_y;
-    Out_SCA_vehicleInfo[vehId].speed_z = Out_SCA_vehicleInfo[vehId].nextSpeed_z;
     Out_SCA_vehicleInfo[vehId].linearSpeed = (double)linearSpeed(&Out_SCA_vehicleInfo[vehId]);;
   }
 
@@ -77,14 +72,11 @@ DataScaner receiveFromScaner(long frameNumber) {
   mapEgoInfo[      "y"] = Out_SCA_vehicleInfo[0].COGPos_y;
   mapEgoInfo["heading"] = (Out_SCA_vehicleInfo[0].heading) * 360 / (2 * M_PI);
   mapEgoInfo[    "yaw"] = Out_SCA_vehicleInfo[0].yawRate;
-  // mapEgoInfo["z"] = Out_SCA_vehicleInfo[0].COGPos_z;  
   mapEgoInfo["x_speed"] = Out_SCA_vehicleInfo[0].speed_x;
   mapEgoInfo["y_speed"] = Out_SCA_vehicleInfo[0].speed_y;
-  // mapEgoInfo["z_speed"] = Out_SCA_vehicleInfo[0].speed_z;
   mapEgoInfo["linear_speed"] = Out_SCA_vehicleInfo[0].linearSpeed;
   mapEgoInfo["x_acc"] = Out_SCA_vehicleInfo[0].accel_x;
   mapEgoInfo["y_acc"] = Out_SCA_vehicleInfo[0].accel_y;
-  // mapEgoInfo["z_acc"] = Out_SCA_vehicleInfo[0].accel_z;
 
   // Collect fusion data
   vector<vector<double>> fusion_container;
@@ -112,12 +104,10 @@ void ctrlScaner(double x_ego, double y_ego, double x, double y) {
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
       Out_SCA_vehicleInfo[vehId].nextPos_x = Out_SCA_vehicleInfo[vehId].COGPos_x + dx;
       Out_SCA_vehicleInfo[vehId].nextPos_y = Out_SCA_vehicleInfo[vehId].COGPos_y + dy;
-      //Out_SCA_vehicleInfo[vehId].nextPos_z = Out_SCA_vehicleInfo[vehId].COGPos_z;
       double next_vx = dx / 5.0/*in legacy 5th point was, to rm*/ * ((double)SAMPLE_TIME_MS / 1000.0);
       double next_vy = dy / 5.0 * ((double)SAMPLE_TIME_MS / 1000.0);
       Out_SCA_vehicleInfo[vehId].nextSpeed_x = next_vx;
       Out_SCA_vehicleInfo[vehId].nextSpeed_y = next_vy;
-      //Out_SCA_vehicleInfo[vehId].nextSpeed_z = 0;      
       Out_SCA_vehicleInfo[vehId].nextLinearSpeed = 3.6*sqrt(next_vx*next_vx + next_vy*next_vy);
       Out_SCA_vehicleInfo[vehId].nextHeading = atan2(dy, dx); // valid for all 4 quadrants (+dx,+dy), (+dx,-dy), (-dx,+dy), (-dx,-dy)
     }
@@ -129,20 +119,21 @@ void send2Scaner(long frameNumber) {
   if (scenarioStarted == (int)SCENARIO::FIRST_RECEIVE) {
     scenarioStarted = (int)SCENARIO::FIRST_SEND;
 
-    for (int i = 0; i < DRIVEN_VEHICLE_NUM; ++i) {
-      /* Initial speed of all vehicles to zero */
-      Com_setShortData(vehicle[i].vehicleSetSpeedObligatory, "vhlId", i);
-      Com_setFloatData(vehicle[i].vehicleSetSpeedObligatory, "speed", 0);
-      Com_setCharData(vehicle[i].vehicleSetSpeedObligatory, "state", 1);
-      Com_setFloatData(vehicle[i].vehicleSetSpeedObligatory, "smoothingTime", 0);
+    // Initial speed of all vehicles to zero
+    for (int vehId = 0; vehId < DRIVEN_VEHICLE_NUM; ++vehId) {
+      DataInterface* vehIdSpeed = vehicle[vehId].vehicleSetSpeedObligatory;
+      Com_setShortData(vehIdSpeed, "vhlId",     vehId);
+      Com_setFloatData(vehIdSpeed, "speed",         0);
+      Com_setCharData(vehIdSpeed,  "state",         1);
+      Com_setFloatData(vehIdSpeed, "smoothingTime", 0);
     }
-  } else if (scenarioStarted == (int)SCENARIO::FIRST_SEND) {
+  } else if (scenarioStarted == (int)SCENARIO::FIRST_SEND) {    
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
-      Com_setShortData(vehicle[vehId].vehicleMove, "vhlId", vehId);
-      Com_setDoubleData(vehicle[vehId].vehicleMove, "pos0", Out_SCA_vehicleInfo[vehId].nextPos_x);
-      Com_setDoubleData(vehicle[vehId].vehicleMove, "pos1", Out_SCA_vehicleInfo[vehId].nextPos_y);
-      Com_setDoubleData(vehicle[vehId].vehicleMove, "pos2", Out_SCA_vehicleInfo[vehId].nextPos_z);
-      Com_setFloatData(vehicle[vehId].vehicleMove, "h", (float)Out_SCA_vehicleInfo[vehId].nextHeading);
+      DataInterface* vehIdMove = vehicle[vehId].vehicleMove;
+      Com_setShortData( vehIdMove, "vhlId", vehId);
+      Com_setDoubleData(vehIdMove,  "pos0", Out_SCA_vehicleInfo[vehId].nextPos_x);
+      Com_setDoubleData(vehIdMove,  "pos1", Out_SCA_vehicleInfo[vehId].nextPos_y);
+      Com_setFloatData( vehIdMove,     "h", (float)Out_SCA_vehicleInfo[vehId].nextHeading);
     }
   } else {
     assert(1 && "SCANeR connection and scenario status unconsistent");
