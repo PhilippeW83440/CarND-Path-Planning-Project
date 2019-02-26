@@ -62,8 +62,8 @@ int main(int argc, char* argv[]) {
   long frameNumber = 0;
   APIProcessState status = PS_DAEMON;
   DataScaner datascaner = { { { "", 0 } }/*mapEgoInfo*/,
-  { { "", { 0 } } }/*mapPreviousPath*/,
-  { { "", { { 0 } } } } }/*mapSensorFusion*/; //  Structure to keep output given by SCANeR compatible with dataObj.init()
+    { { "", { 0 } } }/*mapPreviousPath*/,
+    { { "", { { 0 } } } } }/*mapSensorFusion*/; //  Structure to keep output given by SCANeR compatible with dataObj.init()
   bool first_fn = true;
   long int first_valid_fn = -1; // Invalid at initialization
   bool processState; // Variable in charge of handling iterations in the main while loop

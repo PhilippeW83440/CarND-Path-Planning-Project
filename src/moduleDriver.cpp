@@ -2,9 +2,6 @@
 
 using namespace std;
 
-//vehicleInfo_t Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
-vehicleInfo_t NextStep_vehicleInfo[VEHICLE_NUM_MAX];
-
 void initSCANeR(int argc, char* argv[], int* scenarioStarted, IVehicleStruct* vehicle) {
   Process_Init(argc, argv);
   Com_registerEvent(NETWORK_IVEHICLE_VEHICLEUPDATE);
