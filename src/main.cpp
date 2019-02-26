@@ -61,12 +61,15 @@ int main(int argc, char* argv[]) {
 #else
   long frameNumber = 0;
   APIProcessState status = PS_DAEMON;
-  DataScaner datascaner; //  Structure to keep output given by SCANeR compatible with dataObj.init()
+  DataScaner datascaner = { { { "", 0 } }/*mapEgoInfo*/,
+  { { "", { 0 } } }/*mapPreviousPath*/,
+  { { "", { { 0 } } } } }/*mapSensorFusion*/; //  Structure to keep output given by SCANeR compatible with dataObj.init()
   bool first_fn = true;
   long int first_valid_fn = -1; // Invalid at initialization
   bool processState; // Variable in charge of handling iterations in the main while loop
-  int scenarioStarted;
-  IVehicleStruct vehicle;
+  int scenarioStarted = (int)SCENARIO::INIT;
+  IVehicleStruct vehicle = { 0 };
+  vehicleInfo_t out_SCA_vehicleInfo[VEHICLE_NUM_MAX] = { 0 };
 
   initSCANeR(argc, argv, &scenarioStarted, &vehicle); // Module driver init
   processState = status != PS_DEAD;
@@ -93,8 +96,8 @@ int main(int argc, char* argv[]) {
   CarData car = CarData(0.0/*x*/, 0.0/*y*/, 0.0/*s*/, 0.0/*d*/, 0.0/*yaw*/, 0.0/*v*/, 1.0/*vf*/, 0/*L*/, false/*emergency*/);
 
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
-  TrajectorySD prev_path_sd;
-  TrajectoryXY previous_path_xy;
+  TrajectorySD prev_path_sd = TrajectorySD();
+  TrajectoryXY previous_path_xy = TrajectoryXY();
   //////////////////////////////////////////////////////////////////////
 
 #ifndef _WIN32
@@ -144,7 +147,7 @@ int main(int argc, char* argv[]) {
       Process_Wait();
       Process_Run();
 
-      receiveFromScaner(frameNumber, &scenarioStarted, datascaner); // SCANeR -> Fusion
+      receiveFromScaner(frameNumber, &scenarioStarted, datascaner, out_SCA_vehicleInfo); // SCANeR -> Fusion
 
       status = printProcessState(status);
       Com_updateInputs(UT_AllData); // SCANeR -> Fusion
@@ -152,7 +155,7 @@ int main(int argc, char* argv[]) {
       wrapperScaner(fusion, datascaner, frameNumber);
 
       if (true) { // to respect code symmetry with unity
-        if (fusion.car.x != 0) {
+        if (fusion.car.x != 0) {          
           if (first_fn) {
             cout << "Valida Data" << endl;
             first_valid_fn = frameNumber;
@@ -257,18 +260,22 @@ int main(int argc, char* argv[]) {
           ctrl.trajectory.trajectory.y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
 
           // Communicate to SCANeR
-          ctrlScaner(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0], &scenarioStarted); // 1 single point is consumed by ctrl          
+          ctrlScaner(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0], &scenarioStarted, out_SCA_vehicleInfo); // 1 single point is consumed by ctrl          
           
           // Emulate previous_path.xy.x_vals coming from SCANeR (required with Unity)
           fusion.previous_path.xy.x_vals = next_x_vals;
           fusion.previous_path.xy.y_vals = next_y_vals;
+
+          send2Scaner(frameNumber++, &scenarioStarted, &vehicle, out_SCA_vehicleInfo); // Ctrl -> SCANeR
+          Com_updateOutputs(UT_AllData);
+          processState = (status != PS_DEAD);
 #endif
         }
 #ifndef _WIN32
 #else
-        send2Scaner(frameNumber++, &scenarioStarted, &vehicle); // Ctrl -> SCANeR
-        Com_updateOutputs(UT_AllData);
-        processState = (status != PS_DEAD);
+        //send2Scaner(frameNumber++, &scenarioStarted, &vehicle, out_SCA_vehicleInfo); // Ctrl -> SCANeR
+        //Com_updateOutputs(UT_AllData);
+        //processState = (status != PS_DEAD);
 #endif
       } else {
 #ifndef _WIN32

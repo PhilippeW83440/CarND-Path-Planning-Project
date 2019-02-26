@@ -2,11 +2,7 @@
 
 using namespace std;
 
-/*********** GLOBAL VARIABLES ***********/
-// Variables for DataObj creation // 
-//DataScaner datascaner;
-//IVehicleStruct vehicle[VEHICLE_NUM_MAX];
-vehicleInfo_t Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
+//vehicleInfo_t Out_SCA_vehicleInfo[VEHICLE_NUM_MAX];
 vehicleInfo_t NextStep_vehicleInfo[VEHICLE_NUM_MAX];
 
 void initSCANeR(int argc, char* argv[], int* scenarioStarted, IVehicleStruct* vehicle) {
@@ -25,7 +21,7 @@ void initSCANeR(int argc, char* argv[], int* scenarioStarted, IVehicleStruct* ve
 }
 
 // Collect data from SCANeR
-void receiveFromScaner(long frameNumber, int* scenarioStarted, DataScaner& datascaner) {
+void receiveFromScaner(long frameNumber, int* scenarioStarted, DataScaner& datascaner, vehicleInfo_t* Out_SCA_vehicleInfo) {
   map <string, vector<double> > mapPreviousPath;
   map <string, vector<vector<double>>> mapSensorFusion;
   map<string, double> mapEgoInfo;
@@ -40,50 +36,51 @@ void receiveFromScaner(long frameNumber, int* scenarioStarted, DataScaner& datas
       if (strstr(msgId.c_str(), NETWORK_IVEHICLE_VEHICLEUPDATE)) {
         if (*scenarioStarted == (int)SCENARIO::INIT) *scenarioStarted = (int)SCENARIO::FIRST_RECEIVE;
 
-        short vehId = Com_getShortData(dEventDataInterf, "vhlId");
-        Out_SCA_vehicleInfo[vehId].COGPos_x    = (double)Com_getDoubleData(dEventDataInterf, "pos[0]");
-        Out_SCA_vehicleInfo[vehId].COGPos_y    = (double)Com_getDoubleData(dEventDataInterf, "pos[1]");
-        Out_SCA_vehicleInfo[vehId].heading     = (double)Com_getDoubleData(dEventDataInterf, "pos[3]");
-        Out_SCA_vehicleInfo[vehId].speed_x     = (double)Com_getFloatData( dEventDataInterf, "speed[0]");
-        Out_SCA_vehicleInfo[vehId].speed_y     = (double)Com_getFloatData( dEventDataInterf, "speed[1]");
-        Out_SCA_vehicleInfo[vehId].linearSpeed = (double)linearSpeed(&Out_SCA_vehicleInfo[vehId]);
-        Out_SCA_vehicleInfo[vehId].yawRate     = (double)Com_getFloatData( dEventDataInterf, "speed[3]");
-        Out_SCA_vehicleInfo[vehId].accel_x     = (double)Com_getFloatData( dEventDataInterf, "accel[0]");
-        Out_SCA_vehicleInfo[vehId].accel_y     = (double)Com_getFloatData( dEventDataInterf, "accel[1]");
+        vehicleInfo_t* vehicle = Out_SCA_vehicleInfo + Com_getShortData(dEventDataInterf, "vhlId");
+        vehicle->COGPos_x = (double)Com_getDoubleData(dEventDataInterf, "pos[0]");
+        vehicle->COGPos_y = (double)Com_getDoubleData(dEventDataInterf, "pos[1]");
+        vehicle->heading  = (double)Com_getDoubleData(dEventDataInterf, "pos[3]");
+        vehicle->speed_x  = (double)Com_getFloatData(dEventDataInterf, "speed[0]");
+        vehicle->speed_y  = (double)Com_getFloatData(dEventDataInterf, "speed[1]");
+        vehicle->linearSpeed = (double)linearSpeed(vehicle);
+        vehicle->yawRate  = (double)Com_getFloatData(dEventDataInterf, "speed[3]");
+        vehicle->accel_x  = (double)Com_getFloatData(dEventDataInterf, "accel[0]");
+        vehicle->accel_y  = (double)Com_getFloatData(dEventDataInterf, "accel[1]");
       }
     }
   }
 
   // ?
-  for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; vehId++) {
-    Out_SCA_vehicleInfo[vehId].speed_x = Out_SCA_vehicleInfo[vehId].nextSpeed_x;
-    Out_SCA_vehicleInfo[vehId].speed_y = Out_SCA_vehicleInfo[vehId].nextSpeed_y;
-    Out_SCA_vehicleInfo[vehId].linearSpeed = (double)linearSpeed(&Out_SCA_vehicleInfo[vehId]);;
+  for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
+    Out_SCA_vehicleInfo->speed_x = Out_SCA_vehicleInfo[vehId].nextSpeed_x;
+    Out_SCA_vehicleInfo->speed_y = Out_SCA_vehicleInfo[vehId].nextSpeed_y;
+    Out_SCA_vehicleInfo->linearSpeed = (double)linearSpeed(Out_SCA_vehicleInfo);
   }
 
   // Collect ego data
-  mapEgoInfo[     "fn"] = { (double)frameNumber };
-  mapEgoInfo[      "s"] = { 0 };
-  mapEgoInfo[      "d"] = { 0 };
-  mapEgoInfo[  "speed"] = { 0 };
-  mapEgoInfo[      "x"] = Out_SCA_vehicleInfo[0].COGPos_x;
-  mapEgoInfo[      "y"] = Out_SCA_vehicleInfo[0].COGPos_y;
-  mapEgoInfo["heading"] = (Out_SCA_vehicleInfo[0].heading) * 360 / (2 * M_PI);
-  mapEgoInfo[    "yaw"] = Out_SCA_vehicleInfo[0].yawRate;
-  mapEgoInfo["x_speed"] = Out_SCA_vehicleInfo[0].speed_x;
-  mapEgoInfo["y_speed"] = Out_SCA_vehicleInfo[0].speed_y;
-  mapEgoInfo["linear_speed"] = Out_SCA_vehicleInfo[0].linearSpeed;
-  mapEgoInfo["x_acc"] = Out_SCA_vehicleInfo[0].accel_x;
-  mapEgoInfo["y_acc"] = Out_SCA_vehicleInfo[0].accel_y;
+  vehicleInfo_t* ego = Out_SCA_vehicleInfo;
+  mapEgoInfo[     "fn"] = (double)frameNumber;
+  mapEgoInfo[      "s"] = 0;
+  mapEgoInfo[      "d"] = 0;
+  mapEgoInfo[  "speed"] = 0;
+  mapEgoInfo[      "x"] = ego->COGPos_x;
+  mapEgoInfo[      "y"] = ego->COGPos_y;
+  mapEgoInfo["heading"] = ego->heading * 360 / (2 * M_PI);
+  mapEgoInfo[    "yaw"] = ego->yawRate;
+  mapEgoInfo["x_speed"] = ego->speed_x;
+  mapEgoInfo["y_speed"] = ego->speed_y;
+  mapEgoInfo["linear_speed"] = ego->linearSpeed;
+  mapEgoInfo[  "x_acc"] = ego->accel_x;
+  mapEgoInfo[  "y_acc"] = ego->accel_y;
 
   // Collect fusion data
   vector<vector<double>> fusion_container;
   for (int vehId = DRIVEN_VEHICLE_NUM; vehId < VEHICLE_NUM_MAX; ++vehId) {
     fusion_container.push_back({ (double)vehId,
-      Out_SCA_vehicleInfo[vehId].COGPos_x,
-      Out_SCA_vehicleInfo[vehId].COGPos_y,
-      Out_SCA_vehicleInfo[vehId].speed_x,
-      Out_SCA_vehicleInfo[vehId].speed_y,
+      (Out_SCA_vehicleInfo + vehId)->COGPos_x,
+      (Out_SCA_vehicleInfo + vehId)->COGPos_y,
+      (Out_SCA_vehicleInfo + vehId)->speed_x,
+      (Out_SCA_vehicleInfo + vehId)->speed_y,
       (double)0/*s*/, (double)0/*d*/ });
   }
   mapSensorFusion.insert(make_pair("sensor_fusion", fusion_container));
@@ -94,24 +91,24 @@ void receiveFromScaner(long frameNumber, int* scenarioStarted, DataScaner& datas
 }
 
 // Emulate simplistic (point to point shift + heading) ctrl law
-void ctrlScaner(double x_ego, double y_ego, double x, double y, int* scenarioStarted) {
+void ctrlScaner(double x_ego, double y_ego, double x, double y, int* scenarioStarted, vehicleInfo_t* Out_SCA_vehicleInfo) {
   if (*scenarioStarted == (int)SCENARIO::FIRST_SEND) {
     double dx = x - x_ego, dy = y - y_ego;
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
-      Out_SCA_vehicleInfo[vehId].nextPos_x = Out_SCA_vehicleInfo[vehId].COGPos_x + dx;
-      Out_SCA_vehicleInfo[vehId].nextPos_y = Out_SCA_vehicleInfo[vehId].COGPos_y + dy;
+      Out_SCA_vehicleInfo->nextPos_x = Out_SCA_vehicleInfo[vehId].COGPos_x + dx;
+      Out_SCA_vehicleInfo->nextPos_y = Out_SCA_vehicleInfo[vehId].COGPos_y + dy;
       double next_vx = dx / 5.0/*in legacy 5th point was, to rm*/ * ((double)SAMPLE_TIME_MS / 1000.0);
       double next_vy = dy / 5.0 * ((double)SAMPLE_TIME_MS / 1000.0);
-      Out_SCA_vehicleInfo[vehId].nextSpeed_x = next_vx;
-      Out_SCA_vehicleInfo[vehId].nextSpeed_y = next_vy;
-      Out_SCA_vehicleInfo[vehId].nextLinearSpeed = 3.6*sqrt(next_vx*next_vx + next_vy*next_vy);
-      Out_SCA_vehicleInfo[vehId].nextHeading = atan2(dy, dx); // valid for all 4 quadrants (+dx,+dy), (+dx,-dy), (-dx,+dy), (-dx,-dy)
+      Out_SCA_vehicleInfo->nextSpeed_x = next_vx;
+      Out_SCA_vehicleInfo->nextSpeed_y = next_vy;
+      Out_SCA_vehicleInfo->nextLinearSpeed = 3.6*sqrt(next_vx*next_vx + next_vy*next_vy);
+      (Out_SCA_vehicleInfo++)->nextHeading = atan2(dy, dx); // valid for all 4 quadrants (+dx,+dy), (+dx,-dy), (-dx,+dy), (-dx,-dy)
     }
   }
 }
 
 // Send data to SCANeR (via pseudo control law)
-void send2Scaner(long frameNumber, int* scenarioStarted, IVehicleStruct* vehicle) {
+void send2Scaner(long frameNumber, int* scenarioStarted, IVehicleStruct* vehicle, vehicleInfo_t* Out_SCA_vehicleInfo) {
   if (*scenarioStarted == (int)SCENARIO::FIRST_RECEIVE) {
     *scenarioStarted = (int)SCENARIO::FIRST_SEND;
 
@@ -127,9 +124,9 @@ void send2Scaner(long frameNumber, int* scenarioStarted, IVehicleStruct* vehicle
     for (int vehId = 0; vehId < (int)DRIVEN_VEHICLE_NUM; ++vehId) {
       DataInterface* vehIdMove = (vehicle++)->vehicleMove;
       Com_setShortData( vehIdMove, "vhlId", vehId);
-      Com_setDoubleData(vehIdMove,  "pos0", Out_SCA_vehicleInfo[vehId].nextPos_x);
-      Com_setDoubleData(vehIdMove,  "pos1", Out_SCA_vehicleInfo[vehId].nextPos_y);
-      Com_setFloatData( vehIdMove,     "h", (float)Out_SCA_vehicleInfo[vehId].nextHeading);
+      Com_setDoubleData(vehIdMove,  "pos0", Out_SCA_vehicleInfo->nextPos_x);
+      Com_setDoubleData(vehIdMove,  "pos1", Out_SCA_vehicleInfo->nextPos_y);
+      Com_setFloatData(vehIdMove,      "h", (float)((Out_SCA_vehicleInfo++)->nextHeading));
     }
   } else {
     assert(1 && "SCANeR connection and scenario status unconsistent");

@@ -21,7 +21,7 @@ struct vehicleInfo_t {
 	double nextLinearSpeed;
 };
 
-extern vehicleInfo_t Out_SCA_vehicleInfo[];
+// extern vehicleInfo_t Out_SCA_vehicleInfo[];
 extern vehicleInfo_t NextStep_vehicleInfo[];
 
 inline double linearSpeed(vehicleInfo_t* vehicleInfo) {
