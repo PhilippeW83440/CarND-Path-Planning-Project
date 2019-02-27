@@ -147,12 +147,8 @@ int main(int argc, char* argv[]) {
       Process_Wait();
       Process_Run();
 
-      receiveFromScaner(frameNumber, &scenarioStarted, datascaner, out_SCA_vehicleInfo); // SCANeR -> Fusion
-
-      status = printProcessState(status);
-      Com_updateInputs(UT_AllData); // SCANeR -> Fusion
-
-      wrapperScaner(fusion, datascaner, frameNumber);
+      receiveFromScaner(frameNumber, &scenarioStarted, datascaner, out_SCA_vehicleInfo, &status); // SCANeR -> Fusion
+      wrapperFusionScaner(fusion, datascaner, frameNumber); // Fusion wrapper
 
       if (true) { // to respect code symmetry with unity
         if (fusion.car.x != 0) {          
@@ -186,7 +182,6 @@ int main(int argc, char* argv[]) {
 
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
           vector<vector<double>> sensor_fusion = fusion.sensor_fusion; // car_id, x, y, vx, vy(, s, d)
-          // FIXME: Use ItfFusionPlanning.sensor_fusion instead of sensor_fusion
           for (int i = 0; i< sensor_fusion.size(); ++i) { // s,d is not populated by SCANeR, IF wrap-up is done here
             vector<double> frenet_obj = nav.map.getFrenet(sensor_fusion[i][X]/*x*/,
                                                           sensor_fusion[i][Y]/*y*/,
@@ -259,24 +254,16 @@ int main(int argc, char* argv[]) {
           ctrl.trajectory.trajectory.x_vals = trajectory.getMinCostTrajectoryXY().x_vals;
           ctrl.trajectory.trajectory.y_vals = trajectory.getMinCostTrajectoryXY().y_vals;
 
-          // Communicate to SCANeR
-          ctrlScaner(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0], &scenarioStarted, out_SCA_vehicleInfo); // 1 single point is consumed by ctrl          
-          
           // Emulate previous_path.xy.x_vals coming from SCANeR (required with Unity)
           fusion.previous_path.xy.x_vals = next_x_vals;
           fusion.previous_path.xy.y_vals = next_y_vals;
 
-          send2Scaner(frameNumber++, &scenarioStarted, &vehicle, out_SCA_vehicleInfo); // Ctrl -> SCANeR
-          Com_updateOutputs(UT_AllData);
-          processState = (status != PS_DEAD);
+          // Ctrl wrapper
+          wrapperCtrlScaner(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0], &scenarioStarted, out_SCA_vehicleInfo); // 1 single point is consumed by ctrl          
+          // Ctrl -> SCANeR
+          send2Scaner(frameNumber++, &scenarioStarted, &vehicle, out_SCA_vehicleInfo, &status, &processState); // Ctrl -> SCANeR
 #endif
         }
-#ifndef _WIN32
-#else
-        //send2Scaner(frameNumber++, &scenarioStarted, &vehicle, out_SCA_vehicleInfo); // Ctrl -> SCANeR
-        //Com_updateOutputs(UT_AllData);
-        //processState = (status != PS_DEAD);
-#endif
       } else {
 #ifndef _WIN32
         // Manual driving
