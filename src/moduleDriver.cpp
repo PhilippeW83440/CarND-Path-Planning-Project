@@ -107,25 +107,25 @@ void send2Scaner(long frameNumber, int* scenarioStarted, IVehicleStruct* vehicle
 }
 
 // Wrapper SCANeR fusion -> DPL
-void wrapperFusionScaner(ItfFusionPlanning &myscanerdata, DataScaner &datascaner, long frameNumber) {
+void wrapperFusionScaner(ItfFusionPlanning& fusion, DataScaner& datascaner, long frameNumber) {
   CarData car; // ego: x,y,yaw,norm_v(,s,d)
   // PreviousPath previous_path; // SCANeR => 49 pts, Unity => 8 pts in mean
   std::vector<std::vector<double>> sensor_fusion; // other objects: car_id,x,y,vx,vy(,s,d)
 
   // myscanerdata.fn = (int)frameNumber;
-  myscanerdata.car.x     = datascaner.mapEgoInfo.find(           "x")->second;
-  myscanerdata.car.y     = datascaner.mapEgoInfo.find(           "y")->second;
-  myscanerdata.car.yaw   = datascaner.mapEgoInfo.find(     "heading")->second;
-  myscanerdata.car.speed = datascaner.mapEgoInfo.find("linear_speed")->second;
+  fusion.car.x = datascaner.mapEgoInfo.find("x")->second;
+  fusion.car.y = datascaner.mapEgoInfo.find("y")->second;
+  fusion.car.yaw = datascaner.mapEgoInfo.find("heading")->second;
+  // fusion.car.speed = datascaner.mapEgoInfo.find("linear_speed")->second;
   // myscanerdata.x_speed = datascaner.mapEgoInfo.find("x_speed")->second;
   // myscanerdata.y_speed = datascaner.mapEgoInfo.find("y_speed")->second;
   // myscanerdata.x_acc   = datascaner.mapEgoInfo.find(  "x_acc")->second;
   // myscanerdata.y_acc   = datascaner.mapEgoInfo.find(  "y_acc")->second;
 
   vector<vector<double>> temp_sensor_fusion = datascaner.mapSensorFusion.find("sensor_fusion")->second;
-  myscanerdata.sensor_fusion.clear();
+  fusion.sensor_fusion.clear();
   for (size_t i = 0; i < temp_sensor_fusion.size(); ++i) {
-      myscanerdata.sensor_fusion.push_back(temp_sensor_fusion[i]);
+    fusion.sensor_fusion.push_back(temp_sensor_fusion[i]);
   }
   temp_sensor_fusion.clear();
 }

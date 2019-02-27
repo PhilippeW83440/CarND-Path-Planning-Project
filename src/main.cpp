@@ -4,6 +4,9 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <random>
+#include <ctime>
+#include <iomanip>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 //#undef _WIN32 // Simulate linux OS (hack)
@@ -26,6 +29,11 @@
 #include <map>
 
 using namespace std;
+
+// forward declarations
+void fusionNoise(ItfFusionPlanning* p_if_fusion_dpi, double variance);
+ofstream logInit();
+void logPush(ofstream& file_w, vector<string> label, vector<string> data);
 
 // for convenience
 #ifndef _WIN32
@@ -98,6 +106,9 @@ int main(int argc, char* argv[]) {
   // keep track of previous s and d paths: to initialize for continuity the new trajectory
   TrajectorySD prev_path_sd = TrajectorySD();
   TrajectoryXY previous_path_xy = TrajectoryXY();
+
+  // Create logs to replay prototype captures
+  ofstream file_w = logInit();
   //////////////////////////////////////////////////////////////////////
 
 #ifndef _WIN32
@@ -147,11 +158,16 @@ int main(int argc, char* argv[]) {
       Process_Wait();
       Process_Run();
 
-      receiveFromScaner(frameNumber, &scenarioStarted, datascaner, out_SCA_vehicleInfo, &status); // SCANeR -> Fusion
+      receiveFromScaner(frameNumber, &scenarioStarted, datascaner, out_SCA_vehicleInfo, &status); // SCANeR -> Fusion      
       wrapperFusionScaner(fusion, datascaner, frameNumber); // Fusion wrapper
+      fusionNoise(&fusion, 0.0/*variance*/); // Add noise to fusion
+
 
       if (true) { // to respect code symmetry with unity
-        if (fusion.car.x != 0) {          
+        if (fusion.car.x != 0) {
+          // logger
+          logPush(file_w, { "fusion.car.x", "fusion.car.y", "fusion.car.s", "fusion.car.d" }, { to_string(fusion.car.x), to_string(fusion.car.y), to_string(fusion.car.s), to_string(fusion.car.d) });
+         
           if (first_fn) {
             cout << "Valida Data" << endl;
             first_valid_fn = frameNumber;
@@ -258,6 +274,14 @@ int main(int argc, char* argv[]) {
           fusion.previous_path.xy.x_vals = next_x_vals;
           fusion.previous_path.xy.y_vals = next_y_vals;
 
+          // logger
+          logPush(file_w, { "|->|ctrl.trajectory.x[:]", "ctrl.trajectory.y[:]" }, {
+            to_string(ctrl.trajectory.trajectory.x_vals[0]) + "|" + to_string(ctrl.trajectory.trajectory.x_vals[1]) + "|" + to_string(ctrl.trajectory.trajectory.x_vals[2]),
+            to_string(ctrl.trajectory.trajectory.y_vals[0]) + "|" + to_string(ctrl.trajectory.trajectory.y_vals[1]) + "|" + to_string(ctrl.trajectory.trajectory.y_vals[2])
+          });
+
+          file_w << endl;
+
           // Ctrl wrapper
           wrapperCtrlScaner(fusion.car.x, fusion.car.y, ctrl.trajectory.trajectory.x_vals[0], ctrl.trajectory.trajectory.y_vals[0], &scenarioStarted, out_SCA_vehicleInfo); // 1 single point is consumed by ctrl          
           // Ctrl -> SCANeR
@@ -315,4 +339,45 @@ int main(int argc, char* argv[]) {
   }
   h.run();
 #endif
+}
+
+// AWGN over fusion input (car, objs, not previous_path)
+// Assume same noise variance for all
+void fusionNoise(ItfFusionPlanning* pfusion, double variance) {
+  if (variance < 1e-6)
+    return;
+  std::default_random_engine seed(time(0));
+  std::normal_distribution<float> nd(0.0/*mean*/, sqrt(variance)/*sigma*/);
+
+  pfusion->car.x     += nd(seed); // Gaussian
+  pfusion->car.y     += nd(seed);
+  pfusion->car.s     += nd(seed);
+  pfusion->car.d     += nd(seed);
+  pfusion->car.yaw   += nd(seed);
+  pfusion->car.speed += nd(seed);
+
+  for (int i = 0; i< pfusion->sensor_fusion.size(); ++i) {
+    pfusion->sensor_fusion[i][X] += nd(seed);
+    pfusion->sensor_fusion[i][Y] += nd(seed);
+    pfusion->sensor_fusion[i][VX] += nd(seed);
+    pfusion->sensor_fusion[i][VY] += nd(seed);
+    // S,D populated in wrapper
+  }
+}
+
+ofstream logInit() {
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  std::ostringstream oss;
+  oss << std::put_time(&tm, "%Y.%m.%d_%H.%M.%S");
+  ofstream file_w;
+  file_w.open("../logs/" + oss.str() + ".txt", std::ofstream::out /*write*/ | std::ofstream::trunc /*discard*/); // clear all content
+  return file_w;
+}
+
+void logPush(ofstream& file_w, vector<string> label, vector<string> data) {
+  // write mode
+  for (int i = 0; i < label.size(); ++i) {
+    file_w << label[i] << ":" << data[i] << ";";
+  }
 }

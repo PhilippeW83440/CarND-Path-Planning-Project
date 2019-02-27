@@ -47,7 +47,7 @@ struct DataScaner {
 void initSCANeR(int argc, char* argv[], int* scenarioStarted, IVehicleStruct* vehicle);
 void receiveFromScaner(long frameNumber, int* scenarioStarted, DataScaner& datascaner, vehicleInfo_t* Out_SCA_vehicleInfo, APIProcessState* status);
 void send2Scaner(long frameNumber, int* scenarioStarted, IVehicleStruct* vehicle, vehicleInfo_t* Out_SCA_vehicleInfo, APIProcessState* status, bool* processState);
-void wrapperFusionScaner(ItfFusionPlanning &myscanerdata, DataScaner &datascaner, long frameNumber);
+void wrapperFusionScaner(ItfFusionPlanning& fusion, DataScaner& datascaner, long frameNumber);
 void wrapperCtrlScaner(double x_ego, double y_ego, double x, double y, int* scenarioStarted, vehicleInfo_t* Out_SCA_vehicleInfo);
 
 #endif /* MODULEDRIVER_H */
