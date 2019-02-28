@@ -227,6 +227,8 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
   vector<double> poly_s = JMT(start_s, end_s, T);
   vector<double> poly_d = JMT(start_d, end_d, T);
 
+  polysJmt_.push_back({ poly_s, poly_d, target.time });
+
   vector<double> next_x_vals;
   vector<double> next_y_vals;
   

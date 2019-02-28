@@ -16,6 +16,7 @@
 
 #include "Eigen-3.3/Eigen/Dense"
 
+using namespace std;
 
 // Point of a C2 class function
 struct PointC2 {
@@ -37,11 +38,18 @@ struct TrajectoryXY {
   TrajectoryXY (std::vector<double> X={}, std::vector<double> Y={}) : x_vals(X), y_vals(Y) {}
 };
 
+struct PolyJMT {
+  std::vector<double> poly_s_;
+  std::vector<double> poly_d_;
+  double tmax_;
+  PolyJMT(std::vector<double> poly_s = {}, std::vector<double> poly_d = {}, double tmax = 0.0) : poly_s_(poly_s), poly_d_(poly_d), tmax_(tmax) {}
+};
+
 struct TrajectoryJMT {
   TrajectoryXY trajectory;
   TrajectorySD path_sd;
+  PolyJMT polyJmt;
 };
-
 
 struct PreviousPath {
   TrajectoryXY xy;   // < PARAM_NB_POINTS (some already used by simulator)
@@ -62,11 +70,14 @@ public:
   int getMinCostIndex() { return min_cost_index_; } ;
   TrajectoryXY getMinCostTrajectoryXY() { return trajectories_[min_cost_index_]; };
   TrajectorySD getMinCostTrajectorySD() { return trajectories_sd_[min_cost_index_]; };
+  int     getPolyJmtSize() { return polysJmt_.size(); };
+  PolyJMT getMinCostPoly() { return polysJmt_[min_cost_index_]; };  
 
 private:
   std::vector<class Cost> costs_;
   std::vector<TrajectoryXY> trajectories_;
   std::vector<TrajectorySD> trajectories_sd_;
+  std::vector<PolyJMT> polysJmt_;
   double min_cost_;
   int min_cost_index_;
 
@@ -75,9 +86,9 @@ private:
   double polyeval_dot(std::vector<double> c, double t);
   double polyeval_ddot(std::vector<double> c, double t);
 
-  TrajectoryXY generate_trajectory     (Target target, Map &map, CarData const &car, PreviousPath const &previous_path);
+  TrajectoryXY  generate_trajectory    (Target target, Map &map, CarData const &car, PreviousPath const &previous_path);
   TrajectoryJMT generate_trajectory_jmt(Target target, Map &map, PreviousPath const &previous_path);
-  TrajectoryJMT generate_trajectory_sd(Target target, Map &map, CarData const &car, PreviousPath const &previous_path);
+  TrajectoryJMT generate_trajectory_sd (Target target, Map &map, CarData const &car, PreviousPath const &previous_path);
 };
 
 #endif // TRAJECTORY_H

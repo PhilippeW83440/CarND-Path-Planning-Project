@@ -275,7 +275,28 @@ int main(int argc, char* argv[]) {
           fusion.previous_path.xy.y_vals = next_y_vals;
 
           // logger
-          logPush(file_w, { "|->|ctrl.trajectory.x[:]", "ctrl.trajectory.y[:]" }, {
+          logPush(file_w, { "|->|poly_s.size()" }, { to_string(trajectory.getPolyJmtSize()) });
+
+          if (trajectory.getPolyJmtSize() > 0 && false/*this piece of code crashes when non-JMT is computed, e.g. emergency*/) {
+            PolyJMT polyJmtTemp = trajectory.getMinCostPoly();
+            ctrl.poly_s = polyJmtTemp.poly_s_;
+            ctrl.poly_d = polyJmtTemp.poly_d_;
+            ctrl.tmax = polyJmtTemp.tmax_;
+
+            logPush(file_w, { "|->|poly_s[0:5]", "poly_d[0:5]", "tmax" }, {
+              to_string(ctrl.poly_s[0]) + "|" + to_string(ctrl.poly_s[1]) + "|" + to_string(ctrl.poly_s[2]) + "|" + to_string(ctrl.poly_s[3]) + "|" + to_string(ctrl.poly_s[4]) + "|" + to_string(ctrl.poly_s[5]),
+              to_string(ctrl.poly_d[0]) + "|" + to_string(ctrl.poly_d[1]) + "|" + to_string(ctrl.poly_d[2]) + "|" + to_string(ctrl.poly_d[3]) + "|" + to_string(ctrl.poly_d[4]) + "|" + to_string(ctrl.poly_d[5]),
+              to_string(ctrl.tmax)
+            });
+          }
+
+          ctrl.trajectory.path_sd = trajectory.getMinCostTrajectorySD();
+          logPush(file_w, { "||ctrl.trajectory.s[0:2]", "ctrl.trajectory.d[0:2]" }, {
+            to_string(ctrl.trajectory.path_sd.path_s[0].f) + "|" + to_string(ctrl.trajectory.path_sd.path_s[1].f) + "|" + to_string(ctrl.trajectory.path_sd.path_s[2].f),
+            to_string(ctrl.trajectory.path_sd.path_d[0].f) + "|" + to_string(ctrl.trajectory.path_sd.path_d[1].f) + "|" + to_string(ctrl.trajectory.path_sd.path_d[2].f)
+          });
+
+          logPush(file_w, { "||ctrl.trajectory.x[0:2]", "ctrl.trajectory.y[0:2]" }, {
             to_string(ctrl.trajectory.trajectory.x_vals[0]) + "|" + to_string(ctrl.trajectory.trajectory.x_vals[1]) + "|" + to_string(ctrl.trajectory.trajectory.x_vals[2]),
             to_string(ctrl.trajectory.trajectory.y_vals[0]) + "|" + to_string(ctrl.trajectory.trajectory.y_vals[1]) + "|" + to_string(ctrl.trajectory.trajectory.y_vals[2])
           });
