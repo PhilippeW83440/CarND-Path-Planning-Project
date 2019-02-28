@@ -48,7 +48,6 @@ struct PolyJMT {
 struct TrajectoryJMT {
   TrajectoryXY trajectory;
   TrajectorySD path_sd;
-  PolyJMT polyJmt;
 };
 
 struct PreviousPath {

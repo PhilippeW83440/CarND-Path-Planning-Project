@@ -275,9 +275,8 @@ int main(int argc, char* argv[]) {
           fusion.previous_path.xy.y_vals = next_y_vals;
 
           // logger
-          logPush(file_w, { "|->|poly_s.size()" }, { to_string(trajectory.getPolyJmtSize()) });
-
-          if (trajectory.getPolyJmtSize() > 0 && false/*this piece of code crashes when non-JMT is computed, e.g. emergency*/) {
+          logPush(file_w, { "|->|poly_s.size()", "min_cost_index" }, { to_string(trajectory.getPolyJmtSize()), to_string(min_cost_index) });
+          if (trajectory.getPolyJmtSize() > min_cost_index) {
             PolyJMT polyJmtTemp = trajectory.getMinCostPoly();
             ctrl.poly_s = polyJmtTemp.poly_s_;
             ctrl.poly_d = polyJmtTemp.poly_d_;
@@ -288,6 +287,8 @@ int main(int argc, char* argv[]) {
               to_string(ctrl.poly_d[0]) + "|" + to_string(ctrl.poly_d[1]) + "|" + to_string(ctrl.poly_d[2]) + "|" + to_string(ctrl.poly_d[3]) + "|" + to_string(ctrl.poly_d[4]) + "|" + to_string(ctrl.poly_d[5]),
               to_string(ctrl.tmax)
             });
+          } else {
+            logPush(file_w, { "EMERGENCY" }, {""});
           }
 
           ctrl.trajectory.path_sd = trajectory.getMinCostTrajectorySD();
