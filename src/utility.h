@@ -13,7 +13,7 @@ enum {
   VY = 4, // 4
   S  = 5, // 5
   D  = 6, // 6
-  SIZE    // 7
+  //SIZE    // 7
 };
 
 struct Coord {

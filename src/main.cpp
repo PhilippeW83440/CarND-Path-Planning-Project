@@ -7,6 +7,7 @@
 #include <random>
 #include <ctime>
 #include <iomanip>
+#include <omp.h>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 //#undef _WIN32 // Simulate linux OS (hack)
@@ -16,6 +17,7 @@
 #else
 #include "ScanerAPI\scanerAPI_DLL_C.h"
 #include "moduleDriver.h"
+#include <Windows.h>
 #endif
 
 #include "map.h"
@@ -34,6 +36,8 @@ using namespace std;
 void fusionNoise(ItfFusionPlanning* p_if_fusion_dpi, double variance);
 ofstream logInit();
 void logPush(ofstream& file_w, vector<string> label, vector<string> data);
+int spinALot(int spinCount);
+void sample_frequency(const int nsamples, const int n, double *max, int nthreads);
 
 // for convenience
 #ifndef _WIN32
@@ -95,7 +99,6 @@ int main(int argc, char* argv[]) {
 #else
   nav.map.read("../data/SCANeR_final_map_test.csv");
 #endif
-
   bool start = true;
 
   // car_speed: current speed
@@ -109,6 +112,13 @@ int main(int argc, char* argv[]) {
 
   // Create logs to replay prototype captures
   ofstream file_w = logInit();
+
+  // Profiling purpose
+  auto tic  = std::chrono::high_resolution_clock::now();
+  auto toc1 = std::chrono::high_resolution_clock::now();
+  auto toc2 = std::chrono::high_resolution_clock::now();
+  auto toc3 = std::chrono::high_resolution_clock::now();
+  auto toc  = std::chrono::high_resolution_clock::now();
   //////////////////////////////////////////////////////////////////////
 
 #ifndef _WIN32
@@ -152,16 +162,22 @@ int main(int argc, char* argv[]) {
           vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
 
           nav.map.testError(car.x, car.y, car.yaw);
-#else
+#else  
   while (processState) { // Process manager run
     if (true) { // to respect code symmetry with unity
       Process_Wait();
       Process_Run();
 
+      // Estimate CPU frequency; NB: frequency is variable and CPU load is not under control
+      SYSTEM_INFO sysinfo;
+      GetSystemInfo(&sysinfo);
+      int ncores = sysinfo.dwNumberOfProcessors; // Compute nb of core (windows only)
+      double cpuFreq; // in Hz
+      sample_frequency(100/*nsamples*/, 100/*n*/, &cpuFreq/*max freq*/, ncores);
+
       receiveFromScaner(frameNumber, &scenarioStarted, datascaner, out_SCA_vehicleInfo, &status); // SCANeR -> Fusion      
       wrapperFusionScaner(fusion, datascaner, frameNumber); // Fusion wrapper
       fusionNoise(&fusion, 0.0/*variance*/); // Add noise to fusion
-
 
       if (true) { // to respect code symmetry with unity
         if (fusion.car.x != 0) {
@@ -227,15 +243,19 @@ int main(int argc, char* argv[]) {
           // points _after_  prev_size will be re-generated
           PreviousPath previous_path = PreviousPath(previous_path_xy, prev_path_sd, min(prev_size, PARAM_PREV_PATH_XY_REUSED));
 
+          tic = std::chrono::high_resolution_clock::now();
           // --------------------------------------------------------------------------
           // --- 6 car predictions x 50 points x 2 coord (x,y): 6 objects predicted over 1 second horizon ---
           Predictions predictions = Predictions(sensor_fusion, car, PARAM_NB_POINTS /* 50 */);
+          toc1 = std::chrono::high_resolution_clock::now();
 
           Behavior behavior = Behavior(sensor_fusion, car, predictions);
-          vector<Target> targets = behavior.get_targets();
+          toc2 = std::chrono::high_resolution_clock::now();
+          vector<Target> targets = behavior.get_targets();          
 
           Trajectory trajectory = Trajectory(targets, nav.map, car, previous_path, predictions);
-          // --------------------------------------------------------------------------
+          toc = std::chrono::high_resolution_clock::now();
+          // --------------------------------------------------------------------------          
 
           double min_cost = trajectory.getMinCost();
           int min_cost_index = trajectory.getMinCostIndex();
@@ -301,6 +321,19 @@ int main(int argc, char* argv[]) {
             to_string(ctrl.trajectory.trajectory.x_vals[0]) + "|" + to_string(ctrl.trajectory.trajectory.x_vals[1]) + "|" + to_string(ctrl.trajectory.trajectory.x_vals[2]),
             to_string(ctrl.trajectory.trajectory.y_vals[0]) + "|" + to_string(ctrl.trajectory.trajectory.y_vals[1]) + "|" + to_string(ctrl.trajectory.trajectory.y_vals[2])
           });
+
+          // log profiling results
+          cpuFreq = 0.43; // hack: observed cpu freq in mean (otherwise buggy in release mode)
+          logPush(file_w,
+            { "||Profiling (ms)@", "Ghz (", "% of 2.4GHz)", "pred", "beh", "traj", "tot" },
+            { to_string(cpuFreq * 1E-9f), // GHz
+              to_string(cpuFreq / 2.4E7f), // % of 2.4 GHz
+              "",
+              to_string(std::chrono::duration<double, std::milli>(toc1 -  tic).count()),
+              to_string(std::chrono::duration<double, std::milli>(toc2 - toc1).count()),
+              to_string(std::chrono::duration<double, std::milli>( toc - toc2).count()),
+              to_string(std::chrono::duration<double, std::milli>( toc -  tic).count())
+            });
 
           file_w << endl;
 
@@ -402,4 +435,37 @@ void logPush(ofstream& file_w, vector<string> label, vector<string> data) {
   for (int i = 0; i < label.size(); ++i) {
     file_w << label[i] << ":" << data[i] << ";";
   }
+}
+
+// https://stackoverflow.com/questions/11706563/how-can-i-programmatically-find-the-cpu-frequency-with-c
+// Function takes 3 cycles
+int spinALot(int spinCount) {
+  __m128 x = _mm_setzero_ps();
+  for (int i = 0; i<spinCount; i++) {
+    // loop-carried dependance (x) => no reordering by compiler
+    x =/*1 cycle*/ _mm_add_ps/*1 cycle*/(x, _mm_set1_ps/*1 cycle*/(1.0f/*immediate*/));
+  }
+  return _mm_cvt_ss2si(x);
+}
+
+void sample_frequency(const int nsamples, const int n, double *max, int nthreads) {
+  *max = 0.0;
+  volatile int x = 0;
+  double min_time = DBL_MAX;
+#pragma omp parallel reduction(+:x) num_threads(nthreads)
+  {
+    double dtime, min_time_private = DBL_MAX;
+    for (int i = 0; i<nsamples; i++) {
+#pragma omp barrier
+      dtime = omp_get_wtime();
+      x += spinALot(n); // 3n cycles
+      dtime = omp_get_wtime() - dtime;
+      if (dtime<min_time_private) min_time_private = dtime;
+    }
+#pragma omp critical
+    {
+      if (min_time_private<min_time) min_time = min_time_private;
+    }
+  }
+  *max = 3.0f *(double)n /*3n cycles*/ / min_time;
 }
