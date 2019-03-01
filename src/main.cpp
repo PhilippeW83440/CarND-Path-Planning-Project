@@ -8,6 +8,7 @@
 #include <ctime>
 #include <iomanip>
 #include <omp.h>
+#include <cfloat>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 //#undef _WIN32 // Simulate linux OS (hack)
@@ -90,7 +91,7 @@ int main(int argc, char* argv[]) {
 
   //////////////////////////////////////////////////////////////////////
 #ifndef _WIN32
-  if (PARAM_MAP_BOSCH == true) {
+  if (/*PARAM_MAP_BOSCH == true*/false) {
     nav.map.read(map_bosch_file_);
   } else {
     nav.map.read(map_file_);
@@ -117,12 +118,11 @@ int main(int argc, char* argv[]) {
   auto tic  = std::chrono::high_resolution_clock::now();
   auto toc1 = std::chrono::high_resolution_clock::now();
   auto toc2 = std::chrono::high_resolution_clock::now();
-  auto toc3 = std::chrono::high_resolution_clock::now();
   auto toc  = std::chrono::high_resolution_clock::now();
   //////////////////////////////////////////////////////////////////////
 
 #ifndef _WIN32
-  h.onMessage([&nav, &car, &start, &prev_path_sd, &previous_path_xy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&nav, &car, &start, &prev_path_sd, &previous_path_xy, &tic, &toc1, &toc2, &toc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -437,6 +437,8 @@ void logPush(ofstream& file_w, vector<string> label, vector<string> data) {
   }
 }
 
+#ifndef _WIN32
+#else
 // https://stackoverflow.com/questions/11706563/how-can-i-programmatically-find-the-cpu-frequency-with-c
 // Function takes 3 cycles
 int spinALot(int spinCount) {
@@ -469,3 +471,4 @@ void sample_frequency(const int nsamples, const int n, double *max, int nthreads
   }
   *max = 3.0f *(double)n /*3n cycles*/ / min_time;
 }
+#endif
