@@ -222,7 +222,7 @@ So that is why in the lectures from Udacity & Daimler Benz of the Self Driving C
   
  The starting point consists in trying to find a trajectory that has minimum jerk i.e. maximum comfort for the user. 
  
- The jerk corresponds to variations in acceleration. So we are looking at the 3rd derivatives and we want to minimize the sum of these 3rd derivatives from t_start to t_end. As demonstrated in the folowing link http://www.shadmehrlab.org/book/minimum_jerk/minimumjerk.htm, **a Jerk Minimizing Trajectory has to be a quintic polynomial**.  
+ The jerk corresponds to variations in acceleration. So we are looking at the 3rd derivatives and we want to minimize the sum of these 3rd derivatives from t_start to t_end. As demonstrated in the folowing link http://courses.shadmehrlab.org/Shortcourse/minimumjerk.pdf, **a Jerk Minimizing Trajectory has to be a quintic polynomial**.  
    
  So we end up looking for:
  * a quintic polynomial for the longitudinal part: s(t) is a polynom of order 5
