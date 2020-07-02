@@ -116,7 +116,8 @@ int Cost::check_collision_on_trajectory(TrajectoryXY const &trajectory, std::map
 
 
 // check max speed, acceleration, jerk
-bool Cost::check_max_capabilities(vector<vector<double>> &traj)
+//bool Cost::check_max_capabilities(vector<vector<double>> &traj)
+bool Cost::check_max_capabilities(struct TrajectoryXY const &traj)
 {
   double vx, ax, jx;
   double vy, ay, jy;
@@ -128,18 +129,18 @@ bool Cost::check_max_capabilities(vector<vector<double>> &traj)
   double y, y_1, y_2, y_3;
   double jerk_per_second;
 
-  assert(traj[0].size() == traj[1].size()); // as much x than y ...
+  assert(traj.x_vals.size() == traj.y_vals.size()); // as much x than y ...
 
-  for (size_t t = 3; t < traj[0].size(); t++) {
-    x   = traj[0][t];
-    x_1 = traj[0][t-1];
-    x_2 = traj[0][t-2];
-    x_3 = traj[0][t-3];
+  for (size_t t = 3; t < traj.x_vals.size(); t++) {
+    x   = traj.x_vals[t];
+    x_1 = traj.x_vals[t-1];
+    x_2 = traj.x_vals[t-2];
+    x_3 = traj.x_vals[t-3];
 
-    y   = traj[1][t];
-    y_1 = traj[1][t-1];
-    y_2 = traj[1][t-2];
-    y_3 = traj[1][t-3];
+    y   = traj.y_vals[t];
+    y_1 = traj.y_vals[t-1];
+    y_2 = traj.y_vals[t-2];
+    y_3 = traj.y_vals[t-3];
 
     vx = (x - x_1) / PARAM_DT;
     vy = (y - y_1) / PARAM_DT;
@@ -229,10 +230,10 @@ Cost::Cost(TrajectoryXY const &trajectory, Target target, Predictions &predict, 
 
   // 1) FEASIBILITY cost
   cost_feasibility += check_collision_on_trajectory(trajectory, predictions);
-  //if (check_max_capabilities(trajectory))
-  //{
-  //  cost_feasibility += 1;
-  //}
+  if (check_max_capabilities(trajectory))
+  {
+    cost_feasibility += 1;
+  }
   cost_ = cost_ + PARAM_COST_FEASIBILITY * cost_feasibility;
 
   // 2) SAFETY cost

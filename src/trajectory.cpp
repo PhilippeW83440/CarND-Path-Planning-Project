@@ -201,7 +201,8 @@ TrajectoryJMT Trajectory::generate_trajectory_jmt(Target target, Map &map, Previ
     sf_ddot = 0;
     sf_dot  = mph_to_ms(target.velocity);
 
-    sf      = si + 2 * sf_dot * T;
+    // sf      = si + 2 * sf_dot * T;
+    sf      = si + 1 * sf_dot * T; // less aggressive start
   } else {
     df_ddot = 0;
     df_dot  = 0;
